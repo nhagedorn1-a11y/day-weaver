@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Play, Pause, Plus, Minus, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Settings2 } from 'lucide-react';
+import { TimeScrollPicker } from './ui/scroll-picker';
 
 interface VisualTimerProps {
   duration: number; // seconds
   onComplete: () => void;
   onExtend?: (seconds: number) => void;
+  onDurationChange?: (newDuration: number) => void;
   label?: string;
   variant?: 'circle' | 'bar' | 'sand';
   showControls?: boolean;
@@ -17,6 +19,7 @@ export function VisualTimer({
   duration,
   onComplete,
   onExtend,
+  onDurationChange,
   label,
   variant = 'circle',
   showControls = true,
@@ -26,6 +29,9 @@ export function VisualTimer({
   const [isRunning, setIsRunning] = useState(autoStart);
   const [isMuted, setIsMuted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editMinutes, setEditMinutes] = useState(Math.floor(duration / 60));
+  const [editSeconds, setEditSeconds] = useState(duration % 60);
 
   const progress = timeRemaining / duration;
   
@@ -67,16 +73,28 @@ export function VisualTimer({
     return () => clearInterval(timer);
   }, [isRunning, timeRemaining]);
 
+  // Sync edit values when entering edit mode
+  useEffect(() => {
+    if (isEditing) {
+      setEditMinutes(Math.floor(timeRemaining / 60));
+      setEditSeconds(timeRemaining % 60);
+    }
+  }, [isEditing]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleExtend = useCallback((seconds: number) => {
-    setTimeRemaining((prev) => prev + seconds);
-    onExtend?.(seconds);
-  }, [onExtend]);
+  const handleApplyTime = useCallback(() => {
+    const newDuration = editMinutes * 60 + editSeconds;
+    if (newDuration > 0) {
+      setTimeRemaining(newDuration);
+      onDurationChange?.(newDuration);
+    }
+    setIsEditing(false);
+  }, [editMinutes, editSeconds, onDurationChange]);
 
   const handleBridgeComplete = () => {
     onComplete();
@@ -105,6 +123,51 @@ export function VisualTimer({
     );
   }
 
+  // Time picker edit mode
+  if (isEditing) {
+    return (
+      <div 
+        className="flex flex-col items-center p-6 rounded-3xl transition-colors"
+        style={{ backgroundColor: phaseBgColors[phase] }}
+      >
+        <span 
+          className="hw-label mb-4"
+          style={{ color: phaseColors[phase] }}
+        >
+          Set Time
+        </span>
+
+        <TimeScrollPicker
+          minutes={editMinutes}
+          seconds={editSeconds}
+          onMinutesChange={setEditMinutes}
+          onSecondsChange={setEditSeconds}
+          maxMinutes={60}
+          className="mb-6"
+        />
+
+        <div className="flex gap-3 w-full">
+          <button
+            onClick={() => setIsEditing(false)}
+            className="flex-1 py-3 px-4 rounded-xl bg-muted text-muted-foreground font-medium hover:bg-muted/80 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleApplyTime}
+            className="flex-1 py-3 px-4 rounded-xl font-semibold transition-colors"
+            style={{ 
+              backgroundColor: phaseColors[phase],
+              color: 'white'
+            }}
+          >
+            Set Timer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       className="flex flex-col items-center p-6 rounded-3xl transition-colors"
@@ -118,7 +181,19 @@ export function VisualTimer({
 
       {/* Timer visualization */}
       {variant === 'circle' && (
-        <div className="relative w-48 h-48 mb-6">
+        <div 
+          className="relative w-48 h-48 mb-6 cursor-pointer group"
+          onClick={() => !isRunning && setIsEditing(true)}
+        >
+          {/* Edit hint overlay */}
+          {!isRunning && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="bg-foreground/10 rounded-full p-3">
+                <Settings2 className="w-6 h-6 text-foreground/60" />
+              </div>
+            </div>
+          )}
+          
           {/* Background circle */}
           <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
             <circle
@@ -151,12 +226,18 @@ export function VisualTimer({
             >
               {formatTime(timeRemaining)}
             </span>
+            {!isRunning && (
+              <span className="text-xs text-muted-foreground mt-1">Tap to edit</span>
+            )}
           </div>
         </div>
       )}
 
       {variant === 'bar' && (
-        <div className="w-full mb-6">
+        <div 
+          className="w-full mb-6 cursor-pointer group"
+          onClick={() => !isRunning && setIsEditing(true)}
+        >
           <div className="h-8 rounded-full bg-background/50 overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-1000 ease-linear"
@@ -166,19 +247,25 @@ export function VisualTimer({
               }}
             />
           </div>
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center relative">
             <span 
               className="timer-display"
               style={{ color: phaseColors[phase] }}
             >
               {formatTime(timeRemaining)}
             </span>
+            {!isRunning && (
+              <span className="block text-xs text-muted-foreground mt-1">Tap to edit</span>
+            )}
           </div>
         </div>
       )}
 
       {variant === 'sand' && (
-        <div className="relative w-32 h-48 mb-6">
+        <div 
+          className="relative w-32 h-48 mb-6 cursor-pointer group"
+          onClick={() => !isRunning && setIsEditing(true)}
+        >
           {/* Sand timer visualization */}
           <div 
             className="absolute inset-x-0 top-0 rounded-t-full overflow-hidden transition-all duration-1000"
@@ -205,6 +292,9 @@ export function VisualTimer({
             >
               {formatTime(timeRemaining)}
             </span>
+            {!isRunning && (
+              <span className="block text-xs text-muted-foreground mt-1">Tap to edit</span>
+            )}
           </div>
         </div>
       )}
@@ -212,13 +302,13 @@ export function VisualTimer({
       {/* Controls */}
       {showControls && (
         <div className="flex items-center gap-3 w-full">
-          {/* Extend/Shorten */}
+          {/* Edit Time */}
           <button
-            onClick={() => handleExtend(-60)}
-            disabled={timeRemaining <= 60}
+            onClick={() => setIsEditing(true)}
+            disabled={isRunning}
             className="w-12 h-12 rounded-xl bg-background/50 flex items-center justify-center disabled:opacity-30 hover:bg-background/70 transition-colors"
           >
-            <Minus className="w-5 h-5" />
+            <Settings2 className="w-5 h-5" />
           </button>
 
           {/* Play/Pause */}
@@ -241,14 +331,6 @@ export function VisualTimer({
                 <span>Start</span>
               </>
             )}
-          </button>
-
-          {/* Extend */}
-          <button
-            onClick={() => handleExtend(60)}
-            className="w-12 h-12 rounded-xl bg-background/50 flex items-center justify-center hover:bg-background/70 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
           </button>
 
           {/* Mute */}
