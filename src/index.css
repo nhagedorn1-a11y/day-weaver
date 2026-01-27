@@ -265,6 +265,16 @@
 }
 
 @layer utilities {
+  /* Slide up animation for modals */
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+
+  @keyframes slide-up {
+    0% { transform: translateY(100%); }
+    100% { transform: translateY(0); }
+  }
+
   /* Animation utilities */
   .animate-calm-pulse {
     animation: calm-pulse 4s ease-in-out infinite;
