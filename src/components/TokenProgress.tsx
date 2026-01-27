@@ -1,4 +1,4 @@
-import { Star, Gift, Trophy } from 'lucide-react';
+import { Star, Gift, Trophy, Sparkles } from 'lucide-react';
 
 interface TokenProgressProps {
   earned: number;
@@ -19,19 +19,43 @@ export function TokenProgress({ earned, goal, currentReward, compact = false }: 
 
   if (compact) {
     return (
-      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-token/10 to-primary/5 rounded-2xl border border-token/20">
-        <div className="w-10 h-10 rounded-full bg-token/20 flex items-center justify-center">
-          <Star className="w-5 h-5 text-token" fill="currentColor" />
+      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-token/15 via-token/10 to-primary/5 rounded-2xl border border-token/20 shadow-sm">
+        {/* Token icon with count badge */}
+        <div className="relative">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-token to-token/80 flex items-center justify-center shadow-lg">
+            <Star className="w-6 h-6 text-white" fill="currentColor" />
+          </div>
+          {earned > 0 && (
+            <div className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md border-2 border-background">
+              {earned}
+            </div>
+          )}
         </div>
-        <div className="flex-1">
-          <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+        
+        {/* Progress bar */}
+        <div className="flex-1 space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold text-foreground">Today's Stars</span>
+            <span className="font-mono text-muted-foreground">{goal - earned > 0 ? `${goal - earned} to go` : 'Goal reached!'}</span>
+          </div>
+          <div className="h-2.5 rounded-full bg-muted overflow-hidden shadow-inner">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-token to-primary transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-token via-primary to-token transition-all duration-500 relative"
               style={{ width: `${progress}%` }}
-            />
+            >
+              {progress > 20 && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+              )}
+            </div>
           </div>
         </div>
-        <span className="font-mono text-lg font-bold text-token">{earned}</span>
+
+        {/* Reward preview */}
+        {currentReward && (
+          <div className="w-10 h-10 rounded-xl bg-muted/50 border border-border flex items-center justify-center">
+            <span className="text-xl">{currentReward.icon}</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -51,14 +75,16 @@ export function TokenProgress({ earned, goal, currentReward, compact = false }: 
                 <Star className="w-7 h-7 text-white" fill="currentColor" />
               </div>
               {earned > 0 && (
-                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md">
+                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md border-2 border-card">
                   {earned}
                 </div>
               )}
             </div>
             <div>
               <h3 className="font-bold text-lg">Today's Stars</h3>
-              <p className="text-sm text-muted-foreground">{goal - earned} more to goal</p>
+              <p className="text-sm text-muted-foreground">
+                {goal - earned > 0 ? `${goal - earned} more to goal` : 'Goal reached! 🎉'}
+              </p>
             </div>
           </div>
           
@@ -67,7 +93,9 @@ export function TokenProgress({ earned, goal, currentReward, compact = false }: 
               <span className="text-2xl">{currentReward.icon}</span>
               <div className="text-right">
                 <span className="text-xs text-muted-foreground block">Next reward</span>
-                <span className="text-sm font-bold">{currentReward.cost - earned} to go</span>
+                <span className="text-sm font-bold">
+                  {currentReward.cost - earned > 0 ? `${currentReward.cost - earned} to go` : 'Ready!'}
+                </span>
               </div>
             </div>
           )}
@@ -105,6 +133,7 @@ export function TokenProgress({ earned, goal, currentReward, compact = false }: 
                   ? 'bg-gradient-to-br from-token to-primary shadow-md scale-100'
                   : 'bg-muted/50 border border-dashed border-border scale-95'
               }`}
+              style={{ animationDelay: `${i * 50}ms` }}
             >
               {i < earned && <Star className="w-4 h-4 text-white" fill="currentColor" />}
             </div>
@@ -118,14 +147,15 @@ export function TokenProgress({ earned, goal, currentReward, compact = false }: 
 
         {/* Goal reached celebration */}
         {earned >= goal && (
-          <div className="mt-5 p-4 bg-gradient-to-r from-token/20 to-primary/20 rounded-2xl flex items-center gap-4 border border-token/30">
+          <div className="mt-5 p-4 bg-gradient-to-r from-token/20 to-primary/20 rounded-2xl flex items-center gap-4 border border-token/30 animate-success-pop">
             <div className="w-12 h-12 rounded-xl bg-token/20 flex items-center justify-center">
               <Trophy className="w-6 h-6 text-token" />
             </div>
-            <div>
+            <div className="flex-1">
               <span className="font-bold text-token block">Goal reached!</span>
               <span className="text-sm text-muted-foreground">Time for a reward! 🎉</span>
             </div>
+            <Sparkles className="w-5 h-5 text-token animate-pulse" />
           </div>
         )}
       </div>

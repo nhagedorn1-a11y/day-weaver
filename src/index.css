@@ -267,13 +267,64 @@
 @layer utilities {
   /* Slide up animation for modals */
   .animate-slide-up {
-    animation: slide-up 0.3s ease-out;
+    animation: slide-up 0.3s var(--ease-calm);
   }
 
   @keyframes slide-up {
-    0% { transform: translateY(100%); }
-    100% { transform: translateY(0); }
+    0% { transform: translateY(100%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
   }
+
+  /* Slide down animation */
+  .animate-slide-down {
+    animation: slide-down 0.3s var(--ease-calm);
+  }
+
+  @keyframes slide-down {
+    0% { transform: translateY(-20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  /* Scale in animation */
+  .animate-scale-in {
+    animation: scale-in 0.2s var(--ease-calm);
+  }
+
+  @keyframes scale-in {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Fade in animation */
+  .animate-fade-in {
+    animation: fade-in 0.3s var(--ease-calm);
+  }
+
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  /* Fade in up animation */
+  .animate-fade-in-up {
+    animation: fade-in-up 0.4s var(--ease-calm);
+  }
+
+  @keyframes fade-in-up {
+    0% { transform: translateY(16px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  /* Stagger children animation */
+  .stagger-children > * {
+    animation: fade-in-up 0.4s var(--ease-calm) backwards;
+  }
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 250ms; }
 
   /* Animation utilities */
   .animate-calm-pulse {
@@ -294,13 +345,45 @@
     50% { transform: scale(1.15); }
   }
 
+  /* Gentle bounce */
+  .animate-bounce-gentle {
+    animation: bounce-gentle 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce-gentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  /* Success pop */
+  .animate-success-pop {
+    animation: success-pop 0.4s var(--ease-calm);
+  }
+
+  @keyframes success-pop {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Wiggle for attention */
+  .animate-wiggle {
+    animation: wiggle 0.5s ease-in-out;
+  }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-3deg); }
+    75% { transform: rotate(3deg); }
+  }
+
   /* Safe area padding for mobile */
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 1rem);
   }
 
   .safe-top {
-    padding-top: env(safe-area-inset-top, 1rem);
+    padding-top: env(safe-area-inset-top, 0);
   }
 
   /* Hide scrollbar for scroll pickers */
@@ -339,5 +422,25 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-lg;
+  }
+
+  /* Touch feedback */
+  .touch-bounce {
+    @apply active:scale-[0.97] transition-transform;
+  }
+
+  /* Skeleton loading */
+  .skeleton {
+    @apply animate-pulse bg-muted rounded;
+  }
+
+  /* Focus ring */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 }
