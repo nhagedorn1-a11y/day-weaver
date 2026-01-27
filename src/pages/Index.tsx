@@ -10,9 +10,10 @@ import { TaskStarter } from '@/components/TaskStarter';
 import { VisualTimer } from '@/components/VisualTimer';
 import { BraveryTimer } from '@/components/BraveryTimer';
 import { ParentQuickActions } from '@/components/ParentQuickActions';
+import { ReadingStudio } from '@/components/reading/ReadingStudio';
 import { morningRoutine, afterSchoolRoutine, bedtimeRoutine, rewards } from '@/data/sampleSchedule';
 import { toast } from 'sonner';
-import { Shield } from 'lucide-react';
+import { Shield, Book } from 'lucide-react';
 
 // Combine all routines for demo
 const allTasks: Task[] = [...morningRoutine, ...afterSchoolRoutine, ...bedtimeRoutine];
@@ -33,6 +34,7 @@ const Index = () => {
   const [tokensEarned, setTokensEarned] = useState(0);
   const [showCalmToolkit, setShowCalmToolkit] = useState(false);
   const [showBraveryTimer, setShowBraveryTimer] = useState(false);
+  const [showReadingStudio, setShowReadingStudio] = useState(false);
   
   // Task states
   const [showTaskStarter, setShowTaskStarter] = useState(false);
@@ -134,6 +136,21 @@ const Index = () => {
     toast.success('+3 tokens for bravery! 🦁');
   }, []);
 
+  const handleReadingTokens = useCallback((tokens: number) => {
+    setTokensEarned((prev) => prev + tokens);
+    toast.success(`+${tokens} tokens from reading! 📚`);
+  }, []);
+
+  // Show Reading Studio
+  if (showReadingStudio) {
+    return (
+      <ReadingStudio
+        onBack={() => setShowReadingStudio(false)}
+        onTokensEarned={handleReadingTokens}
+      />
+    );
+  }
+
   // Determine what to show based on current state
   const renderMainContent = () => {
     // Task Starter for difficult tasks
@@ -208,10 +225,12 @@ const Index = () => {
           next={nextTask}
           later={laterTasks}
           onComplete={(taskId) => {
-            // For simple tasks, complete immediately
-            // For harder tasks (reading, homework), show task starter
             const task = tasks.find(t => t.id === taskId);
-            if (task && ['reading', 'homework'].includes(task.icon)) {
+            // For reading tasks, open Reading Studio
+            if (task && task.icon === 'reading') {
+              setShowReadingStudio(true);
+            } else if (task && ['homework'].includes(task.icon)) {
+              // For difficult tasks, show task starter
               setShowTaskStarter(true);
             } else {
               handleTaskComplete(taskId);
@@ -220,16 +239,28 @@ const Index = () => {
           isLocked={isTaskLocked}
         />
 
-        {/* Bravery practice button (parent mode) */}
-        {mode === 'parent' && (
+        {/* Quick action buttons */}
+        <div className="flex gap-3">
+          {/* Reading Studio button */}
           <button
-            onClick={() => setShowBraveryTimer(true)}
-            className="w-full py-4 px-6 rounded-2xl bg-token/10 border-2 border-token/30 flex items-center justify-center gap-3 hover:bg-token/20 transition-colors"
+            onClick={() => setShowReadingStudio(true)}
+            className="flex-1 py-4 px-6 rounded-2xl bg-primary/10 border-2 border-primary/30 flex items-center justify-center gap-3 hover:bg-primary/20 transition-colors"
           >
-            <Shield className="w-5 h-5 text-token" />
-            <span className="font-semibold text-token">Start Bravery Practice</span>
+            <Book className="w-5 h-5 text-primary" />
+            <span className="font-semibold text-primary">Reading Studio</span>
           </button>
-        )}
+
+          {/* Bravery practice button (parent mode) */}
+          {mode === 'parent' && (
+            <button
+              onClick={() => setShowBraveryTimer(true)}
+              className="flex-1 py-4 px-6 rounded-2xl bg-token/10 border-2 border-token/30 flex items-center justify-center gap-3 hover:bg-token/20 transition-colors"
+            >
+              <Shield className="w-5 h-5 text-token" />
+              <span className="font-semibold text-token">Bravery</span>
+            </button>
+          )}
+        </div>
       </div>
     );
   };
