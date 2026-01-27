@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UserMode, Task, AppModule } from '@/types/jackos';
 import { Header } from '@/components/Header';
 import { ModuleMenu } from '@/components/ModuleMenu';
@@ -21,10 +22,12 @@ import { RewardsModule } from '@/components/modules/RewardsModule';
 import { TimerModule } from '@/components/modules/TimerModule';
 import { ScheduleBuilder } from '@/components/schedule/ScheduleBuilder';
 import { VisualSchedule } from '@/components/schedule/VisualSchedule';
+import { GoogleCalendarSync } from '@/components/GoogleCalendarSync';
 import { morningRoutine, afterSchoolRoutine, bedtimeRoutine, rewards } from '@/data/sampleSchedule';
 import { appModules } from '@/data/appContent';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Shield, Menu, Calendar, Plus, List, LayoutGrid } from 'lucide-react';
+import { Shield, Menu, Calendar, Plus, List, LayoutGrid, LogIn, User } from 'lucide-react';
 
 const allTasks: Task[] = [...morningRoutine, ...afterSchoolRoutine, ...bedtimeRoutine].map((t, i) => ({
   ...t,
@@ -44,6 +47,7 @@ const microGoals: Record<string, string> = {
 type ViewMode = 'focus' | 'schedule';
 
 const Index = () => {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<UserMode>('child');
   const [viewMode, setViewMode] = useState<ViewMode>('focus');
   const [currentModule, setCurrentModule] = useState<AppModule>('today');
@@ -53,12 +57,43 @@ const Index = () => {
   const [tokensEarned, setTokensEarned] = useState(0);
   const [showCalmToolkit, setShowCalmToolkit] = useState(false);
   const [showBraveryTimer, setShowBraveryTimer] = useState(false);
+  const [user, setUser] = useState<any>(null);
   
   const [showTaskStarter, setShowTaskStarter] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
   const [isTaskLocked, setIsTaskLocked] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
   const [transitionSeconds, setTransitionSeconds] = useState(120);
+
+  // Auth state
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success('Logged out');
+  };
+
+  const handleImportCalendarTasks = useCallback((importedTasks: Task[]) => {
+    // Merge with existing tasks, avoiding duplicates
+    setTasks(prev => {
+      const existingIds = new Set(prev.map(t => t.id));
+      const newTasks = importedTasks.filter(t => !existingIds.has(t.id));
+      const merged = [...prev, ...newTasks].sort((a, b) => {
+        if (!a.scheduledTime || !b.scheduledTime) return 0;
+        return a.scheduledTime.localeCompare(b.scheduledTime);
+      });
+      return merged;
+    });
+    toast.success(`Imported ${importedTasks.length} events`);
+  }, []);
 
   const incompleteTasks = tasks.filter((t) => !t.completed);
   const currentTaskIndex = tasks.findIndex(t => !t.completed);
@@ -391,22 +426,47 @@ const Index = () => {
             </span>
           </div>
 
-          <button
-            onClick={handleModeSwitch}
-            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-              mode === 'parent' 
-                ? 'bg-primary text-primary-foreground shadow-md' 
-                : 'bg-card border border-border'
-            }`}
-          >
-            {mode === 'child' ? 'Parent' : 'Child'}
-          </button>
+          <div className="flex items-center gap-2">
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="w-10 h-10 rounded-xl bg-card border border-border flex items-center justify-center"
+                title="Log out"
+              >
+                <User className="w-4 h-4 text-calm" />
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/auth')}
+                className="px-3 py-2 rounded-xl bg-card border border-border text-xs font-medium flex items-center gap-1.5"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Log in
+              </button>
+            )}
+            <button
+              onClick={handleModeSwitch}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                mode === 'parent' 
+                  ? 'bg-primary text-primary-foreground shadow-md' 
+                  : 'bg-card border border-border'
+              }`}
+            >
+              {mode === 'child' ? 'Parent' : 'Child'}
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="pb-32">
         {mode === 'parent' && (
-          <div className="p-4 pt-2">
+          <div className="p-4 pt-2 space-y-3">
+            {/* Google Calendar Sync - only show when logged in */}
+            {user && (
+              <div className="flex justify-end">
+                <GoogleCalendarSync tasks={tasks} onImportTasks={handleImportCalendarTasks} />
+              </div>
+            )}
             <ParentQuickActions
               onExtendTime={handleExtendTime}
               onSwapOrder={() => toast('Swapped task order')}
