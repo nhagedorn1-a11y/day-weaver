@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Task } from '@/types/jackos';
-import { ChevronRight, Lock, Check, Star, Clock } from 'lucide-react';
+import { ChevronRight, Lock, Check, Star, Clock, Sparkles } from 'lucide-react';
 
 interface NowNextLaterProps {
   now: Task | null;
   next: Task | null;
   later: Task[];
   onComplete: (taskId: string) => void;
-  isLocked?: boolean; // Cards immutable during task
+  isLocked?: boolean;
 }
 
 const iconMap: Record<string, string> = {
@@ -41,7 +41,6 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
     }
   };
 
-  // Simplified swipe detection
   const handleTouchStart = () => {
     if (!isLocked) setIsSwiping(true);
   };
@@ -57,120 +56,137 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
 
   return (
     <div className="space-y-4">
-      {/* NOW Card - Big and prominent */}
+      {/* NOW Card - Hero prominence with depth */}
       {now && (
         <div
-          className="task-card-now relative overflow-hidden"
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-now via-now to-primary shadow-xl"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+          
           {/* Swipe progress overlay */}
           <div
-            className="absolute inset-0 bg-calm/30 transition-transform origin-left"
+            className="absolute inset-0 bg-calm/40 transition-transform origin-left"
             style={{ transform: `scaleX(${swipeProgress})` }}
           />
 
-          <div className="relative z-10">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <span className="hw-label text-now-foreground/70">Now</span>
-              {isLocked && (
-                <div className="flex items-center gap-1 text-now-foreground/50">
-                  <Lock className="w-4 h-4" />
-                  <span className="text-xs">In progress</span>
+          <div className="relative z-10 p-6">
+            {/* Header with badge */}
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-xs font-bold uppercase tracking-wider text-now-foreground">
+                    Now
+                  </span>
                 </div>
-              )}
-            </div>
-
-            {/* Main content */}
-            <div className="flex items-center gap-5">
-              <div className="text-5xl" role="img" aria-label={now.title}>
-                {iconMap[now.icon] || '⭐'}
-              </div>
-              <div className="flex-1">
-                <h2 className="text-3xl font-bold">{now.title}</h2>
-                {now.duration && (
-                  <div className="flex items-center gap-1.5 mt-1 text-now-foreground/70">
-                    <Clock className="w-4 h-4" />
-                    <span className="font-mono">{now.duration} min</span>
+                {isLocked && (
+                  <div className="flex items-center gap-1 text-now-foreground/70">
+                    <Lock className="w-3.5 h-3.5" />
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1">
-                <Star className="w-5 h-5" />
-                <span className="font-mono font-bold">{now.tokens}</span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm">
+                <Star className="w-4 h-4 text-token" fill="currentColor" />
+                <span className="font-mono font-bold text-now-foreground">{now.tokens}</span>
               </div>
             </div>
 
-            {/* Swipe hint */}
-            {!isLocked && (
-              <div className="mt-6 flex items-center justify-center gap-2 text-now-foreground/60">
-                <ChevronRight className="w-4 h-4" />
-                <span className="text-sm">Swipe or tap when done</span>
-                <ChevronRight className="w-4 h-4" />
+            {/* Main content with large icon */}
+            <div className="flex items-center gap-5">
+              <div className="w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-inner">
+                <span className="text-5xl" role="img" aria-label={now.title}>
+                  {iconMap[now.icon] || '⭐'}
+                </span>
               </div>
-            )}
+              <div className="flex-1">
+                <h2 className="text-3xl font-bold text-now-foreground leading-tight">
+                  {now.title}
+                </h2>
+                {now.duration && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10">
+                      <Clock className="w-3.5 h-3.5 text-now-foreground/80" />
+                      <span className="font-mono text-sm text-now-foreground/90">{now.duration} min</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
-            {/* Complete button for non-touch */}
+            {/* Complete button */}
             {!isLocked && (
               <button
                 onClick={handleSwipeComplete}
-                className="mt-4 w-full py-4 rounded-2xl bg-now-foreground/20 text-now-foreground font-semibold flex items-center justify-center gap-2 hover:bg-now-foreground/30 transition-colors"
+                className="mt-6 w-full py-4 rounded-2xl bg-white/20 backdrop-blur-sm text-now-foreground font-bold flex items-center justify-center gap-3 hover:bg-white/30 active:scale-[0.98] transition-all shadow-lg border border-white/10"
               >
-                <Check className="w-5 h-5" />
-                <span>All Done!</span>
+                <Check className="w-6 h-6" />
+                <span className="text-lg">All Done!</span>
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* NEXT Card - Medium prominence */}
+      {/* NEXT Card - Clean card with subtle accent */}
       {next && (
-        <div className="task-card-next">
-          <div className="flex items-center justify-between mb-2">
-            <span className="hw-label text-next-foreground/70">Next</span>
-            <div className="flex items-center gap-1 text-next-foreground/70">
-              <Star className="w-4 h-4" />
-              <span className="font-mono text-sm">{next.tokens}</span>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-next/90 to-next border border-next/30 shadow-lg">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          
+          <div className="relative p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-next-foreground/70">
+                Up Next
+              </span>
+              <div className="flex items-center gap-1 text-next-foreground/70">
+                <Star className="w-3.5 h-3.5" />
+                <span className="font-mono text-sm">{next.tokens}</span>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-3xl" role="img" aria-label={next.title}>
-              {iconMap[next.icon] || '⭐'}
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold">{next.title}</h3>
-              {next.duration && (
-                <span className="text-next-foreground/60 text-sm font-mono">
-                  {next.duration} min
-                </span>
-              )}
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center">
+                <span className="text-3xl">{iconMap[next.icon] || '⭐'}</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-next-foreground">{next.title}</h3>
+                {next.duration && (
+                  <span className="text-next-foreground/60 text-sm font-mono">
+                    {next.duration} min
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* LATER Cards - Subtle */}
+      {/* LATER Cards - Horizontal scroll with frosted glass look */}
       {later.length > 0 && (
-        <div className="space-y-2">
-          <span className="hw-label block px-2">Later</span>
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Coming Later
+            </span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
             {later.slice(0, 4).map((task) => (
               <div
                 key={task.id}
-                className="task-card-later flex-shrink-0 min-w-[140px] py-4 px-4"
+                className="flex-shrink-0 min-w-[130px] p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{iconMap[task.icon] || '⭐'}</span>
-                  <span className="font-medium truncate">{task.title}</span>
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mb-2">
+                  <span className="text-xl">{iconMap[task.icon] || '⭐'}</span>
                 </div>
+                <span className="font-medium text-sm text-foreground/80 line-clamp-2">{task.title}</span>
               </div>
             ))}
             {later.length > 4 && (
-              <div className="task-card-later flex-shrink-0 min-w-[80px] py-4 px-4 flex items-center justify-center">
-                <span className="text-sm text-muted-foreground">
-                  +{later.length - 4} more
+              <div className="flex-shrink-0 min-w-[80px] p-4 rounded-xl bg-muted/50 border border-dashed border-border flex items-center justify-center">
+                <span className="text-sm text-muted-foreground font-medium">
+                  +{later.length - 4}
                 </span>
               </div>
             )}
@@ -178,12 +194,17 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
         </div>
       )}
 
-      {/* All done state */}
+      {/* All done state - Celebration */}
       {!now && !next && later.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🌟</div>
-          <h2 className="text-2xl font-bold mb-2">All Done Today!</h2>
-          <p className="text-muted-foreground">Great job!</p>
+        <div className="text-center py-16 px-6">
+          <div className="relative inline-block">
+            <div className="text-7xl mb-4 animate-float">🌟</div>
+            <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-token animate-pulse" />
+          </div>
+          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-token bg-clip-text text-transparent">
+            All Done Today!
+          </h2>
+          <p className="text-muted-foreground text-lg">You did amazing!</p>
         </div>
       )}
     </div>
