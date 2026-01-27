@@ -122,6 +122,7 @@ export interface TurnTakingGame {
 // === NAVIGATION ===
 export type AppModule = 
   | 'today'
+  | 'timers'
   | 'reading'
   | 'math'
   | 'motor'
