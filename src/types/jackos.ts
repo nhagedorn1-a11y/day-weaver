@@ -11,7 +11,44 @@ export interface Task {
   category: 'routine' | 'transition' | 'learning' | 'bravery' | 'calm' | 'motor' | 'social';
   oneStepInstruction?: string;
   visualCue?: string;
+  scheduledTime?: string; // HH:MM format
 }
+
+// Schedule template for quick day building
+export interface ScheduleTemplate {
+  id: string;
+  name: string;
+  icon: string;
+  tasks: Omit<Task, 'id' | 'completed'>[];
+}
+
+// Available task icons for the picker
+export const TASK_ICONS = [
+  { id: 'breakfast', emoji: '🍳', label: 'Breakfast' },
+  { id: 'teeth', emoji: '🦷', label: 'Brush Teeth' },
+  { id: 'dress', emoji: '👕', label: 'Get Dressed' },
+  { id: 'backpack', emoji: '🎒', label: 'Backpack' },
+  { id: 'reading', emoji: '📖', label: 'Reading' },
+  { id: 'homework', emoji: '✏️', label: 'Homework' },
+  { id: 'play', emoji: '🎮', label: 'Play Time' },
+  { id: 'bath', emoji: '🛁', label: 'Bath' },
+  { id: 'bed', emoji: '🌙', label: 'Bedtime' },
+  { id: 'calm', emoji: '🧘', label: 'Calm Time' },
+  { id: 'brave', emoji: '🦁', label: 'Bravery' },
+  { id: 'snack', emoji: '🍎', label: 'Snack' },
+  { id: 'walk', emoji: '🚶', label: 'Walk' },
+  { id: 'music', emoji: '🎵', label: 'Music' },
+  { id: 'art', emoji: '🎨', label: 'Art' },
+  { id: 'outside', emoji: '🌳', label: 'Outside' },
+  { id: 'lunch', emoji: '🥪', label: 'Lunch' },
+  { id: 'dinner', emoji: '🍽️', label: 'Dinner' },
+  { id: 'therapy', emoji: '💬', label: 'Therapy' },
+  { id: 'exercise', emoji: '🏃', label: 'Exercise' },
+  { id: 'screen', emoji: '📺', label: 'Screen Time' },
+  { id: 'chores', emoji: '🧹', label: 'Chores' },
+  { id: 'rest', emoji: '😴', label: 'Rest' },
+  { id: 'social', emoji: '👋', label: 'Social' },
+] as const;
 
 export type UserMode = 'child' | 'parent';
 

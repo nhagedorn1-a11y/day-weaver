@@ -19,12 +19,17 @@ import { MotorModule } from '@/components/modules/MotorModule';
 import { SocialModule } from '@/components/modules/SocialModule';
 import { RewardsModule } from '@/components/modules/RewardsModule';
 import { TimerModule } from '@/components/modules/TimerModule';
+import { ScheduleBuilder } from '@/components/schedule/ScheduleBuilder';
+import { VisualSchedule } from '@/components/schedule/VisualSchedule';
 import { morningRoutine, afterSchoolRoutine, bedtimeRoutine, rewards } from '@/data/sampleSchedule';
 import { appModules } from '@/data/appContent';
 import { toast } from 'sonner';
-import { Shield, Menu } from 'lucide-react';
+import { Shield, Menu, Calendar, Plus, List, LayoutGrid } from 'lucide-react';
 
-const allTasks: Task[] = [...morningRoutine, ...afterSchoolRoutine, ...bedtimeRoutine];
+const allTasks: Task[] = [...morningRoutine, ...afterSchoolRoutine, ...bedtimeRoutine].map((t, i) => ({
+  ...t,
+  scheduledTime: `${String(7 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 === 0 ? '00' : '30'}`,
+}));
 const TOKENS_GOAL = 15;
 
 const microGoals: Record<string, string> = {
@@ -36,10 +41,14 @@ const microGoals: Record<string, string> = {
   'backpack': 'Just find your bag',
 };
 
+type ViewMode = 'focus' | 'schedule';
+
 const Index = () => {
   const [mode, setMode] = useState<UserMode>('child');
+  const [viewMode, setViewMode] = useState<ViewMode>('focus');
   const [currentModule, setCurrentModule] = useState<AppModule>('today');
   const [showModuleMenu, setShowModuleMenu] = useState(false);
+  const [showScheduleBuilder, setShowScheduleBuilder] = useState(false);
   const [tasks, setTasks] = useState<Task[]>(allTasks);
   const [tokensEarned, setTokensEarned] = useState(0);
   const [showCalmToolkit, setShowCalmToolkit] = useState(false);
@@ -52,6 +61,7 @@ const Index = () => {
   const [transitionSeconds, setTransitionSeconds] = useState(120);
 
   const incompleteTasks = tasks.filter((t) => !t.completed);
+  const currentTaskIndex = tasks.findIndex(t => !t.completed);
   const nowTask = incompleteTasks[0] || null;
   const nextTask = incompleteTasks[1] || null;
   const laterTasks = incompleteTasks.slice(2);
@@ -217,42 +227,101 @@ const Index = () => {
     }
 
     return (
-      <div className="space-y-6">
-        {/* Hero greeting section */}
-        <div className="px-6 pt-2">
-          <TokenProgress earned={tokensEarned} goal={TOKENS_GOAL} currentReward={currentReward} />
+      <div className="space-y-5">
+        {/* Token Progress - compact at top */}
+        <div className="px-5 pt-2">
+          <TokenProgress earned={tokensEarned} goal={TOKENS_GOAL} currentReward={currentReward} compact />
         </div>
 
-        {/* Now/Next/Later - the main focus */}
-        <div className="px-6">
-          <NowNextLater
-            now={nowTask}
-            next={nextTask}
-            later={laterTasks}
-            onComplete={(taskId) => {
-              const task = tasks.find(t => t.id === taskId);
-              if (task && task.icon === 'reading') {
-                setCurrentModule('reading');
-              } else if (task && ['homework'].includes(task.icon)) {
-                setShowTaskStarter(true);
-              } else {
-                handleTaskComplete(taskId);
-              }
-            }}
-            isLocked={isTaskLocked}
-          />
+        {/* View Toggle + Build Button */}
+        <div className="px-5 flex items-center gap-2">
+          <div className="flex-1 flex bg-muted rounded-xl p-1">
+            <button
+              onClick={() => setViewMode('focus')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                viewMode === 'focus' 
+                  ? 'bg-background shadow-sm text-foreground' 
+                  : 'text-muted-foreground'
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Focus
+            </button>
+            <button
+              onClick={() => setViewMode('schedule')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                viewMode === 'schedule' 
+                  ? 'bg-background shadow-sm text-foreground' 
+                  : 'text-muted-foreground'
+              }`}
+            >
+              <List className="w-4 h-4" />
+              Schedule
+            </button>
+          </div>
+          
+          {mode === 'parent' && (
+            <button
+              onClick={() => setShowScheduleBuilder(true)}
+              className="w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:shadow-lg active:scale-95 transition-all"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
-        {/* Self-talk buttons - minimal but accessible */}
-        <div className="px-6">
-          <SelfTalkButtons />
-        </div>
+        {/* Main Content based on view mode */}
+        {viewMode === 'focus' ? (
+          <>
+            {/* Now/Next/Later - the main focus */}
+            <div className="px-5">
+              <NowNextLater
+                now={nowTask}
+                next={nextTask}
+                later={laterTasks}
+                onComplete={(taskId) => {
+                  const task = tasks.find(t => t.id === taskId);
+                  if (task && task.icon === 'reading') {
+                    setCurrentModule('reading');
+                  } else if (task && ['homework'].includes(task.icon)) {
+                    setShowTaskStarter(true);
+                  } else {
+                    handleTaskComplete(taskId);
+                  }
+                }}
+                isLocked={isTaskLocked}
+              />
+            </div>
 
-        {/* Quick access modules - cleaner grid */}
-        <div className="px-6">
+            {/* Self-talk buttons */}
+            <div className="px-5">
+              <SelfTalkButtons />
+            </div>
+          </>
+        ) : (
+          /* Full Schedule View */
+          <div className="px-5">
+            <VisualSchedule
+              tasks={tasks}
+              currentTaskIndex={currentTaskIndex}
+              onTaskClick={(task) => {
+                if (task.icon === 'reading') {
+                  setCurrentModule('reading');
+                } else if (['homework'].includes(task.icon)) {
+                  setShowTaskStarter(true);
+                } else if (!task.completed) {
+                  handleTaskComplete(task.id);
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {/* Quick access modules */}
+        <div className="px-5">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Quick Access
+              Activities
             </span>
             <div className="flex-1 h-px bg-border" />
           </div>
@@ -261,10 +330,10 @@ const Index = () => {
               <button
                 key={module.id}
                 onClick={() => setCurrentModule(module.id)}
-                className="group flex flex-col items-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow-md active:scale-[0.98] transition-all"
+                className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow-md active:scale-[0.98] transition-all"
               >
-                <div className="w-12 h-12 rounded-xl bg-muted/50 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                  <span className="text-2xl">{module.icon}</span>
+                <div className="w-11 h-11 rounded-xl bg-muted/50 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                  <span className="text-xl">{module.icon}</span>
                 </div>
                 <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
                   {module.title}
@@ -276,7 +345,7 @@ const Index = () => {
 
         {/* Parent-only bravery button */}
         {mode === 'parent' && (
-          <div className="px-6 pb-4">
+          <div className="px-5 pb-4">
             <button
               onClick={() => setShowBraveryTimer(true)}
               className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-token/10 to-primary/10 border border-token/30 flex items-center justify-center gap-3 hover:from-token/20 hover:to-primary/20 active:scale-[0.99] transition-all"
@@ -371,6 +440,13 @@ const Index = () => {
       {showCalmToolkit && <CalmToolkit onClose={() => setShowCalmToolkit(false)} />}
       {showBraveryTimer && (
         <BraveryTimer duration={30} copingPhrase="I can handle this feeling." onComplete={handleBraveryComplete} onCancel={() => setShowBraveryTimer(false)} />
+      )}
+      {showScheduleBuilder && (
+        <ScheduleBuilder
+          tasks={tasks}
+          onTasksChange={setTasks}
+          onClose={() => setShowScheduleBuilder(false)}
+        />
       )}
     </div>
   );
