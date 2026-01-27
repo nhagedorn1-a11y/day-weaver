@@ -18,6 +18,7 @@ import { MathModule } from '@/components/modules/MathModule';
 import { MotorModule } from '@/components/modules/MotorModule';
 import { SocialModule } from '@/components/modules/SocialModule';
 import { RewardsModule } from '@/components/modules/RewardsModule';
+import { TimerModule } from '@/components/modules/TimerModule';
 import { morningRoutine, afterSchoolRoutine, bedtimeRoutine, rewards } from '@/data/sampleSchedule';
 import { appModules } from '@/data/appContent';
 import { toast } from 'sonner';
@@ -137,6 +138,8 @@ const Index = () => {
   // Render module content
   const renderModuleContent = () => {
     switch (currentModule) {
+      case 'timers':
+        return <TimerModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
       case 'reading':
         return <ReadingStudio onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
       case 'sensory':

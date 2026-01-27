@@ -2,6 +2,7 @@ import { ModuleInfo, PraisePhrase, SupportiveStatement, HeavyWorkActivity, Inter
 
 export const appModules: ModuleInfo[] = [
   { id: 'today', title: 'Today', icon: '📋', description: 'Now / Next / Later', color: 'primary' },
+  { id: 'timers', title: 'Timers', icon: '⏱️', description: 'Visual timers', color: 'next' },
   { id: 'reading', title: 'Reading', icon: '📖', description: 'OG Reading Studio', color: 'calm' },
   { id: 'math', title: 'Math', icon: '🔢', description: 'Number sense games', color: 'next' },
   { id: 'motor', title: 'Writing', icon: '✏️', description: 'Letters & ADLs', color: 'token' },
