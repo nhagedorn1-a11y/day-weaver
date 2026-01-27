@@ -1,4 +1,12 @@
-import { Task, Reward, CalmTool } from '@/types/jackos';
+import { Task, Reward } from '@/types/jackos';
+
+export interface CalmTool {
+  id: string;
+  title: string;
+  icon: string;
+  type: 'breathing' | 'sensory' | 'script' | 'body-check';
+  duration?: number;
+}
 
 export const morningRoutine: Task[] = [
   {
