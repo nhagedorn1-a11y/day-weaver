@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Task, TASK_ICONS } from '@/types/jackos';
-import { Plus, GripVertical, Trash2, Clock, Star, X, Check } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Clock, Star, X, Check, Pencil } from 'lucide-react';
 import { TimeScrollPicker } from '@/components/ui/scroll-picker';
+import { toast } from 'sonner';
 
 interface ScheduleBuilderProps {
   tasks: Task[];
@@ -32,21 +33,17 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
     const exists = tasks.find(t => t.id === task.id);
     if (exists) {
       onTasksChange(tasks.map(t => t.id === task.id ? task : t));
+      toast.success('Activity updated');
     } else {
       onTasksChange([...tasks, task]);
+      toast.success('Activity added');
     }
     setEditingTask(null);
   };
 
   const handleDeleteTask = (taskId: string) => {
     onTasksChange(tasks.filter(t => t.id !== taskId));
-  };
-
-  const handleReorder = (fromIndex: number, toIndex: number) => {
-    const newTasks = [...tasks];
-    const [moved] = newTasks.splice(fromIndex, 1);
-    newTasks.splice(toIndex, 0, moved);
-    onTasksChange(newTasks);
+    toast.success('Activity removed');
   };
 
   // Sort tasks by scheduled time
@@ -65,13 +62,18 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
         task={editingTask}
         onSave={handleSaveTask}
         onCancel={() => setEditingTask(null)}
+        onDelete={() => {
+          handleDeleteTask(editingTask.id);
+          setEditingTask(null);
+        }}
         getIconEmoji={getIconEmoji}
+        isNew={!tasks.find(t => t.id === editingTask.id)}
       />
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="fixed inset-0 z-50 bg-background overflow-auto">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center justify-between p-4 safe-top">
@@ -91,16 +93,33 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
         </div>
       </header>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 pb-32">
+        {/* Instructions */}
+        <div className="bg-muted/50 rounded-xl p-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <Pencil className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">Tap</strong> any activity to edit name, time & tokens
+          </p>
+        </div>
+
         {/* Visual Timeline */}
         <div className="space-y-2">
           {sortedTasks.length === 0 ? (
-            <div className="text-center py-12 px-6">
+            <div className="text-center py-12 px-6 bg-card rounded-2xl border-2 border-dashed border-border">
               <div className="text-5xl mb-4">📋</div>
-              <h3 className="text-lg font-semibold mb-2">No tasks yet</h3>
-              <p className="text-muted-foreground text-sm">
-                Tap the + button to start building the day
+              <h3 className="text-lg font-semibold mb-2">No activities yet</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Build Jack's day by adding activities
               </p>
+              <button
+                onClick={() => setShowAddTask(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold"
+              >
+                <Plus className="w-5 h-5" />
+                Add First Activity
+              </button>
             </div>
           ) : (
             sortedTasks.map((task, index) => (
@@ -109,8 +128,8 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
                 className="flex items-stretch gap-3"
               >
                 {/* Time column */}
-                <div className="w-16 flex-shrink-0 text-right pt-4">
-                  <span className="font-mono text-sm font-semibold text-muted-foreground">
+                <div className="w-14 flex-shrink-0 text-right pt-4">
+                  <span className="font-mono text-sm font-bold text-primary">
                     {task.scheduledTime || '--:--'}
                   </span>
                 </div>
@@ -123,44 +142,38 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
                   )}
                 </div>
 
-                {/* Task card */}
+                {/* Task card - tappable to edit */}
                 <div 
-                  className={`flex-1 p-4 rounded-2xl border-2 transition-all ${
+                  className={`flex-1 p-4 rounded-2xl border-2 transition-all active:scale-[0.98] ${
                     task.completed 
                       ? 'bg-muted/50 border-border opacity-60' 
-                      : 'bg-card border-border hover:border-primary/50 cursor-pointer'
+                      : 'bg-card border-border hover:border-primary/50 hover:shadow-md cursor-pointer'
                   }`}
-                  onClick={() => !task.completed && setEditingTask(task)}
+                  onClick={() => setEditingTask(task)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <GripVertical className="w-4 h-4 text-muted-foreground/50" />
+                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
                       <span className="text-2xl">{getIconEmoji(task.icon)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold truncate">{task.title}</h4>
+                      <h4 className="font-semibold truncate text-lg">{task.title}</h4>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         {task.duration && (
                           <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
+                            <Clock className="w-3.5 h-3.5" />
                             {task.duration}m
                           </span>
                         )}
-                        <span className="flex items-center gap-1">
-                          <Star className="w-3 h-3" />
+                        <span className="flex items-center gap-1 text-token">
+                          <Star className="w-3.5 h-3.5" fill="currentColor" />
                           {task.tokens}
                         </span>
                       </div>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTask(task.id);
-                      }}
-                      className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive hover:bg-destructive/20 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {/* Edit indicator */}
+                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
+                      <Pencil className="w-4 h-4 text-muted-foreground" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -168,14 +181,16 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
           )}
         </div>
 
-        {/* Add Task Button */}
-        <button
-          onClick={() => setShowAddTask(true)}
-          className="w-full py-4 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 flex items-center justify-center gap-2 text-primary font-semibold hover:bg-primary/10 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Add Activity</span>
-        </button>
+        {/* Add Task Button - Always visible */}
+        {sortedTasks.length > 0 && (
+          <button
+            onClick={() => setShowAddTask(true)}
+            className="w-full py-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 flex items-center justify-center gap-2 text-primary font-semibold hover:bg-primary/10 active:scale-[0.99] transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add Activity</span>
+          </button>
+        )}
 
         {/* Quick Templates */}
         <div className="pt-4">
@@ -237,10 +252,12 @@ interface TaskEditorProps {
   task: Task;
   onSave: (task: Task) => void;
   onCancel: () => void;
+  onDelete: () => void;
   getIconEmoji: (iconId: string) => string;
+  isNew: boolean;
 }
 
-function TaskEditor({ task, onSave, onCancel, getIconEmoji }: TaskEditorProps) {
+function TaskEditor({ task, onSave, onCancel, onDelete, getIconEmoji, isNew }: TaskEditorProps) {
   const [title, setTitle] = useState(task.title);
   const [duration, setDuration] = useState(task.duration || 10);
   const [tokens, setTokens] = useState(task.tokens);
@@ -250,9 +267,13 @@ function TaskEditor({ task, onSave, onCancel, getIconEmoji }: TaskEditorProps) {
   const [showIconPicker, setShowIconPicker] = useState(false);
 
   const handleSave = () => {
+    if (!title.trim()) {
+      toast.error('Please enter an activity name');
+      return;
+    }
     onSave({
       ...task,
-      title,
+      title: title.trim(),
       icon: selectedIcon,
       duration,
       tokens,
@@ -261,24 +282,24 @@ function TaskEditor({ task, onSave, onCancel, getIconEmoji }: TaskEditorProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="fixed inset-0 z-50 bg-background overflow-auto">
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center justify-between p-4 safe-top">
           <button onClick={onCancel} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
             <X className="w-5 h-5" />
           </button>
-          <h1 className="font-bold text-lg">Edit Activity</h1>
+          <h1 className="font-bold text-lg">{isNew ? 'Add Activity' : 'Edit Activity'}</h1>
           <button
             onClick={handleSave}
             className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
-            Save
+            {isNew ? 'Add' : 'Save'}
           </button>
         </div>
       </header>
 
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 pb-32">
         {/* Icon selector */}
         <div className="flex flex-col items-center">
           <button
@@ -297,6 +318,7 @@ function TaskEditor({ task, onSave, onCancel, getIconEmoji }: TaskEditorProps) {
                 key={icon.id}
                 onClick={() => {
                   setSelectedIcon(icon.id);
+                  setTitle(icon.label);
                   setShowIconPicker(false);
                 }}
                 className={`p-2 rounded-xl transition-all ${
@@ -320,6 +342,7 @@ function TaskEditor({ task, onSave, onCancel, getIconEmoji }: TaskEditorProps) {
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-3 rounded-xl bg-card border-2 border-border focus:border-primary outline-none text-lg font-semibold"
             placeholder="Activity name..."
+            maxLength={50}
           />
         </div>
 
@@ -352,7 +375,7 @@ function TaskEditor({ task, onSave, onCancel, getIconEmoji }: TaskEditorProps) {
               step={5}
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
-              className="flex-1 h-2 rounded-full appearance-none bg-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+              className="flex-1 h-2 rounded-full appearance-none bg-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
             />
             <div className="w-20 px-3 py-2 rounded-xl bg-card border border-border text-center">
               <span className="font-mono font-bold">{duration}</span>
@@ -383,6 +406,19 @@ function TaskEditor({ task, onSave, onCancel, getIconEmoji }: TaskEditorProps) {
             ))}
           </div>
         </div>
+
+        {/* Delete button - only for existing tasks */}
+        {!isNew && (
+          <div className="pt-4 border-t border-border">
+            <button
+              onClick={onDelete}
+              className="w-full py-4 rounded-xl bg-destructive/10 text-destructive font-semibold flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors"
+            >
+              <Trash2 className="w-5 h-5" />
+              Remove Activity
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
