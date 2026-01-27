@@ -2,95 +2,142 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* JackOS Design System — Teenage Engineering inspired
+   Calm, structured, predictable. Hardware-like clarity with warmth.
 */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Base palette — warm, calm, off-white foundation */
+    --background: 45 20% 97%;
+    --foreground: 30 10% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 45 25% 99%;
+    --card-foreground: 30 10% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 45 25% 99%;
+    --popover-foreground: 30 10% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary — warm terracotta for active states */
+    --primary: 15 60% 55%;
+    --primary-foreground: 45 20% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary — soft sage for calm/transitions */
+    --secondary: 150 20% 92%;
+    --secondary-foreground: 150 25% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted — for subtle backgrounds */
+    --muted: 45 15% 94%;
+    --muted-foreground: 30 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent — amber for rewards/tokens */
+    --accent: 40 90% 60%;
+    --accent-foreground: 30 40% 15%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Calm — sage green for calm toolkit */
+    --calm: 150 30% 45%;
+    --calm-foreground: 150 10% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Now/Next/Later cards */
+    --now: 15 65% 55%;
+    --now-foreground: 45 20% 98%;
+    --next: 200 25% 50%;
+    --next-foreground: 200 10% 98%;
+    --later: 45 15% 85%;
+    --later-foreground: 30 10% 35%;
 
-    --radius: 0.5rem;
+    /* Token gold */
+    --token: 45 95% 55%;
+    --token-foreground: 30 40% 15%;
 
-    --sidebar-background: 0 0% 98%;
+    /* System */
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --border: 45 15% 88%;
+    --input: 45 15% 88%;
+    --ring: 15 60% 55%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    --radius: 1rem;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    /* Sidebar */
+    --sidebar-background: 45 20% 95%;
+    --sidebar-foreground: 30 10% 25%;
+    --sidebar-primary: 15 60% 55%;
+    --sidebar-primary-foreground: 45 20% 98%;
+    --sidebar-accent: 150 20% 92%;
+    --sidebar-accent-foreground: 150 25% 25%;
+    --sidebar-border: 45 15% 88%;
+    --sidebar-ring: 15 60% 55%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    /* Typography */
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-mono: 'Space Mono', monospace;
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    /* Spacing rhythm */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
 
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Animation — slow and predictable */
+    --duration-fast: 150ms;
+    --duration-normal: 300ms;
+    --duration-slow: 500ms;
+    --ease-calm: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 30 15% 10%;
+    --foreground: 45 15% 92%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 30 15% 12%;
+    --card-foreground: 45 15% 92%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 30 15% 12%;
+    --popover-foreground: 45 15% 92%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 15 55% 60%;
+    --primary-foreground: 30 15% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 150 15% 20%;
+    --secondary-foreground: 150 20% 85%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 30 10% 18%;
+    --muted-foreground: 45 10% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 40 85% 55%;
+    --accent-foreground: 30 30% 10%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --calm: 150 25% 40%;
+    --calm-foreground: 150 10% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --now: 15 60% 58%;
+    --now-foreground: 30 15% 10%;
+    --next: 200 20% 55%;
+    --next-foreground: 200 10% 10%;
+    --later: 30 10% 25%;
+    --later-foreground: 45 10% 75%;
+
+    --token: 45 90% 50%;
+    --token-foreground: 30 30% 10%;
+
+    --border: 30 10% 20%;
+    --input: 30 10% 20%;
+    --ring: 15 55% 60%;
+
+    --sidebar-background: 30 15% 8%;
+    --sidebar-foreground: 45 15% 85%;
+    --sidebar-primary: 15 55% 60%;
+    --sidebar-primary-foreground: 30 15% 10%;
+    --sidebar-accent: 150 15% 18%;
+    --sidebar-accent-foreground: 150 20% 85%;
+    --sidebar-border: 30 10% 18%;
+    --sidebar-ring: 15 55% 60%;
   }
 }
 
@@ -100,6 +147,149 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-display);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply font-semibold tracking-tight;
+  }
+
+  /* Mono for labels and tags */
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer components {
+  /* Task Cards — chunky, hardware-like */
+  .task-card {
+    @apply rounded-2xl border-2 p-6 transition-all;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-calm);
+  }
+
+  .task-card-now {
+    @apply task-card bg-now text-now-foreground border-now shadow-lg;
+    box-shadow: 0 8px 32px -8px hsl(var(--now) / 0.3);
+  }
+
+  .task-card-next {
+    @apply task-card bg-next text-next-foreground border-next/50;
+  }
+
+  .task-card-later {
+    @apply task-card bg-later text-later-foreground border-later;
+  }
+
+  /* Token chip */
+  .token-chip {
+    @apply inline-flex items-center justify-center w-10 h-10 rounded-full bg-token text-token-foreground font-mono font-bold text-sm;
+    box-shadow: 0 2px 8px hsl(var(--token) / 0.4);
+  }
+
+  .token-chip-empty {
+    @apply token-chip bg-muted text-muted-foreground shadow-none border-2 border-dashed border-border;
+  }
+
+  /* Calm button */
+  .calm-button {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-calm text-calm-foreground font-semibold text-lg transition-all;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-calm);
+  }
+
+  .calm-button:hover {
+    @apply scale-105;
+    box-shadow: 0 8px 24px hsl(var(--calm) / 0.3);
+  }
+
+  .calm-button:active {
+    @apply scale-100;
+  }
+
+  /* Giant button for child UI */
+  .giant-button {
+    @apply flex flex-col items-center justify-center gap-3 p-8 rounded-3xl font-semibold text-xl transition-all;
+    min-height: 120px;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-calm);
+  }
+
+  .giant-button:active {
+    @apply scale-95;
+  }
+
+  /* Parent mode subtle button */
+  .parent-button {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground font-medium text-sm transition-all;
+    transition-duration: var(--duration-fast);
+  }
+
+  .parent-button:hover {
+    @apply bg-secondary/80;
+  }
+
+  /* Timer display */
+  .timer-display {
+    @apply font-mono text-5xl font-bold tracking-wider;
+  }
+
+  /* Progress bar — calm, chunky */
+  .progress-calm {
+    @apply h-3 rounded-full bg-muted overflow-hidden;
+  }
+
+  .progress-calm-fill {
+    @apply h-full rounded-full transition-all;
+    transition-duration: var(--duration-slow);
+    transition-timing-function: var(--ease-calm);
+  }
+
+  /* Hardware label style */
+  .hw-label {
+    @apply font-mono text-xs uppercase tracking-widest text-muted-foreground;
+  }
+
+  /* Card deck stack effect */
+  .card-deck {
+    @apply relative;
+  }
+
+  .card-deck > * {
+    @apply transition-transform;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-calm);
+  }
+}
+
+@layer utilities {
+  /* Animation utilities */
+  .animate-calm-pulse {
+    animation: calm-pulse 4s ease-in-out infinite;
+  }
+
+  @keyframes calm-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.02); }
+  }
+
+  .animate-breathe {
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  /* Safe area padding for mobile */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 1rem);
   }
 }
