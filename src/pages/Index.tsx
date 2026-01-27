@@ -217,78 +217,122 @@ const Index = () => {
     }
 
     return (
-      <div className="p-6 space-y-6">
-        <TokenProgress earned={tokensEarned} goal={TOKENS_GOAL} currentReward={currentReward} />
-        
-        {/* Self-talk buttons */}
-        <SelfTalkButtons />
-
-        <NowNextLater
-          now={nowTask}
-          next={nextTask}
-          later={laterTasks}
-          onComplete={(taskId) => {
-            const task = tasks.find(t => t.id === taskId);
-            if (task && task.icon === 'reading') {
-              setCurrentModule('reading');
-            } else if (task && ['homework'].includes(task.icon)) {
-              setShowTaskStarter(true);
-            } else {
-              handleTaskComplete(taskId);
-            }
-          }}
-          isLocked={isTaskLocked}
-        />
-
-        {/* Module shortcuts */}
-        <div className="grid grid-cols-4 gap-3">
-          {appModules.slice(1, 5).map((module) => (
-            <button
-              key={module.id}
-              onClick={() => setCurrentModule(module.id)}
-              className="flex flex-col items-center gap-1 p-3 rounded-2xl bg-card border-2 border-border hover:border-primary/50 transition-colors"
-            >
-              <span className="text-2xl">{module.icon}</span>
-              <span className="text-xs font-medium">{module.title}</span>
-            </button>
-          ))}
+      <div className="space-y-6">
+        {/* Hero greeting section */}
+        <div className="px-6 pt-2">
+          <TokenProgress earned={tokensEarned} goal={TOKENS_GOAL} currentReward={currentReward} />
         </div>
 
+        {/* Now/Next/Later - the main focus */}
+        <div className="px-6">
+          <NowNextLater
+            now={nowTask}
+            next={nextTask}
+            later={laterTasks}
+            onComplete={(taskId) => {
+              const task = tasks.find(t => t.id === taskId);
+              if (task && task.icon === 'reading') {
+                setCurrentModule('reading');
+              } else if (task && ['homework'].includes(task.icon)) {
+                setShowTaskStarter(true);
+              } else {
+                handleTaskComplete(taskId);
+              }
+            }}
+            isLocked={isTaskLocked}
+          />
+        </div>
+
+        {/* Self-talk buttons - minimal but accessible */}
+        <div className="px-6">
+          <SelfTalkButtons />
+        </div>
+
+        {/* Quick access modules - cleaner grid */}
+        <div className="px-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Quick Access
+            </span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {appModules.slice(1, 5).map((module) => (
+              <button
+                key={module.id}
+                onClick={() => setCurrentModule(module.id)}
+                className="group flex flex-col items-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow-md active:scale-[0.98] transition-all"
+              >
+                <div className="w-12 h-12 rounded-xl bg-muted/50 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                  <span className="text-2xl">{module.icon}</span>
+                </div>
+                <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                  {module.title}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Parent-only bravery button */}
         {mode === 'parent' && (
-          <button
-            onClick={() => setShowBraveryTimer(true)}
-            className="w-full py-4 px-6 rounded-2xl bg-token/10 border-2 border-token/30 flex items-center justify-center gap-3 hover:bg-token/20 transition-colors"
-          >
-            <Shield className="w-5 h-5 text-token" />
-            <span className="font-semibold text-token">Start Bravery Practice</span>
-          </button>
+          <div className="px-6 pb-4">
+            <button
+              onClick={() => setShowBraveryTimer(true)}
+              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-token/10 to-primary/10 border border-token/30 flex items-center justify-center gap-3 hover:from-token/20 hover:to-primary/20 active:scale-[0.99] transition-all"
+            >
+              <Shield className="w-5 h-5 text-token" />
+              <span className="font-bold text-token">Start Bravery Practice</span>
+            </button>
+          </div>
         )}
       </div>
     );
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header with menu button */}
-      <header className="flex items-center justify-between p-4 safe-top bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-20">
-        <button
-          onClick={() => setShowModuleMenu(true)}
-          className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-        
-        <div className="text-center">
-          <h1 className="font-semibold text-lg">Jack's Day</h1>
-          <span className="hw-label">{new Date().toLocaleDateString('en-US', { weekday: 'long' })}</span>
-        </div>
+  // Get time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return { text: 'Good Morning', emoji: '🌅' };
+    if (hour < 17) return { text: 'Good Afternoon', emoji: '☀️' };
+    return { text: 'Good Evening', emoji: '🌙' };
+  };
 
-        <button
-          onClick={handleModeSwitch}
-          className="px-3 py-2 rounded-xl bg-secondary text-xs font-medium"
-        >
-          {mode === 'child' ? 'Parent' : 'Child'}
-        </button>
+  const greeting = getGreeting();
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+      {/* Header with greeting */}
+      <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="flex items-center justify-between p-4 safe-top">
+          <button
+            onClick={() => setShowModuleMenu(true)}
+            className="w-11 h-11 rounded-xl bg-card border border-border flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-lg">{greeting.emoji}</span>
+              <h1 className="font-bold text-lg">{greeting.text}, Jack!</h1>
+            </div>
+            <span className="text-xs font-medium text-muted-foreground">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+
+          <button
+            onClick={handleModeSwitch}
+            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+              mode === 'parent' 
+                ? 'bg-primary text-primary-foreground shadow-md' 
+                : 'bg-card border border-border'
+            }`}
+          >
+            {mode === 'child' ? 'Parent' : 'Child'}
+          </button>
+        </div>
       </header>
 
       <main className="pb-32">
