@@ -29,7 +29,7 @@ export function GraphemeCard({
 }: GraphemeCardProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [justTapped, setJustTapped] = useState(false);
-  const { playTap } = useSound();
+  const { speakPhoneme } = useSound();
 
   const sizeClasses = {
     small: 'w-20 h-24',
@@ -51,12 +51,12 @@ export function GraphemeCard({
 
   const handleTap = useCallback(() => {
     setJustTapped(true);
-    playTap(); // Play tap sound
+    speakPhoneme(phoneme); // Speak the actual phoneme sound
     onTap?.();
     
     // Visual feedback duration
     setTimeout(() => setJustTapped(false), 400);
-  }, [onTap, playTap]);
+  }, [onTap, speakPhoneme, phoneme]);
 
   return (
     <button
