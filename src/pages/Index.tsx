@@ -29,6 +29,7 @@ import { AmbientCanvas } from '@/components/ambient/AmbientCanvas';
 import { StatusStrip } from '@/components/controls/StatusStrip';
 import { CompanionProvider, useCompanion } from '@/components/companion/CompanionProvider';
 import { DailySummary } from '@/components/story/DailySummary';
+import { SettingsPage } from '@/components/settings';
 import { morningRoutine, afterSchoolRoutine, bedtimeRoutine, rewards } from '@/data/sampleSchedule';
 import { appModules } from '@/data/appContent';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,6 +69,7 @@ const IndexContent = () => {
   const [showCalmToolkit, setShowCalmToolkit] = useState(false);
   const [showBraveryTimer, setShowBraveryTimer] = useState(false);
   const [showDailySummary, setShowDailySummary] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [regulationLevel, setRegulationLevel] = useState<'good' | 'okay' | 'hard'>('good');
   const [user, setUser] = useState<any>(null);
   const [calmToolkitUses, setCalmToolkitUses] = useState(0);
@@ -629,6 +631,7 @@ const IndexContent = () => {
         isOpen={showModuleMenu}
         onClose={() => setShowModuleMenu(false)}
         onSelectModule={setCurrentModule}
+        onOpenSettings={() => setShowSettings(true)}
         currentModule={currentModule}
       />
 
@@ -655,6 +658,13 @@ const IndexContent = () => {
           onClose={() => setShowScheduleBuilder(false)}
         />
       )}
+      <SettingsPage
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        user={user}
+        onLogin={() => navigate('/auth')}
+        onLogout={handleLogout}
+      />
     </div>
   );
 };

@@ -1,17 +1,18 @@
 import { forwardRef } from 'react';
 import { AppModule } from '@/types/jackos';
 import { appModules } from '@/data/appContent';
-import { X, ChevronRight } from 'lucide-react';
+import { X, ChevronRight, Settings } from 'lucide-react';
 
 interface ModuleMenuProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectModule: (module: AppModule) => void;
+  onOpenSettings: () => void;
   currentModule: AppModule;
 }
 
 export const ModuleMenu = forwardRef<HTMLDivElement, ModuleMenuProps>(
-  function ModuleMenu({ isOpen, onClose, onSelectModule, currentModule }, ref) {
+  function ModuleMenu({ isOpen, onClose, onSelectModule, onOpenSettings, currentModule }, ref) {
     if (!isOpen) return null;
 
     return (
@@ -91,11 +92,24 @@ export const ModuleMenu = forwardRef<HTMLDivElement, ModuleMenuProps>(
             </div>
           </div>
 
-          {/* Bottom hint */}
-          <div className="p-4 border-t border-border text-center">
-            <p className="text-sm text-muted-foreground">
-              Tap anywhere outside to close
-            </p>
+          {/* Settings Button */}
+          <div className="p-4 border-t border-border">
+            <button
+              onClick={() => {
+                onClose();
+                onOpenSettings();
+              }}
+              className="w-full p-4 rounded-xl bg-card border border-border flex items-center gap-4 hover:border-primary/40 hover:shadow-md transition-all active:scale-[0.99]"
+            >
+              <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+                <Settings className="w-6 h-6 text-secondary-foreground" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold">Settings</p>
+                <p className="text-sm text-muted-foreground">Sound, display, account</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
           </div>
         </div>
       </div>
