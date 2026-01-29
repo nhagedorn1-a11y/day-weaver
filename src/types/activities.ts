@@ -162,13 +162,18 @@ export interface ADLMission {
   title: string;
   emoji: string;
   category: 'dressing' | 'hygiene' | 'eating' | 'organizing';
-  steps: {
-    instruction: string;
-    visualCue: string;
-    completed: boolean;
-  }[];
+  steps: ADLStep[];
   tokenPerStep: number;
   totalTime: number; // minutes
+}
+
+// Individual ADL step with rich visual data
+export interface ADLStep {
+  instruction: string;
+  visualCue: string; // Legacy emoji string
+  visualEmoji: string; // Primary step visual
+  description: string; // Detailed description for the visual
+  completed: boolean;
 }
 
 // Fine motor game
