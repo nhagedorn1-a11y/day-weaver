@@ -1,11 +1,15 @@
 import { createContext, useContext, ReactNode, useCallback, useState, useEffect, useRef } from 'react';
 import { useSoundscape } from '@/hooks/useSoundscape';
 
+type TTSEngine = 'web-speech' | 'elevenlabs';
+
 interface SoundSettings {
   voiceURI: string;
   speechRate: number;
   speechPitch: number;
-  phonemesEnabled: boolean; // Toggle for phoneme sounds
+  phonemesEnabled: boolean;
+  ttsEngine: TTSEngine;
+  elevenLabsVoiceId: string;
 }
 
 interface SoundContextType {
@@ -171,12 +175,24 @@ function getPhonemeSound(phoneme: string): string {
   return normalized;
 }
 
+// ElevenLabs voice options for phonemes
+const ELEVENLABS_VOICES = [
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah (Clear)' },
+  { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily (Gentle)' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel (Warm)' },
+  { id: 'cgSgspJ2msm6clMCkdW9', name: 'Jessica (Friendly)' },
+];
+
 const DEFAULT_SETTINGS: SoundSettings = {
   voiceURI: '',
   speechRate: 0.75,
   speechPitch: 1.0,
-  phonemesEnabled: true, // Default on
+  phonemesEnabled: true,
+  ttsEngine: 'web-speech',
+  elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL',
 };
+
+export { ELEVENLABS_VOICES };
 
 export function SoundProvider({ children }: { children: ReactNode }) {
   const soundscape = useSoundscape({ enabled: true, volume: 0.4 });
@@ -282,8 +298,59 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     setTimeout(() => playTone(523.25, 0.2, 'sine', 0.3), 100);
   }, [playTone]);
 
-  const speakPhoneme = useCallback((phoneme: string) => {
-    if (!soundscape.isEnabled || !settings.phonemesEnabled) return;
+  const speakPhonemeWithElevenLabs = useCallback(async (phoneme: string) => {
+    const textToSpeak = getPhonemeSound(phoneme);
+    
+    try {
+      setIsSpeaking(true);
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ 
+            text: textToSpeak, 
+            voiceId: settings.elevenLabsVoiceId 
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        console.error('ElevenLabs TTS failed:', response.status);
+        // Fallback to Web Speech
+        speakPhonemeWithWebSpeech(phoneme);
+        return;
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.volume = soundscape.volume;
+      
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      await audio.play();
+    } catch (error) {
+      console.error('ElevenLabs TTS error:', error);
+      setIsSpeaking(false);
+      // Fallback to Web Speech
+      speakPhonemeWithWebSpeech(phoneme);
+    }
+  }, [settings.elevenLabsVoiceId, soundscape.volume]);
+
+  const speakPhonemeWithWebSpeech = useCallback((phoneme: string) => {
     if (!('speechSynthesis' in window)) {
       playTap();
       return;
@@ -298,7 +365,6 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     utterance.pitch = settings.speechPitch;
     utterance.volume = soundscape.volume;
     
-    // Use selected voice
     if (settings.voiceURI) {
       const voice = availableVoices.find(v => v.voiceURI === settings.voiceURI);
       if (voice) {
@@ -314,7 +380,17 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     };
     
     window.speechSynthesis.speak(utterance);
-  }, [soundscape.isEnabled, soundscape.volume, settings, availableVoices, playTap]);
+  }, [soundscape.volume, settings.speechRate, settings.speechPitch, settings.voiceURI, availableVoices, playTap]);
+
+  const speakPhoneme = useCallback((phoneme: string) => {
+    if (!soundscape.isEnabled || !settings.phonemesEnabled) return;
+    
+    if (settings.ttsEngine === 'elevenlabs') {
+      speakPhonemeWithElevenLabs(phoneme);
+    } else {
+      speakPhonemeWithWebSpeech(phoneme);
+    }
+  }, [soundscape.isEnabled, settings.phonemesEnabled, settings.ttsEngine, speakPhonemeWithElevenLabs, speakPhonemeWithWebSpeech]);
 
   const speakWord = useCallback((word: string) => {
     if (!soundscape.isEnabled) return;
