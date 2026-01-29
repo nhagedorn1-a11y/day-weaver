@@ -1,6 +1,28 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Task, TASK_ICONS } from '@/types/jackos';
-import { Plus, GripVertical, Trash2, Clock, Star, X, Check, Pencil } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { 
+  Plus, GripVertical, Trash2, Clock, Star, X, Check, Pencil, 
+  ChevronDown, ChevronUp 
+} from 'lucide-react';
 import { TimeScrollPicker } from '@/components/ui/scroll-picker';
 import { toast } from 'sonner';
 
@@ -11,8 +33,54 @@ interface ScheduleBuilderProps {
 }
 
 export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuilderProps) {
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showAddTask, setShowAddTask] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = tasks.findIndex(t => t.id === active.id);
+      const newIndex = tasks.findIndex(t => t.id === over.id);
+      
+      const newTasks = arrayMove(tasks, oldIndex, newIndex);
+      
+      // Reassign scheduled times based on new order
+      const reorderedTasks = newTasks.map((task, index) => ({
+        ...task,
+        scheduledTime: getTimeForIndex(index, newTasks.length),
+      }));
+      
+      onTasksChange(reorderedTasks);
+      toast.success('Schedule reordered');
+    }
+  };
+
+  // Generate reasonable time slots based on position
+  const getTimeForIndex = (index: number, total: number): string => {
+    const startHour = 7; // 7 AM
+    const endHour = 20; // 8 PM
+    const slot = startHour + Math.floor((endHour - startHour) * (index / Math.max(total - 1, 1)));
+    return `${slot.toString().padStart(2, '0')}:00`;
+  };
 
   const handleAddTask = (icon: typeof TASK_ICONS[number]) => {
     const newTask: Task = {
@@ -23,54 +91,29 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
       completed: false,
       tokens: 1,
       category: 'routine',
-      scheduledTime: '09:00',
+      scheduledTime: getTimeForIndex(tasks.length, tasks.length + 1),
     };
-    setEditingTask(newTask);
+    onTasksChange([...tasks, newTask]);
     setShowAddTask(false);
+    setEditingTaskId(newTask.id);
+    toast.success('Activity added');
   };
 
-  const handleSaveTask = (task: Task) => {
-    const exists = tasks.find(t => t.id === task.id);
-    if (exists) {
-      onTasksChange(tasks.map(t => t.id === task.id ? task : t));
-      toast.success('Activity updated');
-    } else {
-      onTasksChange([...tasks, task]);
-      toast.success('Activity added');
-    }
-    setEditingTask(null);
-  };
+  const handleUpdateTask = useCallback((updatedTask: Task) => {
+    onTasksChange(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+  }, [tasks, onTasksChange]);
 
-  const handleDeleteTask = (taskId: string) => {
+  const handleDeleteTask = useCallback((taskId: string) => {
     onTasksChange(tasks.filter(t => t.id !== taskId));
+    setEditingTaskId(null);
     toast.success('Activity removed');
-  };
-
-  // Sort tasks by scheduled time
-  const sortedTasks = [...tasks].sort((a, b) => {
-    if (!a.scheduledTime || !b.scheduledTime) return 0;
-    return a.scheduledTime.localeCompare(b.scheduledTime);
-  });
+  }, [tasks, onTasksChange]);
 
   const getIconEmoji = (iconId: string) => {
     return TASK_ICONS.find(i => i.id === iconId)?.emoji || '⭐';
   };
 
-  if (editingTask) {
-    return (
-      <TaskEditor
-        task={editingTask}
-        onSave={handleSaveTask}
-        onCancel={() => setEditingTask(null)}
-        onDelete={() => {
-          handleDeleteTask(editingTask.id);
-          setEditingTask(null);
-        }}
-        getIconEmoji={getIconEmoji}
-        isNew={!tasks.find(t => t.id === editingTask.id)}
-      />
-    );
-  }
+  const activeTask = activeId ? tasks.find(t => t.id === activeId) : null;
 
   return (
     <div className="fixed inset-0 z-50 bg-background overflow-auto">
@@ -83,7 +126,7 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
           >
             <X className="w-5 h-5" />
           </button>
-          <h1 className="font-bold text-lg">Build Today's Schedule</h1>
+          <h1 className="font-bold text-lg">Build Schedule</h1>
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
@@ -95,94 +138,72 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
 
       <div className="p-4 space-y-4 pb-32">
         {/* Instructions */}
-        <div className="bg-muted/50 rounded-xl p-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <Pencil className="w-4 h-4 text-primary" />
+        <div className="bg-muted/50 rounded-xl p-3 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <GripVertical className="w-4 h-4 text-primary" />
           </div>
-          <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground">Tap</strong> any activity to edit name, time & tokens
-          </p>
+          <div className="text-sm text-muted-foreground">
+            <strong className="text-foreground">Drag</strong> to reorder • 
+            <strong className="text-foreground"> Tap</strong> to edit • 
+            <strong className="text-foreground"> Swipe</strong> to delete
+          </div>
         </div>
 
-        {/* Visual Timeline */}
-        <div className="space-y-2">
-          {sortedTasks.length === 0 ? (
-            <div className="text-center py-12 px-6 bg-card rounded-2xl border-2 border-dashed border-border">
-              <div className="text-5xl mb-4">📋</div>
-              <h3 className="text-lg font-semibold mb-2">No activities yet</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Build Jack's day by adding activities
-              </p>
-              <button
-                onClick={() => setShowAddTask(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold"
-              >
-                <Plus className="w-5 h-5" />
-                Add First Activity
-              </button>
-            </div>
-          ) : (
-            sortedTasks.map((task, index) => (
-              <div
-                key={task.id}
-                className="flex items-stretch gap-3"
-              >
-                {/* Time column */}
-                <div className="w-14 flex-shrink-0 text-right pt-4">
-                  <span className="font-mono text-sm font-bold text-primary">
-                    {task.scheduledTime || '--:--'}
-                  </span>
-                </div>
+        {/* Empty state */}
+        {tasks.length === 0 ? (
+          <div className="text-center py-12 px-6 bg-card rounded-2xl border-2 border-dashed border-border">
+            <div className="text-5xl mb-4">📋</div>
+            <h3 className="text-lg font-semibold mb-2">No activities yet</h3>
+            <p className="text-muted-foreground text-sm mb-4">
+              Build the day by adding activities
+            </p>
+            <button
+              onClick={() => setShowAddTask(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold"
+            >
+              <Plus className="w-5 h-5" />
+              Add First Activity
+            </button>
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2">
+                {tasks.map((task) => (
+                  <SortableTaskCard
+                    key={task.id}
+                    task={task}
+                    isEditing={editingTaskId === task.id}
+                    onEdit={() => setEditingTaskId(editingTaskId === task.id ? null : task.id)}
+                    onUpdate={handleUpdateTask}
+                    onDelete={() => handleDeleteTask(task.id)}
+                    getIconEmoji={getIconEmoji}
+                  />
+                ))}
+              </div>
+            </SortableContext>
 
-                {/* Timeline connector */}
-                <div className="flex flex-col items-center">
-                  <div className={`w-3 h-3 rounded-full ${task.completed ? 'bg-calm' : 'bg-primary'}`} />
-                  {index < sortedTasks.length - 1 && (
-                    <div className="w-0.5 flex-1 bg-border" />
-                  )}
-                </div>
-
-                {/* Task card - tappable to edit */}
-                <div 
-                  className={`flex-1 p-4 rounded-2xl border-2 transition-all active:scale-[0.98] ${
-                    task.completed 
-                      ? 'bg-muted/50 border-border opacity-60' 
-                      : 'bg-card border-border hover:border-primary/50 hover:shadow-md cursor-pointer'
-                  }`}
-                  onClick={() => setEditingTask(task)}
-                >
+            {/* Drag overlay - shows the card being dragged */}
+            <DragOverlay>
+              {activeTask && (
+                <div className="p-4 rounded-2xl bg-primary text-primary-foreground shadow-2xl scale-105 opacity-90">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
-                      <span className="text-2xl">{getIconEmoji(task.icon)}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold truncate text-lg">{task.title}</h4>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        {task.duration && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" />
-                            {task.duration}m
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1 text-token">
-                          <Star className="w-3.5 h-3.5" fill="currentColor" />
-                          {task.tokens}
-                        </span>
-                      </div>
-                    </div>
-                    {/* Edit indicator */}
-                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
-                      <Pencil className="w-4 h-4 text-muted-foreground" />
-                    </div>
+                    <span className="text-2xl">{getIconEmoji(activeTask.icon)}</span>
+                    <span className="font-semibold">{activeTask.title}</span>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
+              )}
+            </DragOverlay>
+          </DndContext>
+        )}
 
-        {/* Add Task Button - Always visible */}
-        {sortedTasks.length > 0 && (
+        {/* Add Task Button */}
+        {tasks.length > 0 && (
           <button
             onClick={() => setShowAddTask(true)}
             className="w-full py-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 flex items-center justify-center gap-2 text-primary font-semibold hover:bg-primary/10 active:scale-[0.99] transition-all"
@@ -191,34 +212,15 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
             <span>Add Activity</span>
           </button>
         )}
-
-        {/* Quick Templates */}
-        <div className="pt-4">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Quick Templates
-          </h3>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: 'Morning', icon: '🌅', count: 5 },
-              { label: 'After School', icon: '🏠', count: 4 },
-              { label: 'Bedtime', icon: '🌙', count: 4 },
-            ].map((template) => (
-              <button
-                key={template.label}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors"
-              >
-                <span className="text-2xl">{template.icon}</span>
-                <span className="text-xs font-medium">{template.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Add Task Modal */}
       {showAddTask && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
-          <div className="w-full bg-background rounded-t-3xl safe-bottom animate-slide-up">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setShowAddTask(false)}>
+          <div 
+            className="w-full bg-background rounded-t-3xl safe-bottom animate-slide-up"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="p-4 border-b border-border flex items-center justify-between">
               <h3 className="font-semibold text-lg">Choose Activity</h3>
               <button
@@ -247,31 +249,129 @@ export function ScheduleBuilder({ tasks, onTasksChange, onClose }: ScheduleBuild
   );
 }
 
-// Task Editor Sub-component
-interface TaskEditorProps {
+// === Sortable Task Card ===
+interface SortableTaskCardProps {
   task: Task;
-  onSave: (task: Task) => void;
-  onCancel: () => void;
+  isEditing: boolean;
+  onEdit: () => void;
+  onUpdate: (task: Task) => void;
   onDelete: () => void;
   getIconEmoji: (iconId: string) => string;
-  isNew: boolean;
 }
 
-function TaskEditor({ task, onSave, onCancel, onDelete, getIconEmoji, isNew }: TaskEditorProps) {
+function SortableTaskCard({ task, isEditing, onEdit, onUpdate, onDelete, getIconEmoji }: SortableTaskCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="touch-none">
+      <div
+        className={`rounded-2xl border-2 overflow-hidden transition-all ${
+          isEditing 
+            ? 'bg-card border-primary shadow-lg' 
+            : 'bg-card border-border hover:border-primary/30'
+        }`}
+      >
+        {/* Main row */}
+        <div className="flex items-center gap-2 p-3">
+          {/* Drag handle */}
+          <div 
+            {...attributes} 
+            {...listeners}
+            className="w-8 h-12 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
+          >
+            <GripVertical className="w-5 h-5 text-muted-foreground" />
+          </div>
+
+          {/* Icon */}
+          <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+            <span className="text-2xl">{getIconEmoji(task.icon)}</span>
+          </div>
+
+          {/* Info - tappable to expand */}
+          <div 
+            className="flex-1 min-w-0 cursor-pointer"
+            onClick={onEdit}
+          >
+            <h4 className="font-semibold truncate">{task.title}</h4>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="font-mono">{task.scheduledTime || '--:--'}</span>
+              {task.duration && (
+                <span className="flex items-center gap-0.5">
+                  <Clock className="w-3 h-3" />
+                  {task.duration}m
+                </span>
+              )}
+              <span className="flex items-center gap-0.5 text-token">
+                <Star className="w-3 h-3" fill="currentColor" />
+                {task.tokens}
+              </span>
+            </div>
+          </div>
+
+          {/* Expand/Delete buttons */}
+          <button
+            onClick={onEdit}
+            className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center"
+          >
+            {isEditing ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          
+          <button
+            onClick={onDelete}
+            className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive hover:bg-destructive/20"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Expanded edit panel */}
+        {isEditing && (
+          <InlineTaskEditor 
+            task={task} 
+            onUpdate={onUpdate} 
+            getIconEmoji={getIconEmoji}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// === Inline Task Editor ===
+interface InlineTaskEditorProps {
+  task: Task;
+  onUpdate: (task: Task) => void;
+  getIconEmoji: (iconId: string) => string;
+}
+
+function InlineTaskEditor({ task, onUpdate, getIconEmoji }: InlineTaskEditorProps) {
   const [title, setTitle] = useState(task.title);
   const [duration, setDuration] = useState(task.duration || 10);
   const [tokens, setTokens] = useState(task.tokens);
-  const [hours, setHours] = useState(parseInt(task.scheduledTime?.split(':')[0] || '9'));
-  const [minutes, setMinutes] = useState(parseInt(task.scheduledTime?.split(':')[1] || '0'));
   const [selectedIcon, setSelectedIcon] = useState(task.icon);
   const [showIconPicker, setShowIconPicker] = useState(false);
+  
+  // Parse time
+  const [hours, setHours] = useState(parseInt(task.scheduledTime?.split(':')[0] || '9'));
+  const [minutes, setMinutes] = useState(parseInt(task.scheduledTime?.split(':')[1] || '0'));
 
   const handleSave = () => {
-    if (!title.trim()) {
-      toast.error('Please enter an activity name');
-      return;
-    }
-    onSave({
+    if (!title.trim()) return;
+    
+    onUpdate({
       ...task,
       title: title.trim(),
       icon: selectedIcon,
@@ -281,144 +381,106 @@ function TaskEditor({ task, onSave, onCancel, onDelete, getIconEmoji, isNew }: T
     });
   };
 
+  // Auto-save on blur
+  const handleBlur = () => {
+    handleSave();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-background overflow-auto">
-      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-lg border-b border-border">
-        <div className="flex items-center justify-between p-4 safe-top">
-          <button onClick={onCancel} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
-            <X className="w-5 h-5" />
-          </button>
-          <h1 className="font-bold text-lg">{isNew ? 'Add Activity' : 'Edit Activity'}</h1>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center gap-2"
-          >
-            <Check className="w-4 h-4" />
-            {isNew ? 'Add' : 'Save'}
-          </button>
+    <div className="border-t border-border p-4 space-y-4 bg-muted/30">
+      {/* Icon picker */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setShowIconPicker(!showIconPicker)}
+          className="w-14 h-14 rounded-xl bg-primary/10 border-2 border-primary/30 flex items-center justify-center hover:bg-primary/20"
+        >
+          <span className="text-3xl">{getIconEmoji(selectedIcon)}</span>
+        </button>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={handleBlur}
+          className="flex-1 px-3 py-2 rounded-xl bg-card border border-border focus:border-primary outline-none font-semibold"
+          placeholder="Activity name..."
+          maxLength={50}
+        />
+      </div>
+
+      {showIconPicker && (
+        <div className="grid grid-cols-6 gap-2 p-3 bg-card rounded-xl border border-border">
+          {TASK_ICONS.map((icon) => (
+            <button
+              key={icon.id}
+              onClick={() => {
+                setSelectedIcon(icon.id);
+                setTitle(icon.label);
+                setShowIconPicker(false);
+                handleSave();
+              }}
+              className={`p-2 rounded-lg transition-all ${
+                selectedIcon === icon.id ? 'bg-primary/20 scale-110' : 'hover:bg-muted'
+              }`}
+            >
+              <span className="text-xl">{icon.emoji}</span>
+            </button>
+          ))}
         </div>
-      </header>
+      )}
 
-      <div className="p-6 space-y-6 pb-32">
-        {/* Icon selector */}
-        <div className="flex flex-col items-center">
-          <button
-            onClick={() => setShowIconPicker(!showIconPicker)}
-            className="w-24 h-24 rounded-2xl bg-primary/10 border-2 border-primary/30 flex items-center justify-center hover:bg-primary/20 transition-colors"
-          >
-            <span className="text-5xl">{getIconEmoji(selectedIcon)}</span>
-          </button>
-          <span className="text-sm text-muted-foreground mt-2">Tap to change icon</span>
-        </div>
-
-        {showIconPicker && (
-          <div className="grid grid-cols-6 gap-2 p-4 bg-muted rounded-2xl">
-            {TASK_ICONS.map((icon) => (
-              <button
-                key={icon.id}
-                onClick={() => {
-                  setSelectedIcon(icon.id);
-                  setTitle(icon.label);
-                  setShowIconPicker(false);
-                }}
-                className={`p-2 rounded-xl transition-all ${
-                  selectedIcon === icon.id ? 'bg-primary/20 scale-110' : 'hover:bg-background'
-                }`}
-              >
-                <span className="text-2xl">{icon.emoji}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Title */}
-        <div>
-          <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider block mb-2">
-            Activity Name
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-card border-2 border-border focus:border-primary outline-none text-lg font-semibold"
-            placeholder="Activity name..."
-            maxLength={50}
+      {/* Time */}
+      <div>
+        <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">Time</label>
+        <div className="flex justify-center bg-card rounded-xl border border-border p-3">
+          <TimeScrollPicker
+            minutes={hours}
+            seconds={minutes}
+            onMinutesChange={(h) => { setHours(h); }}
+            onSecondsChange={(m) => { setMinutes(m); }}
+            maxMinutes={23}
           />
         </div>
+      </div>
 
-        {/* Time Picker */}
-        <div>
-          <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider block mb-3">
-            Scheduled Time
-          </label>
-          <div className="flex justify-center bg-card rounded-2xl border border-border p-4">
-            <TimeScrollPicker
-              minutes={hours}
-              seconds={minutes}
-              onMinutesChange={setHours}
-              onSecondsChange={setMinutes}
-              maxMinutes={23}
-            />
-          </div>
-        </div>
-
-        {/* Duration slider */}
-        <div>
-          <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider block mb-2">
-            Duration
-          </label>
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min={5}
-              max={60}
-              step={5}
-              value={duration}
-              onChange={(e) => setDuration(Number(e.target.value))}
-              className="flex-1 h-2 rounded-full appearance-none bg-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
-            />
-            <div className="w-20 px-3 py-2 rounded-xl bg-card border border-border text-center">
-              <span className="font-mono font-bold">{duration}</span>
-              <span className="text-sm text-muted-foreground ml-1">min</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tokens */}
-        <div>
-          <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider block mb-2">
-            Token Reward
-          </label>
-          <div className="flex gap-2">
-            {[1, 2, 3, 5].map((t) => (
-              <button
-                key={t}
-                onClick={() => setTokens(t)}
-                className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                  tokens === t 
-                    ? 'bg-token text-token-foreground shadow-lg scale-105' 
-                    : 'bg-card border border-border hover:border-token/50'
-                }`}
-              >
-                <Star className="w-4 h-4" />
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Delete button - only for existing tasks */}
-        {!isNew && (
-          <div className="pt-4 border-t border-border">
+      {/* Duration */}
+      <div>
+        <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">Duration</label>
+        <div className="flex gap-2">
+          {[5, 10, 15, 20, 30, 45, 60].map((d) => (
             <button
-              onClick={onDelete}
-              className="w-full py-4 rounded-xl bg-destructive/10 text-destructive font-semibold flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors"
+              key={d}
+              onClick={() => { setDuration(d); handleSave(); }}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+                duration === d 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-card border border-border hover:border-primary/50'
+              }`}
             >
-              <Trash2 className="w-5 h-5" />
-              Remove Activity
+              {d}m
             </button>
-          </div>
-        )}
+          ))}
+        </div>
+      </div>
+
+      {/* Tokens */}
+      <div>
+        <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">Tokens</label>
+        <div className="flex gap-2">
+          {[1, 2, 3, 5].map((t) => (
+            <button
+              key={t}
+              onClick={() => { setTokens(t); handleSave(); }}
+              className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition-all ${
+                tokens === t 
+                  ? 'bg-token text-token-foreground' 
+                  : 'bg-card border border-border hover:border-token/50'
+              }`}
+            >
+              <Star className="w-3.5 h-3.5" />
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
