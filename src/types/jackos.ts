@@ -162,6 +162,8 @@ export type AppModule =
   | 'timers'
   | 'reading'
   | 'math'
+  | 'writing'
+  | 'science'
   | 'motor'
   | 'sensory'
   | 'social'

@@ -16,6 +16,8 @@ import { ParentQuickActions } from '@/components/ParentQuickActions';
 import { ReadingStudio } from '@/components/reading/ReadingStudio';
 import { SensoryModule } from '@/components/modules/SensoryModule';
 import { MathModule } from '@/components/modules/MathModule';
+import { WritingModule } from '@/components/modules/WritingModule';
+import { ScienceModule } from '@/components/modules/ScienceModule';
 import { MotorModule } from '@/components/modules/MotorModule';
 import { SocialModule } from '@/components/modules/SocialModule';
 import { RewardsModule } from '@/components/modules/RewardsModule';
@@ -212,6 +214,10 @@ const IndexContent = () => {
         return <SensoryModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
       case 'math':
         return <MathModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
+      case 'writing':
+        return <WritingModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
+      case 'science':
+        return <ScienceModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
       case 'motor':
         return <MotorModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
       case 'social':
