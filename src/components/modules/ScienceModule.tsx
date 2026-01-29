@@ -200,6 +200,9 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
   if (view === 'activity' && selectedActivity) {
     const currentStep = selectedActivity.instructions[activityStep];
     const progress = ((activityStep + 1) / selectedActivity.instructions.length) * 100;
+    
+    // Get the visual for the current step (if available)
+    const currentVisual = selectedActivity.visualSteps?.[activityStep];
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -225,7 +228,23 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <span className="text-8xl mb-6">{selectedActivity.icon}</span>
+          {/* Step-specific visual - changes for each step */}
+          <div className="relative mb-6">
+            <span 
+              className="text-8xl block transition-all duration-300 animate-scale-in"
+              key={activityStep} // Re-animate on step change
+              role="img"
+              aria-label={currentVisual?.description || currentVisual?.label || selectedActivity.title}
+            >
+              {currentVisual?.emoji || selectedActivity.icon}
+            </span>
+            {/* Visual label underneath */}
+            {currentVisual?.label && (
+              <span className="text-sm text-muted-foreground mt-2 block font-medium">
+                {currentVisual.label}
+              </span>
+            )}
+          </div>
           
           <h2 className="text-2xl font-bold mb-4">{currentStep}</h2>
 
