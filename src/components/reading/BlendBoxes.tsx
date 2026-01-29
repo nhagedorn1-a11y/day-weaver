@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
 import { useSound } from '@/contexts/SoundContext';
 
@@ -17,6 +17,16 @@ export function BlendBoxes({ phonemes, word, onComplete, showWord = false }: Ble
   const [isComplete, setIsComplete] = useState(false);
   const [showError, setShowError] = useState(false);
   const { speakPhoneme, speakWord, playBlend, playComplete } = useSound();
+
+  // Reset state when word changes (new word loaded)
+  useEffect(() => {
+    setTappedPhonemes(new Set());
+    setCurrentExpected(0);
+    setIsBlending(false);
+    setBlendProgress(0);
+    setIsComplete(false);
+    setShowError(false);
+  }, [word]);
 
   const allTapped = tappedPhonemes.size === phonemes.length;
 
