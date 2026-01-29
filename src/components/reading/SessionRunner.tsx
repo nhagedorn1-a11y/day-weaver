@@ -41,13 +41,21 @@ export function SessionRunner({
   // Sound effects
   const { playComplete, playTokenEarned, playTap, playCorrect } = useSound();
 
-  // Calculate items for each step
-  const stepItems = useMemo(() => ({
-    warmup: lesson.warmUpWords.slice(0, 3),
-    review: lesson.reviewGraphemes.slice(0, 6).map(g => graphemeCards[g]).filter(Boolean),
-    practice: lesson.wordList.slice(0, Math.min(6, lesson.wordList.length)),
-    sentence: lesson.sentences.slice(0, 2),
-  }), [lesson]);
+  // Calculate items for each step - ensure warmup words have their phoneme data
+  const stepItems = useMemo(() => {
+    // Map warmup word strings back to their full word data from wordList
+    const warmupWithPhonemes = lesson.warmUpWords.slice(0, 3).map(warmupWord => {
+      const wordData = lesson.wordList.find(w => w.word === warmupWord);
+      return wordData || { id: warmupWord, word: warmupWord, phonemes: warmupWord.split(''), isSightWord: false };
+    });
+    
+    return {
+      warmup: warmupWithPhonemes,
+      review: lesson.reviewGraphemes.slice(0, 6).map(g => graphemeCards[g]).filter(Boolean),
+      practice: lesson.wordList.slice(0, Math.min(6, lesson.wordList.length)),
+      sentence: lesson.sentences.slice(0, 2),
+    };
+  }, [lesson]);
 
   const handleNextStep = useCallback(() => {
     const currentIndex = STEPS.indexOf(currentStep);
@@ -116,7 +124,6 @@ export function SessionRunner({
       case 'warmup':
         return <WarmupStep 
           words={stepItems.warmup}
-          wordList={lesson.wordList}
           currentIndex={itemIndex}
           onItemComplete={handleItemComplete}
           isComplete={isStepComplete}
@@ -216,16 +223,14 @@ export function SessionRunner({
 // === Step Components ===
 
 interface WarmupStepProps {
-  words: string[];
-  wordList: { word: string; phonemes: string[] }[];
+  words: { word: string; phonemes: string[] }[];
   currentIndex: number;
   onItemComplete: (wasCorrect: boolean) => void;
   isComplete: boolean;
 }
 
-function WarmupStep({ words, wordList, currentIndex, onItemComplete, isComplete }: WarmupStepProps) {
+function WarmupStep({ words, currentIndex, onItemComplete, isComplete }: WarmupStepProps) {
   const currentWord = words[currentIndex];
-  const wordData = wordList.find(w => w.word === currentWord);
 
   return (
     <div className="space-y-6">
@@ -237,10 +242,10 @@ function WarmupStep({ words, wordList, currentIndex, onItemComplete, isComplete 
         <p className="text-muted-foreground text-sm">Tap each sound, then blend them together</p>
       </div>
       
-      {!isComplete && wordData ? (
+      {!isComplete && currentWord ? (
         <BlendBoxes
-          phonemes={wordData.phonemes}
-          word={currentWord}
+          phonemes={currentWord.phonemes}
+          word={currentWord.word}
           onComplete={() => onItemComplete(true)}
         />
       ) : isComplete ? (
