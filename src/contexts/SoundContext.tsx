@@ -30,91 +30,94 @@ interface SoundContextType {
 
 const SoundContext = createContext<SoundContextType | null>(null);
 
-// Phoneme-to-pronunciation map for Web Speech API
+// Phoneme pronunciation map - uses phonetic spellings that force TTS to say SOUNDS not letter names
+// Format: letter/grapheme -> phonetic spelling the TTS engine will pronounce correctly
 const PHONEME_PRONUNCIATIONS: Record<string, string> = {
-  // Short vowels
-  'a': 'ah',
-  'e': 'eh',
-  'i': 'ih',
-  'o': 'aw',
-  'u': 'uh',
+  // === SHORT VOWELS (most common sounds) ===
+  'a': 'aah',      // /æ/ as in "cat" - open mouth "aah" 
+  'e': 'eeh',      // /ɛ/ as in "bed" - short "eh"
+  'i': 'iih',      // /ɪ/ as in "sit" - short "ih"
+  'o': 'awe',      // /ɒ/ as in "hot" - open "aw"
+  'u': 'uhh',      // /ʌ/ as in "cup" - short "uh"
   
-  // Long vowels
-  'a_e': 'ay',
-  'e_e': 'ee',
-  'i_e': 'eye',
-  'o_e': 'oh',
-  'u_e': 'yoo',
+  // === CONSONANTS (continuous sounds stretched, stops minimal) ===
+  // Continuous sounds - can be held/stretched
+  'f': 'ffff',     // friction sound
+  'l': 'llll',     // tongue tip up
+  'm': 'mmmm',     // lips together, hum
+  'n': 'nnnn',     // tongue behind teeth
+  'r': 'rrrr',     // tongue curled back
+  's': 'ssss',     // snake sound
+  'v': 'vvvv',     // teeth on lip, vibrate
+  'w': 'wwww',     // lips rounded
+  'y': 'yyyy',     // tongue up, glide
+  'z': 'zzzz',     // buzzing s
   
-  // Consonants
-  'b': 'buh',
-  'c': 'kuh',
-  'd': 'duh',
-  'f': 'fff',
-  'g': 'guh',
-  'h': 'huh',
-  'j': 'juh',
-  'k': 'kuh',
-  'l': 'lll',
-  'm': 'mmm',
-  'n': 'nnn',
-  'p': 'puh',
-  'q': 'kwuh',
-  'r': 'rrr',
-  's': 'sss',
-  't': 'tuh',
-  'v': 'vvv',
-  'w': 'wuh',
-  'x': 'ks',
-  'y': 'yuh',
-  'z': 'zzz',
+  // Stop sounds - quick burst, minimal vowel
+  'b': 'b',        // lips pop
+  'c': 'k',        // back of tongue
+  'd': 'd',        // tongue tap
+  'g': 'g',        // throat sound
+  'h': 'h',        // breath out
+  'j': 'j',        // soft g sound
+  'k': 'k',        // back of tongue pop
+  'p': 'p',        // lips pop (no "uh")
+  'q': 'kw',       // always with u
+  't': 't',        // tongue tap (no "uh")
+  'x': 'ks',       // combo sound
   
-  // Digraphs
-  'sh': 'shh',
-  'ch': 'chuh',
-  'th': 'thh',
-  'wh': 'wuh',
-  'ph': 'fff',
-  'ck': 'kuh',
-  'ng': 'ng',
-  'nk': 'nk',
+  // === DIGRAPHS (two letters, one sound) ===
+  'sh': 'shhhh',   // quiet sound
+  'ch': 'ch',      // train sound
+  'th': 'thhh',    // tongue between teeth (voiceless)
+  'wh': 'wh',      // breathy w
+  'ph': 'ffff',    // same as f
+  'ck': 'k',       // same as k
+  'ng': 'ng',      // back of tongue, nasal
+  'nk': 'nk',      // n + k blend
   
-  // Vowel teams
-  'ee': 'ee',
-  'ea': 'ee',
-  'ai': 'ay',
-  'ay': 'ay',
-  'oa': 'oh',
-  'ow': 'oh',
-  'ou': 'ow',
-  'oo': 'oo',
-  'oi': 'oy',
-  'oy': 'oy',
-  'au': 'aw',
-  'aw': 'aw',
+  // === LONG VOWELS (say their name) ===
+  'a_e': 'ay',     // cake
+  'e_e': 'ee',     // these
+  'i_e': 'eye',    // like
+  'o_e': 'oh',     // home
+  'u_e': 'you',    // cute
   
-  // R-controlled vowels
-  'ar': 'ar',
-  'er': 'er',
-  'ir': 'er',
-  'or': 'or',
-  'ur': 'er',
+  // === VOWEL TEAMS ===
+  'ee': 'ee',      // tree
+  'ea': 'ee',      // read
+  'ai': 'ay',      // rain
+  'ay': 'ay',      // play
+  'oa': 'oh',      // boat
+  'ow': 'oh',      // snow (also "ow" as in cow)
+  'ou': 'ow',      // out
+  'oo': 'oo',      // moon
+  'oi': 'oy',      // oil
+  'oy': 'oy',      // boy
+  'au': 'aw',      // caught
+  'aw': 'aw',      // saw
+  'ew': 'you',     // new
+  'ue': 'oo',      // blue
+  'ie': 'eye',     // pie
   
-  // IPA notation
-  '/a/': 'ah',
-  '/e/': 'eh',
-  '/i/': 'ih',
-  '/o/': 'aw',
-  '/u/': 'uh',
-  '/æ/': 'ah',
-  '/ɛ/': 'eh',
-  '/ɪ/': 'ih',
-  '/ɒ/': 'aw',
-  '/ʌ/': 'uh',
-  '/ʃ/': 'shh',
-  '/tʃ/': 'chuh',
-  '/θ/': 'thh',
-  '/ð/': 'thh',
+  // === R-CONTROLLED VOWELS ===
+  'ar': 'ar',      // car
+  'er': 'er',      // her
+  'ir': 'er',      // bird
+  'or': 'or',      // for
+  'ur': 'er',      // fur
+  
+  // === IPA NOTATION (for lesson data) ===
+  '/æ/': 'aah',
+  '/ɛ/': 'eeh', 
+  '/ɪ/': 'iih',
+  '/ɒ/': 'awe',
+  '/ʌ/': 'uhh',
+  '/ʃ/': 'shhhh',
+  '/tʃ/': 'ch',
+  '/θ/': 'thhh',
+  '/ð/': 'thhh',
+  '/ŋ/': 'ng',
 };
 
 function getPhonemeSound(phoneme: string): string {
