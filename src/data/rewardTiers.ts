@@ -1,5 +1,8 @@
 // ============================================
 // TIERED REWARD SYSTEM - iPad is Premium-Only
+// Based on assessment: high urgency to access interests (iPad) to alleviate distress
+// Key rule: Never trade upward during meltdowns — offer Tier 1-2 regulation rewards only
+// iPad is for SUCCESS, not for calming dysregulation
 // ============================================
 
 export interface TierReward {
