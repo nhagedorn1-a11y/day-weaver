@@ -385,7 +385,7 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
 
       <div className="p-4 space-y-4">
         <p className="text-muted-foreground text-center">
-          Pick a lab to explore 🧪
+          Real-world discovery activities! 🧪
         </p>
 
         {/* Science lanes grid */}
@@ -406,7 +406,7 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
                 </div>
                 <span className="font-bold text-center">{lane.name}</span>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{activities.length} games</span>
+                  <span>{activities.length} activities</span>
                   <span>•</span>
                   <span>🃏 {unlockedInLane}/{laneCards.length}</span>
                 </div>
