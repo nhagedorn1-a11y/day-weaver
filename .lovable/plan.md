@@ -1,6 +1,16 @@
 
 # Elevating JackOS: MIT Media Lab × Teenage Engineering × Disco Elysium
 
+## ✅ Completed Updates
+
+### Reading Studio Overhaul (OG-Aligned)
+- **SessionRunner**: Refactored with proper I Do / We Do / You Do teaching flow, modular step components, error tracking, and adaptive pacing
+- **BlendBoxes**: Sequential tapping requirement (left to right), animated blend sweep, gentle error feedback for out-of-order taps
+- **WordCard**: Phased reveal → tap sounds → blend flow, proper My Turn / Together / Your Turn error correction
+- **TracePad**: Improved completion detection with coverage threshold, multisensory reminders, visual feedback
+
+---
+
 ## Current State Analysis
 
 The app already has strong fundamentals:
