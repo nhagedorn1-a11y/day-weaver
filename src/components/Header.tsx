@@ -1,5 +1,6 @@
 import { UserMode } from '@/types/jackos';
 import { Settings, User } from 'lucide-react';
+import { SoundSettings } from './SoundSettings';
 
 interface HeaderProps {
   mode: UserMode;
@@ -24,17 +25,22 @@ export function Header({ mode, onModeSwitch, childName = 'Jack' }: HeaderProps) 
         </div>
       </div>
 
-      <button
-        onClick={onModeSwitch}
-        className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
-        aria-label={mode === 'child' ? 'Switch to parent mode' : 'Switch to child mode'}
-      >
-        {mode === 'child' ? (
-          <Settings className="w-5 h-5 text-secondary-foreground" />
-        ) : (
-          <User className="w-5 h-5 text-secondary-foreground" />
-        )}
-      </button>
+      <div className="flex items-center gap-2">
+        {/* Sound Settings */}
+        <SoundSettings />
+        
+        <button
+          onClick={onModeSwitch}
+          className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+          aria-label={mode === 'child' ? 'Switch to parent mode' : 'Switch to child mode'}
+        >
+          {mode === 'child' ? (
+            <Settings className="w-5 h-5 text-secondary-foreground" />
+          ) : (
+            <User className="w-5 h-5 text-secondary-foreground" />
+          )}
+        </button>
+      </div>
     </header>
   );
 }

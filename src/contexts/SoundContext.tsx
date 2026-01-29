@@ -1,11 +1,20 @@
-import { createContext, useContext, ReactNode, useCallback, useState } from 'react';
+import { createContext, useContext, ReactNode, useCallback, useState, useEffect, useRef } from 'react';
 import { useSoundscape } from '@/hooks/useSoundscape';
+
+interface SoundSettings {
+  voiceURI: string;
+  speechRate: number;
+  speechPitch: number;
+}
 
 interface SoundContextType {
   isEnabled: boolean;
   volume: number;
   toggle: () => void;
   setVolume: (v: number) => void;
+  settings: SoundSettings;
+  setSettings: (s: Partial<SoundSettings>) => void;
+  availableVoices: SpeechSynthesisVoice[];
   playTap: () => void;
   playReveal: () => void;
   playBlend: () => void;
@@ -22,28 +31,27 @@ interface SoundContextType {
 const SoundContext = createContext<SoundContextType | null>(null);
 
 // Phoneme-to-pronunciation map for Web Speech API
-// These spellings help TTS pronounce the SOUND, not the letter name
 const PHONEME_PRONUNCIATIONS: Record<string, string> = {
   // Short vowels
-  'a': 'ah',           // /æ/ as in "cat"
-  'e': 'eh',           // /ɛ/ as in "bed"
-  'i': 'ih',           // /ɪ/ as in "sit"
-  'o': 'aw',           // /ɒ/ as in "hot"
-  'u': 'uh',           // /ʌ/ as in "cup"
+  'a': 'ah',
+  'e': 'eh',
+  'i': 'ih',
+  'o': 'aw',
+  'u': 'uh',
   
-  // Long vowels (usually with silent e or digraphs)
-  'a_e': 'ay',         // /eɪ/ as in "cake"
-  'e_e': 'ee',         // /iː/ as in "Pete"
-  'i_e': 'eye',        // /aɪ/ as in "bike"
-  'o_e': 'oh',         // /oʊ/ as in "home"
-  'u_e': 'yoo',        // /juː/ as in "cube"
+  // Long vowels
+  'a_e': 'ay',
+  'e_e': 'ee',
+  'i_e': 'eye',
+  'o_e': 'oh',
+  'u_e': 'yoo',
   
-  // Consonants - pronounced as sounds, not names
+  // Consonants
   'b': 'buh',
-  'c': 'kuh',          // Hard c sound
+  'c': 'kuh',
   'd': 'duh',
   'f': 'fff',
-  'g': 'guh',          // Hard g
+  'g': 'guh',
   'h': 'huh',
   'j': 'juh',
   'k': 'kuh',
@@ -92,7 +100,7 @@ const PHONEME_PRONUNCIATIONS: Record<string, string> = {
   'or': 'or',
   'ur': 'er',
   
-  // Common phonemes from IPA notation
+  // IPA notation
   '/a/': 'ah',
   '/e/': 'eh',
   '/i/': 'ih',
@@ -109,16 +117,13 @@ const PHONEME_PRONUNCIATIONS: Record<string, string> = {
   '/ð/': 'thh',
 };
 
-// Get pronunciation for a phoneme
 function getPhonemeSound(phoneme: string): string {
   const normalized = phoneme.toLowerCase().trim();
   
-  // Check direct match
   if (PHONEME_PRONUNCIATIONS[normalized]) {
     return PHONEME_PRONUNCIATIONS[normalized];
   }
   
-  // Check if it's wrapped in slashes (IPA style)
   if (normalized.startsWith('/') && normalized.endsWith('/')) {
     const inner = normalized.slice(1, -1);
     if (PHONEME_PRONUNCIATIONS[inner]) {
@@ -126,19 +131,62 @@ function getPhonemeSound(phoneme: string): string {
     }
   }
   
-  // For unknown phonemes, try to make it sound-like
-  // If it's a single letter, use our consonant/vowel sounds
   if (normalized.length === 1) {
     return PHONEME_PRONUNCIATIONS[normalized] || normalized;
   }
   
-  // Return as-is for longer unknown phonemes
   return normalized;
 }
+
+const DEFAULT_SETTINGS: SoundSettings = {
+  voiceURI: '',
+  speechRate: 0.75,
+  speechPitch: 1.0,
+};
 
 export function SoundProvider({ children }: { children: ReactNode }) {
   const soundscape = useSoundscape({ enabled: true, volume: 0.4 });
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [settings, setSettingsState] = useState<SoundSettings>(DEFAULT_SETTINGS);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const voicesLoadedRef = useRef(false);
+
+  // Load voices
+  useEffect(() => {
+    const loadVoices = () => {
+      if (!('speechSynthesis' in window)) return;
+      
+      const voices = window.speechSynthesis.getVoices();
+      const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+      setAvailableVoices(englishVoices);
+      
+      // Set default voice on first load
+      if (!voicesLoadedRef.current && englishVoices.length > 0) {
+        voicesLoadedRef.current = true;
+        const defaultVoice = englishVoices.find(v => 
+          v.name.includes('Samantha') || 
+          v.name.includes('Google US English') ||
+          v.name.includes('Karen')
+        ) || englishVoices[0];
+        
+        setSettingsState(prev => ({
+          ...prev,
+          voiceURI: defaultVoice.voiceURI,
+        }));
+      }
+    };
+
+    loadVoices();
+    window.speechSynthesis?.addEventListener('voiceschanged', loadVoices);
+    
+    return () => {
+      window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
+    };
+  }, []);
+
+  const setSettings = useCallback((updates: Partial<SoundSettings>) => {
+    setSettingsState(prev => ({ ...prev, ...updates }));
+  }, []);
 
   const playTone = useCallback((frequency: number, duration: number, type: OscillatorType = 'sine', volume = 0.3) => {
     if (!soundscape.isEnabled) return;
@@ -200,7 +248,6 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     setTimeout(() => playTone(523.25, 0.2, 'sine', 0.3), 100);
   }, [playTone]);
 
-  // Speak phoneme using Web Speech API with phonetic pronunciation
   const speakPhoneme = useCallback((phoneme: string) => {
     if (!soundscape.isEnabled) return;
     if (!('speechSynthesis' in window)) {
@@ -210,25 +257,19 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     
     window.speechSynthesis.cancel();
     
-    // Get the phonetic pronunciation instead of letter name
     const textToSpeak = getPhonemeSound(phoneme);
     
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.rate = 0.75; // Slower for clarity
-    utterance.pitch = 1.0;
+    utterance.rate = settings.speechRate;
+    utterance.pitch = settings.speechPitch;
     utterance.volume = soundscape.volume;
     
-    // Try to find a clear voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => 
-      v.name.includes('Samantha') || 
-      v.name.includes('Karen') || 
-      v.name.includes('Google US English') ||
-      (v.lang.startsWith('en') && v.name.includes('Female'))
-    ) || voices.find(v => v.lang.startsWith('en'));
-    
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
+    // Use selected voice
+    if (settings.voiceURI) {
+      const voice = availableVoices.find(v => v.voiceURI === settings.voiceURI);
+      if (voice) {
+        utterance.voice = voice;
+      }
     }
     
     utterance.onstart = () => setIsSpeaking(true);
@@ -239,9 +280,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     };
     
     window.speechSynthesis.speak(utterance);
-  }, [soundscape.isEnabled, soundscape.volume, playTap]);
+  }, [soundscape.isEnabled, soundscape.volume, settings, availableVoices, playTap]);
 
-  // Speak full word (this says the actual word, not letter by letter)
   const speakWord = useCallback((word: string) => {
     if (!soundscape.isEnabled) return;
     if (!('speechSynthesis' in window)) {
@@ -252,20 +292,15 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     window.speechSynthesis.cancel();
     
     const utterance = new SpeechSynthesisUtterance(word);
-    utterance.rate = 0.8;
-    utterance.pitch = 1.0;
+    utterance.rate = settings.speechRate + 0.1; // Slightly faster for words
+    utterance.pitch = settings.speechPitch;
     utterance.volume = soundscape.volume;
     
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => 
-      v.name.includes('Samantha') || 
-      v.name.includes('Karen') || 
-      v.name.includes('Google US English') ||
-      v.lang.startsWith('en')
-    );
-    
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
+    if (settings.voiceURI) {
+      const voice = availableVoices.find(v => v.voiceURI === settings.voiceURI);
+      if (voice) {
+        utterance.voice = voice;
+      }
     }
     
     utterance.onstart = () => setIsSpeaking(true);
@@ -273,7 +308,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     utterance.onerror = () => setIsSpeaking(false);
     
     window.speechSynthesis.speak(utterance);
-  }, [soundscape.isEnabled, soundscape.volume, playComplete]);
+  }, [soundscape.isEnabled, soundscape.volume, settings, availableVoices, playComplete]);
 
   return (
     <SoundContext.Provider
@@ -282,6 +317,9 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         volume: soundscape.volume,
         toggle: soundscape.toggle,
         setVolume: soundscape.setVolume,
+        settings,
+        setSettings,
+        availableVoices,
         playTap,
         playReveal,
         playBlend,
@@ -308,6 +346,9 @@ export function useSound() {
       volume: 0,
       toggle: () => {},
       setVolume: () => {},
+      settings: DEFAULT_SETTINGS,
+      setSettings: () => {},
+      availableVoices: [] as SpeechSynthesisVoice[],
       playTap: () => {},
       playReveal: () => {},
       playBlend: () => {},
