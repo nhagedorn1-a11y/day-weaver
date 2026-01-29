@@ -74,19 +74,22 @@ const tier3Rewards: TierReward[] = [
 ];
 
 // Tier 4 — Big rewards (10 tokens, UNCOMMON) — FIRST iPad tier
+// Themed with Jack's interests: Poppy Playtime, Alphabet Lore, creepy toys
 const tier4Rewards: TierReward[] = [
-  { id: 't4-ipad-10', title: '10 Min iPad', emoji: '📱', description: 'Pick 1 app from the menu', category: 'screen', duration: 10, isIPad: true },
-  { id: 't4-ipad-15', title: '15 Min iPad', emoji: '📱', description: 'Pick 1 app from the menu', category: 'screen', duration: 15, isIPad: true },
-  { id: 't4-creepy-vault', title: 'Creepy Vault Pick', emoji: '🗝️', description: 'Choose 1 stored creepy toy for 24 hours', category: 'activity', requiresParent: true },
-  { id: 't4-movie-pick', title: 'Pick Family Movie', emoji: '🎬', description: 'Choose from pre-approved list', category: 'autonomy', requiresParent: true },
-  { id: 't4-spooky-short', title: 'Spooky Short', emoji: '👻', description: 'Pick a spooky short video', category: 'screen', requiresParent: true },
-  { id: 't4-late-bed', title: 'Late Bedtime +10', emoji: '🌙', description: '+10 minutes before bed (if it works)', category: 'autonomy', requiresParent: true },
+  { id: 't4-ipad-10', title: 'Huggy Wuggy Time', emoji: '🧸', description: '10 min iPad - Pick Poppy Playtime!', category: 'screen', duration: 10, isIPad: true },
+  { id: 't4-ipad-15', title: 'Alphabet Lore Quest', emoji: '🔤', description: '15 min iPad - Watch Alphabet Lore!', category: 'screen', duration: 15, isIPad: true },
+  { id: 't4-creepy-vault', title: 'Creepy Vault Unlock', emoji: '🔐', description: 'Choose 1 creepy toy for 24 hours', category: 'activity', requiresParent: true },
+  { id: 't4-movie-pick', title: 'Monster Movie Night', emoji: '🎃', description: 'Pick a spooky movie from the list', category: 'autonomy', requiresParent: true },
+  { id: 't4-spooky-short', title: 'Kissy Missy Short', emoji: '💗', description: 'Pick a Poppy Playtime video', category: 'screen', requiresParent: true },
+  { id: 't4-late-bed', title: 'Nighttime Extension', emoji: '🌑', description: '+10 spooky minutes before bed', category: 'autonomy', requiresParent: true },
 ];
 
-// Tier 5 — Pinnacle rewards (15 tokens, RARE)
+// Tier 5 — Pinnacle rewards (15 tokens, RARE) — Boss Level
+// Ultimate creepy/monster themed rewards
 const tier5Rewards: TierReward[] = [
-  { id: 't5-ipad-30', title: '30 Min iPad', emoji: '📱', description: 'The ultimate screen reward', category: 'screen', duration: 30, isIPad: true },
-  { id: 't5-new-creepy', title: 'New Creepy Toy', emoji: '🎁', description: 'Weekly "boss level" only', category: 'collectible', requiresParent: true },
+  { id: 't5-ipad-30', title: 'Poppy Playtime Marathon', emoji: '👹', description: '30 min of ultimate creepy time!', category: 'screen', duration: 30, isIPad: true },
+  { id: 't5-new-creepy', title: 'New Creepy Creature', emoji: '🕷️', description: 'Boss level: New creepy toy unlocked!', category: 'collectible', requiresParent: true },
+  { id: 't5-alphabet-binge', title: 'Alphabet Lore Binge', emoji: '👾', description: '30 min Alphabet Lore marathon!', category: 'screen', duration: 30, isIPad: true },
 ];
 
 // Complete tier system
@@ -123,9 +126,9 @@ export const REWARD_TIERS: RewardTier[] = [
   },
   {
     tier: 4,
-    name: 'Big',
-    subtitle: 'iPad eligible',
-    emoji: '📱',
+    name: 'Creepy Zone',
+    subtitle: 'Huggy Wuggy awaits!',
+    emoji: '🧸',
     tokenCost: 10,
     frequency: 'uncommon',
     color: 'bg-primary',
@@ -133,9 +136,9 @@ export const REWARD_TIERS: RewardTier[] = [
   },
   {
     tier: 5,
-    name: 'Pinnacle',
-    subtitle: 'Boss level',
-    emoji: '👑',
+    name: 'Monster Lair',
+    subtitle: 'Boss level unlocked!',
+    emoji: '👹',
     tokenCost: 15,
     frequency: 'rare',
     color: 'bg-token',
@@ -211,6 +214,6 @@ export function getRewardsByTier(tier: 1 | 2 | 3 | 4 | 5): TierReward[] {
 export const TOKEN_MILESTONES = [
   { tokens: 3, tier: 2, label: 'Tier 2', emoji: '🌟' },
   { tokens: 6, tier: 3, label: 'Tier 3', emoji: '🎯' },
-  { tokens: 10, tier: 4, label: 'iPad!', emoji: '📱' },
-  { tokens: 15, tier: 5, label: 'Boss Level', emoji: '👑' },
+  { tokens: 10, tier: 4, label: 'Creepy Zone!', emoji: '🧸' },
+  { tokens: 15, tier: 5, label: 'Monster Lair!', emoji: '👹' },
 ];
