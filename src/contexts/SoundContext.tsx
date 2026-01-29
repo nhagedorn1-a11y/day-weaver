@@ -5,6 +5,7 @@ interface SoundSettings {
   voiceURI: string;
   speechRate: number;
   speechPitch: number;
+  phonemesEnabled: boolean; // Toggle for phoneme sounds
 }
 
 interface SoundContextType {
@@ -163,6 +164,7 @@ const DEFAULT_SETTINGS: SoundSettings = {
   voiceURI: '',
   speechRate: 0.75,
   speechPitch: 1.0,
+  phonemesEnabled: true, // Default on
 };
 
 export function SoundProvider({ children }: { children: ReactNode }) {
@@ -270,7 +272,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, [playTone]);
 
   const speakPhoneme = useCallback((phoneme: string) => {
-    if (!soundscape.isEnabled) return;
+    if (!soundscape.isEnabled || !settings.phonemesEnabled) return;
     if (!('speechSynthesis' in window)) {
       playTap();
       return;

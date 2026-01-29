@@ -81,7 +81,30 @@ export function SoundSettings() {
             </button>
           </div>
 
-          {isEnabled && (
+          {/* Phoneme Sounds Toggle */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
+            <div>
+              <p className="font-medium">Phoneme Sounds</p>
+              <p className="text-sm text-muted-foreground">Speak letter sounds on tap</p>
+            </div>
+            <button
+              onClick={() => setSettings({ phonemesEnabled: !settings.phonemesEnabled })}
+              className={`
+                w-14 h-8 rounded-full transition-colors relative
+                ${settings.phonemesEnabled ? 'bg-primary' : 'bg-muted-foreground/30'}
+              `}
+            >
+              <div 
+                className={`
+                  absolute top-1 w-6 h-6 rounded-full bg-white shadow-md
+                  transition-transform
+                  ${settings.phonemesEnabled ? 'translate-x-7' : 'translate-x-1'}
+                `}
+              />
+            </button>
+          </div>
+
+          {isEnabled && settings.phonemesEnabled && (
             <>
               {/* Volume */}
               <div className="space-y-3">
