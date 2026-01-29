@@ -33,7 +33,8 @@ import { morningRoutine, afterSchoolRoutine, bedtimeRoutine, rewards } from '@/d
 import { appModules } from '@/data/appContent';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Shield, Menu, Plus, List, LayoutGrid, LogIn, User, BookOpen } from 'lucide-react';
+import { Shield, Menu, Plus, List, LayoutGrid, LogIn, User, BookOpen, TrendingUp } from 'lucide-react';
+import { ProgressHub } from '@/components/dashboard/ProgressHub';
 
 const allTasks: Task[] = [...morningRoutine, ...afterSchoolRoutine, ...bedtimeRoutine].map((t, i) => ({
   ...t,
@@ -50,13 +51,13 @@ const microGoals: Record<string, string> = {
   'backpack': 'Just find your bag',
 };
 
-type ViewMode = 'focus' | 'schedule';
+type ViewMode = 'progress' | 'schedule' | 'tasks';
 
 const IndexContent = () => {
   const navigate = useNavigate();
   const { celebrate, encourage, calm: setCompanionCalm } = useCompanion();
   const [mode, setMode] = useState<UserMode>('child');
-  const [viewMode, setViewMode] = useState<ViewMode>('focus');
+  const [viewMode, setViewMode] = useState<ViewMode>('progress');
   const [currentModule, setCurrentModule] = useState<AppModule>('today');
   const [showModuleMenu, setShowModuleMenu] = useState(false);
   const [showScheduleBuilder, setShowScheduleBuilder] = useState(false);
@@ -299,15 +300,26 @@ const IndexContent = () => {
         <div className="px-5 flex items-center gap-2">
           <div className="flex-1 flex bg-muted rounded-xl p-1">
             <button
-              onClick={() => setViewMode('focus')}
+              onClick={() => setViewMode('progress')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
-                viewMode === 'focus' 
+                viewMode === 'progress' 
+                  ? 'bg-background shadow-sm text-foreground' 
+                  : 'text-muted-foreground'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              Progress
+            </button>
+            <button
+              onClick={() => setViewMode('tasks')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                viewMode === 'tasks' 
                   ? 'bg-background shadow-sm text-foreground' 
                   : 'text-muted-foreground'
               }`}
             >
               <LayoutGrid className="w-4 h-4" />
-              Focus
+              Tasks
             </button>
             <button
               onClick={() => setViewMode('schedule')}
@@ -333,7 +345,15 @@ const IndexContent = () => {
         </div>
 
         {/* Main Content based on view mode */}
-        {viewMode === 'focus' ? (
+        {viewMode === 'progress' ? (
+          <div className="px-5">
+            <ProgressHub 
+              onNavigateToModule={(moduleId) => setCurrentModule(moduleId as AppModule)}
+              tokensEarned={tokensEarned}
+              tokensGoal={TOKENS_GOAL}
+            />
+          </div>
+        ) : viewMode === 'tasks' ? (
           <>
             {/* Now/Next/Later - the main focus */}
             <div className="px-5">
