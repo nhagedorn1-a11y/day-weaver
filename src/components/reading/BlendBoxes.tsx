@@ -16,7 +16,7 @@ export function BlendBoxes({ phonemes, word, onComplete, showWord = false }: Ble
   const [blendProgress, setBlendProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [showError, setShowError] = useState(false);
-  const { playTap, playBlend, playComplete } = useSound();
+  const { speakPhoneme, speakWord, playBlend, playComplete } = useSound();
 
   const allTapped = tappedPhonemes.size === phonemes.length;
 
@@ -25,7 +25,7 @@ export function BlendBoxes({ phonemes, word, onComplete, showWord = false }: Ble
 
     // Must tap in sequence for OG method
     if (index === currentExpected) {
-      playTap(); // Play tap sound on correct tap
+      speakPhoneme(phonemes[index]); // Speak the phoneme sound
       const newTapped = new Set(tappedPhonemes);
       newTapped.add(index);
       setTappedPhonemes(newTapped);
@@ -36,7 +36,7 @@ export function BlendBoxes({ phonemes, word, onComplete, showWord = false }: Ble
       setShowError(true);
       setTimeout(() => setShowError(false), 800);
     }
-  }, [currentExpected, tappedPhonemes, isBlending, isComplete, playTap]);
+  }, [currentExpected, tappedPhonemes, isBlending, isComplete, speakPhoneme, phonemes]);
 
   const handleBlend = useCallback(() => {
     setIsBlending(true);
@@ -52,10 +52,11 @@ export function BlendBoxes({ phonemes, word, onComplete, showWord = false }: Ble
         clearInterval(interval);
         setIsComplete(true);
         playComplete(); // Play completion sound
+        speakWord(word); // Speak the blended word
         onComplete?.();
       }
     }, 50);
-  }, [phonemes.length, onComplete, playBlend, playComplete]);
+  }, [phonemes.length, word, onComplete, playBlend, playComplete, speakWord]);
 
   const handleReset = useCallback(() => {
     setTappedPhonemes(new Set());

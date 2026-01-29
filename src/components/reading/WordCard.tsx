@@ -23,7 +23,7 @@ export function WordCard({
   const [tappedPhonemes, setTappedPhonemes] = useState<Set<number>>(new Set());
   const [showingCorrection, setShowingCorrection] = useState(false);
   const [correctionStep, setCorrectionStep] = useState<CorrectionStep>('myTurn');
-  const { playTap, playReveal, playCorrect, playComplete } = useSound();
+  const { speakPhoneme, playReveal, playCorrect, playComplete, playTap } = useSound();
 
   const handleReveal = () => {
     playReveal(); // Play reveal sound
@@ -36,7 +36,7 @@ export function WordCard({
 
   const handlePhonemeTap = (index: number) => {
     if (!tappedPhonemes.has(index)) {
-      playTap(); // Play tap sound
+      speakPhoneme(phonemes[index]); // Speak the phoneme sound
       const newTapped = new Set(tappedPhonemes);
       newTapped.add(index);
       setTappedPhonemes(newTapped);
