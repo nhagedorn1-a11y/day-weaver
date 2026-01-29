@@ -32,7 +32,7 @@ export const FEELINGS_MAP = [
   { feeling: 'just right', emoji: '😊', need: 'none', suggestion: 'Your body feels good!' },
 ];
 
-// 6 Breathing exercises
+// 6 Breathing exercises with distinct visual frames
 export const breathingExercises: BreathingExercise[] = [
   {
     id: 'balloon-breaths',
@@ -42,6 +42,20 @@ export const breathingExercises: BreathingExercise[] = [
     pattern: { inhale: 4, exhale: 6 },
     visualType: 'balloon',
     difficulty: 1,
+    // Distinct visual for each second of the breath cycle
+    visualFrames: [
+      { phase: 'rest', emoji: '🎈', size: 20, color: '#FF6B6B' },
+      { phase: 'inhale', emoji: '🎈', size: 35, color: '#FF8E8E' },
+      { phase: 'inhale', emoji: '🎈', size: 50, color: '#FFA5A5' },
+      { phase: 'inhale', emoji: '🎈', size: 65, color: '#FFBDBD' },
+      { phase: 'inhale', emoji: '🎈', size: 80, color: '#FFD5D5' },
+      { phase: 'exhale', emoji: '🎈', size: 70, color: '#FFBDBD' },
+      { phase: 'exhale', emoji: '🎈', size: 55, color: '#FFA5A5' },
+      { phase: 'exhale', emoji: '🎈', size: 40, color: '#FF8E8E' },
+      { phase: 'exhale', emoji: '🎈', size: 30, color: '#FF7777' },
+      { phase: 'exhale', emoji: '🎈', size: 25, color: '#FF6B6B' },
+      { phase: 'exhale', emoji: '🎈', size: 20, color: '#FF6B6B' },
+    ],
   },
   {
     id: 'box-breathing',
@@ -51,6 +65,25 @@ export const breathingExercises: BreathingExercise[] = [
     pattern: { inhale: 4, hold: 4, exhale: 4, holdAfter: 4 },
     visualType: 'box',
     difficulty: 2,
+    // Position around the box for each second
+    visualFrames: [
+      { phase: 'inhale', position: { x: 0, y: 0 }, side: 'top', progress: 0 },
+      { phase: 'inhale', position: { x: 25, y: 0 }, side: 'top', progress: 25 },
+      { phase: 'inhale', position: { x: 50, y: 0 }, side: 'top', progress: 50 },
+      { phase: 'inhale', position: { x: 75, y: 0 }, side: 'top', progress: 75 },
+      { phase: 'hold', position: { x: 100, y: 0 }, side: 'right', progress: 0 },
+      { phase: 'hold', position: { x: 100, y: 33 }, side: 'right', progress: 33 },
+      { phase: 'hold', position: { x: 100, y: 66 }, side: 'right', progress: 66 },
+      { phase: 'hold', position: { x: 100, y: 100 }, side: 'right', progress: 100 },
+      { phase: 'exhale', position: { x: 100, y: 100 }, side: 'bottom', progress: 0 },
+      { phase: 'exhale', position: { x: 75, y: 100 }, side: 'bottom', progress: 25 },
+      { phase: 'exhale', position: { x: 50, y: 100 }, side: 'bottom', progress: 50 },
+      { phase: 'exhale', position: { x: 25, y: 100 }, side: 'bottom', progress: 75 },
+      { phase: 'holdAfter', position: { x: 0, y: 100 }, side: 'left', progress: 0 },
+      { phase: 'holdAfter', position: { x: 0, y: 66 }, side: 'left', progress: 33 },
+      { phase: 'holdAfter', position: { x: 0, y: 33 }, side: 'left', progress: 66 },
+      { phase: 'holdAfter', position: { x: 0, y: 0 }, side: 'left', progress: 100 },
+    ],
   },
   {
     id: 'dragon-breath',
@@ -60,6 +93,21 @@ export const breathingExercises: BreathingExercise[] = [
     pattern: { inhale: 3, exhale: 8 },
     visualType: 'dragon',
     difficulty: 1,
+    // Dragon animation frames
+    visualFrames: [
+      { phase: 'rest', emoji: '🐉', state: 'calm', fireLevel: 0 },
+      { phase: 'inhale', emoji: '🐉', state: 'inhaling', fireLevel: 0, chest: 'expanding' },
+      { phase: 'inhale', emoji: '🐉', state: 'inhaling', fireLevel: 0, chest: 'big' },
+      { phase: 'inhale', emoji: '🐉', state: 'full', fireLevel: 0, chest: 'full' },
+      { phase: 'exhale', emoji: '🔥', state: 'fire', fireLevel: 100, flame: 'big' },
+      { phase: 'exhale', emoji: '🔥', state: 'fire', fireLevel: 85, flame: 'medium-large' },
+      { phase: 'exhale', emoji: '🔥', state: 'fire', fireLevel: 70, flame: 'medium' },
+      { phase: 'exhale', emoji: '🔥', state: 'fire', fireLevel: 55, flame: 'medium-small' },
+      { phase: 'exhale', emoji: '💨', state: 'smoke', fireLevel: 40, flame: 'small' },
+      { phase: 'exhale', emoji: '💨', state: 'smoke', fireLevel: 25, flame: 'tiny' },
+      { phase: 'exhale', emoji: '💨', state: 'smoke', fireLevel: 10, flame: 'wisps' },
+      { phase: 'exhale', emoji: '✨', state: 'done', fireLevel: 0, flame: 'none' },
+    ],
   },
   {
     id: 'wave-breath',
@@ -69,6 +117,17 @@ export const breathingExercises: BreathingExercise[] = [
     pattern: { inhale: 4, exhale: 4 },
     visualType: 'wave',
     difficulty: 1,
+    // Wave height animation
+    visualFrames: [
+      { phase: 'inhale', emoji: '🌊', height: 10, direction: 'rising' },
+      { phase: 'inhale', emoji: '🌊', height: 30, direction: 'rising' },
+      { phase: 'inhale', emoji: '🌊', height: 55, direction: 'rising' },
+      { phase: 'inhale', emoji: '🌊', height: 80, direction: 'peak' },
+      { phase: 'exhale', emoji: '🌊', height: 65, direction: 'falling' },
+      { phase: 'exhale', emoji: '🌊', height: 45, direction: 'falling' },
+      { phase: 'exhale', emoji: '🌊', height: 25, direction: 'falling' },
+      { phase: 'exhale', emoji: '🌊', height: 10, direction: 'calm' },
+    ],
   },
   {
     id: 'flower-breath',
@@ -78,6 +137,18 @@ export const breathingExercises: BreathingExercise[] = [
     pattern: { inhale: 3, exhale: 5 },
     visualType: 'flower',
     difficulty: 1,
+    // Flower and dandelion animation
+    visualFrames: [
+      { phase: 'inhale', emoji: '🌸', state: 'smelling', petalOpen: 30 },
+      { phase: 'inhale', emoji: '🌷', state: 'smelling', petalOpen: 60 },
+      { phase: 'inhale', emoji: '🌺', state: 'full-smell', petalOpen: 100 },
+      { phase: 'switch', emoji: '🌻', state: 'dandelion', seedsRemaining: 100 },
+      { phase: 'exhale', emoji: '🌬️', state: 'blowing', seedsRemaining: 80 },
+      { phase: 'exhale', emoji: '🌬️', state: 'blowing', seedsRemaining: 55 },
+      { phase: 'exhale', emoji: '🌬️', state: 'blowing', seedsRemaining: 30 },
+      { phase: 'exhale', emoji: '✨', state: 'floating', seedsRemaining: 10 },
+      { phase: 'exhale', emoji: '✨', state: 'done', seedsRemaining: 0 },
+    ],
   },
   {
     id: 'calm-countdown',
@@ -87,6 +158,19 @@ export const breathingExercises: BreathingExercise[] = [
     pattern: { inhale: 3, hold: 2, exhale: 4 },
     visualType: 'box',
     difficulty: 2,
+    // Countdown number display
+    visualFrames: [
+      { phase: 'inhale', number: 5, emoji: '5️⃣', calmLevel: 20 },
+      { phase: 'inhale', number: 5, emoji: '5️⃣', calmLevel: 25 },
+      { phase: 'inhale', number: 5, emoji: '5️⃣', calmLevel: 30 },
+      { phase: 'hold', number: 4, emoji: '4️⃣', calmLevel: 40 },
+      { phase: 'hold', number: 4, emoji: '4️⃣', calmLevel: 45 },
+      { phase: 'exhale', number: 3, emoji: '3️⃣', calmLevel: 55 },
+      { phase: 'exhale', number: 3, emoji: '3️⃣', calmLevel: 60 },
+      { phase: 'exhale', number: 2, emoji: '2️⃣', calmLevel: 70 },
+      { phase: 'exhale', number: 1, emoji: '1️⃣', calmLevel: 85 },
+      { phase: 'done', number: 0, emoji: '😌', calmLevel: 100 },
+    ],
   },
 ];
 

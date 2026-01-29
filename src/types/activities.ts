@@ -38,6 +38,13 @@ export interface ScienceActivity extends Activity {
   prediction?: string;
   observation?: string;
   labCardId?: string;
+  visualSteps?: Array<{
+    emoji: string;
+    phase?: string;
+    planet?: string;
+    label: string;
+    size?: string;
+  }>;
 }
 
 // Body/Regulation activities
@@ -62,6 +69,25 @@ export interface BreathingExercise {
   };
   visualType: 'balloon' | 'box' | 'dragon' | 'wave' | 'flower';
   difficulty: 1 | 2 | 3;
+  visualFrames?: Array<{
+    phase: string;
+    emoji?: string;
+    size?: number;
+    color?: string;
+    position?: { x: number; y: number };
+    side?: string;
+    progress?: number;
+    state?: string;
+    fireLevel?: number;
+    flame?: string;
+    chest?: string;
+    height?: number;
+    direction?: string;
+    petalOpen?: number;
+    seedsRemaining?: number;
+    number?: number;
+    calmLevel?: number;
+  }>;
 }
 
 // Micro-break
