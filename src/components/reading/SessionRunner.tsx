@@ -260,7 +260,7 @@ function WarmupStep({ words, wordList, currentIndex, onItemComplete, isComplete 
 }
 
 interface ReviewStepProps {
-  graphemes: { id: string; grapheme: string; phoneme: string; isDigraph: boolean }[];
+  graphemes: { id: string; grapheme: string; phoneme: string; keyword?: string; keywordEmoji?: string; isDigraph: boolean }[];
   currentIndex: number;
   onItemComplete: () => void;
   isComplete: boolean;
@@ -298,9 +298,12 @@ function ReviewStep({ graphemes, currentIndex, onItemComplete, isComplete }: Rev
             key={card.id}
             grapheme={card.grapheme}
             phoneme={card.phoneme}
+            keyword={card.keyword}
+            keywordEmoji={card.keywordEmoji}
             isDigraph={card.isDigraph}
             size="medium"
             isActive={tappedCards.has(idx)}
+            showKeyword={true}
             onTap={() => handleCardTap(idx)}
           />
         ))}
@@ -376,9 +379,12 @@ function TeachStep({ lesson, phase, onPhaseNext, onTraceComplete, isComplete }: 
         <GraphemeCard
           grapheme={newGrapheme.grapheme}
           phoneme={newGrapheme.phoneme}
+          keyword={newGrapheme.keyword}
+          keywordEmoji={newGrapheme.keywordEmoji}
           isDigraph={newGrapheme.isDigraph}
           size="large"
           showPhoneme={phase !== 'intro'}
+          showKeyword={true}
           isActive={phase === 'youDo' || phase === 'trace'}
         />
       </div>

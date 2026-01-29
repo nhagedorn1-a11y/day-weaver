@@ -4,7 +4,8 @@ export interface GraphemeCard {
   id: string;
   grapheme: string; // The letter(s): "a", "sh", "ch"
   phoneme: string; // The sound: "/ă/", "/sh/"
-  keyword?: string; // Optional keyword: "apple" (no pictures)
+  keyword: string; // Keyword for visual association: "apple"
+  keywordEmoji: string; // Visual cue emoji: "🍎"
   isDigraph: boolean;
 }
 
