@@ -60,12 +60,29 @@ export const reassuranceLimiterScript =
   "I can't answer that again, but I can help you cope. Let's try something else.";
 
 // Naughty Mr. Alien scripts (OCD externalization)
+// Based on assessment: personification helps Jack externalize intrusive thoughts
 export const alienScripts = [
   "That's just Naughty Mr. Alien talking!",
   "Mr. Alien is being tricky again.",
   "We don't have to listen to Mr. Alien.",
   "Mr. Alien wants us to worry, but we're brave.",
   "Bye bye, Mr. Alien. We're not playing your game.",
+];
+
+// Sensory accommodations (from assessment: hypersensitive to noise, under-responsive to pain/temp)
+export const sensoryReminders = {
+  headphones: { icon: '🎧', prompt: 'Need headphones?' },
+  temperature: { icon: '🌡️', prompt: 'Check: too hot or cold?' },
+  heavyWork: { icon: '💪', prompt: 'Body needs input?' },
+};
+
+// Jack's interests for engagement (from assessment)
+export const childInterests = [
+  { id: 'poppy', name: 'Poppy Playtime', emoji: '🧸' },
+  { id: 'alphabet', name: 'Alphabet Lore', emoji: '🔤' },
+  { id: 'creepy', name: 'Creepy toys', emoji: '👻' },
+  { id: 'monsters', name: 'Monsters', emoji: '👾' },
+  { id: 'nerf', name: 'Nerf', emoji: '🔫' },
 ];
 
 export const heavyWorkActivities: HeavyWorkActivity[] = [
