@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback, TouchEvent, MouseEvent } from 'react';
 import { RefreshCw, Check } from 'lucide-react';
+import { useSound } from '@/contexts/SoundContext';
 
 interface TracePoint {
   x: number;
@@ -22,6 +23,7 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
   const [points, setPoints] = useState<TracePoint[]>([]);
   const [isComplete, setIsComplete] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const { playTrace } = useSound();
 
   // Draw guide letter with dotted outline
   useEffect(() => {
@@ -150,12 +152,13 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     
     if (checkCompletion()) {
       setIsComplete(true);
+      playTrace(); // Play trace complete sound
       onComplete?.();
     } else if (points.length > 10) {
       // Not enough coverage - increment attempts
       setAttempts(prev => prev + 1);
     }
-  }, [checkCompletion, onComplete, points.length]);
+  }, [checkCompletion, onComplete, points.length, playTrace]);
 
   const handleClear = () => {
     setPoints([]);

@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ReadingLesson, SessionStep, SessionState } from '@/types/reading';
+import { useState, useCallback, useMemo } from 'react';
+import { ReadingLesson, SessionStep } from '@/types/reading';
 import { ProgressRail } from './ProgressRail';
 import { GraphemeCard } from './GraphemeCard';
 import { BlendBoxes } from './BlendBoxes';
 import { WordCard } from './WordCard';
 import { TracePad } from './TracePad';
 import { graphemeCards } from '@/data/readingLessons';
-import { ArrowRight, Book, Star, MessageSquare, RefreshCw, Hand, Eye, Ear } from 'lucide-react';
+import { ArrowRight, Book, Star, Hand, Eye, Ear } from 'lucide-react';
+import { useSound } from '@/contexts/SoundContext';
 
 interface SessionRunnerProps {
   lesson: ReadingLesson;
@@ -36,6 +37,9 @@ export function SessionRunner({
   // Error tracking for adaptive pacing
   const [errorCount, setErrorCount] = useState(0);
   const [consecutiveCorrect, setConsecutiveCorrect] = useState(0);
+  
+  // Sound effects
+  const { playComplete, playTokenEarned, playTap, playCorrect } = useSound();
 
   // Calculate items for each step
   const stepItems = useMemo(() => ({
@@ -49,6 +53,7 @@ export function SessionRunner({
     const currentIndex = STEPS.indexOf(currentStep);
     
     if (currentIndex < STEPS.length - 1) {
+      playComplete(); // Play step complete sound
       setCompletedSteps(prev => [...prev, currentStep]);
       setCurrentStep(STEPS[currentIndex + 1]);
       setItemIndex(0);
@@ -56,14 +61,17 @@ export function SessionRunner({
       setConsecutiveCorrect(0);
     } else {
       // Session complete
+      playComplete(); // Final completion sound
+      playTokenEarned(); // Token earned celebration
       const durationSeconds = Math.floor((Date.now() - startTime) / 1000);
       const bonusTokens = errorCount === 0 ? 2 : 1; // Perfect score bonus
       onComplete(tokensEarned + bonusTokens, durationSeconds);
     }
-  }, [currentStep, tokensEarned, startTime, onComplete, errorCount]);
+  }, [currentStep, tokensEarned, startTime, onComplete, errorCount, playComplete, playTokenEarned]);
 
   const handleItemComplete = useCallback((wasCorrect: boolean = true) => {
     if (wasCorrect) {
+      playCorrect(); // Play success sound for correct item
       setConsecutiveCorrect(prev => prev + 1);
       setTokensEarned(prev => prev + 0.5);
     } else {
@@ -71,15 +79,16 @@ export function SessionRunner({
       setConsecutiveCorrect(0);
     }
     setItemIndex(prev => prev + 1);
-  }, []);
+  }, [playCorrect]);
 
   const handleTeachPhaseNext = useCallback(() => {
+    playTap(); // Play tap sound for phase progression
     const phases: typeof teachPhase[] = ['intro', 'iDo', 'weDo', 'youDo', 'trace'];
     const currentIdx = phases.indexOf(teachPhase);
     if (currentIdx < phases.length - 1) {
       setTeachPhase(phases[currentIdx + 1]);
     }
-  }, [teachPhase]);
+  }, [teachPhase, playTap]);
 
   // Check if step is complete
   const isStepComplete = useMemo(() => {
