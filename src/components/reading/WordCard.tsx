@@ -23,7 +23,7 @@ export function WordCard({
   const [tappedPhonemes, setTappedPhonemes] = useState<Set<number>>(new Set());
   const [showingCorrection, setShowingCorrection] = useState(false);
   const [correctionStep, setCorrectionStep] = useState<CorrectionStep>('myTurn');
-  const { speakPhoneme, playReveal, playCorrect, playComplete, playTap } = useSound();
+  const { speakPhoneme, speakWord, playReveal, playCorrect, playComplete, playTap } = useSound();
 
   const handleReveal = () => {
     playReveal(); // Play reveal sound
@@ -171,10 +171,17 @@ export function WordCard({
       {/* Revealed state - see word, can start tapping */}
       {phase === 'revealed' && (
         <div className="animate-fade-in">
-          <div className="font-display text-5xl font-bold mb-4">{word}</div>
+          {/* Tap on word to hear it spoken */}
+          <button 
+            onClick={() => speakWord(word)}
+            className="font-display text-5xl font-bold mb-4 hover:text-primary transition-colors"
+            aria-label={`Hear the word ${word}`}
+          >
+            {word}
+          </button>
           
           <p className="text-sm text-muted-foreground mb-4">
-            Tap the sounds, then blend them together
+            Tap the word to hear it, then tap sounds to practice
           </p>
 
           <button
@@ -213,8 +220,14 @@ export function WordCard({
             })}
           </div>
 
-          {/* Word display */}
-          <div className="font-display text-4xl font-bold">{word}</div>
+          {/* Word display - tap to hear the whole word */}
+          <button 
+            onClick={() => speakWord(word)}
+            className="font-display text-4xl font-bold hover:text-primary transition-colors"
+            aria-label={`Hear the word ${word}`}
+          >
+            {word}
+          </button>
 
           {/* Action buttons - only show when all tapped */}
           {allPhonemesTapped && (
