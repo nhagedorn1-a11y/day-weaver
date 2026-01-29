@@ -116,6 +116,54 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_progress: {
+        Row: {
+          created_at: string
+          current_lesson_id: string
+          current_lesson_index: number | null
+          id: string
+          last_session_date: string | null
+          level: string | null
+          session_minutes: number | null
+          streak: number | null
+          subject: string
+          total_minutes: number | null
+          total_problems: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_lesson_id?: string
+          current_lesson_index?: number | null
+          id?: string
+          last_session_date?: string | null
+          level?: string | null
+          session_minutes?: number | null
+          streak?: number | null
+          subject: string
+          total_minutes?: number | null
+          total_problems?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_lesson_id?: string
+          current_lesson_index?: number | null
+          id?: string
+          last_session_date?: string | null
+          level?: string | null
+          session_minutes?: number | null
+          streak?: number | null
+          subject?: string
+          total_minutes?: number | null
+          total_problems?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -138,6 +186,78 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_parent?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      schedules: {
+        Row: {
+          completed: boolean | null
+          created_at: string
+          duration: number | null
+          icon: string
+          id: string
+          schedule_date: string
+          scheduled_time: string | null
+          sort_order: number | null
+          title: string
+          tokens: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string
+          duration?: number | null
+          icon?: string
+          id?: string
+          schedule_date?: string
+          scheduled_time?: string | null
+          sort_order?: number | null
+          title: string
+          tokens?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string
+          duration?: number | null
+          icon?: string
+          id?: string
+          schedule_date?: string
+          scheduled_time?: string | null
+          sort_order?: number | null
+          title?: string
+          tokens?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      token_balances: {
+        Row: {
+          balance: number | null
+          created_at: string
+          id: string
+          lifetime_earned: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number | null
+          created_at?: string
+          id?: string
+          lifetime_earned?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number | null
+          created_at?: string
+          id?: string
+          lifetime_earned?: number | null
           updated_at?: string
           user_id?: string
         }

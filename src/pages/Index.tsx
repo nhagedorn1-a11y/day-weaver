@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserMode, Task, AppModule } from '@/types/jackos';
 import { Header } from '@/components/Header';
@@ -33,8 +33,10 @@ import { morningRoutine, afterSchoolRoutine, bedtimeRoutine, rewards } from '@/d
 import { appModules } from '@/data/appContent';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Shield, Menu, Plus, List, LayoutGrid, LogIn, User, BookOpen, TrendingUp } from 'lucide-react';
+import { Shield, Menu, Plus, List, LayoutGrid, LogIn, User, BookOpen, TrendingUp, Cloud, CloudOff } from 'lucide-react';
 import { ProgressHub } from '@/components/dashboard/ProgressHub';
+import { useCloudSchedule } from '@/hooks/useCloudSchedule';
+import { useCloudProgress } from '@/hooks/useCloudProgress';
 
 const allTasks: Task[] = [...morningRoutine, ...afterSchoolRoutine, ...bedtimeRoutine].map((t, i) => ({
   ...t,
@@ -61,8 +63,8 @@ const IndexContent = () => {
   const [currentModule, setCurrentModule] = useState<AppModule>('today');
   const [showModuleMenu, setShowModuleMenu] = useState(false);
   const [showScheduleBuilder, setShowScheduleBuilder] = useState(false);
-  const [tasks, setTasks] = useState<Task[]>(allTasks);
-  const [tokensEarned, setTokensEarned] = useState(0);
+  const [localTasks, setLocalTasks] = useState<Task[]>(allTasks);
+  const [localTokens, setLocalTokens] = useState(0);
   const [showCalmToolkit, setShowCalmToolkit] = useState(false);
   const [showBraveryTimer, setShowBraveryTimer] = useState(false);
   const [showDailySummary, setShowDailySummary] = useState(false);
@@ -76,6 +78,52 @@ const IndexContent = () => {
   const [isTaskLocked, setIsTaskLocked] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
   const [transitionSeconds, setTransitionSeconds] = useState(120);
+
+  // Cloud hooks - only active when logged in
+  const cloudSchedule = useCloudSchedule(user?.id ?? null);
+  const cloudProgress = useCloudProgress(user?.id ?? null);
+
+  // Use cloud data when logged in, local data otherwise
+  const isCloudEnabled = !!user;
+  const tasks = isCloudEnabled && cloudSchedule.tasks.length > 0 ? cloudSchedule.tasks : localTasks;
+  const tokensEarned = isCloudEnabled ? cloudProgress.tokenBalance : localTokens;
+
+  // Unified setters that sync to cloud when logged in
+  const setTasks = useCallback((updater: Task[] | ((prev: Task[]) => Task[])) => {
+    if (typeof updater === 'function') {
+      setLocalTasks(prev => {
+        const newTasks = updater(prev);
+        if (isCloudEnabled) {
+          cloudSchedule.reorderTasks(newTasks);
+        }
+        return newTasks;
+      });
+    } else {
+      setLocalTasks(updater);
+      if (isCloudEnabled) {
+        cloudSchedule.reorderTasks(updater);
+      }
+    }
+  }, [isCloudEnabled, cloudSchedule]);
+
+  const setTokensEarned = useCallback((updater: number | ((prev: number) => number)) => {
+    if (typeof updater === 'function') {
+      setLocalTokens(prev => {
+        const newTokens = updater(prev);
+        const diff = newTokens - prev;
+        if (isCloudEnabled && diff > 0) {
+          cloudProgress.addTokens(diff);
+        }
+        return newTokens;
+      });
+    } else {
+      const diff = updater - localTokens;
+      setLocalTokens(updater);
+      if (isCloudEnabled && diff > 0) {
+        cloudProgress.addTokens(diff);
+      }
+    }
+  }, [isCloudEnabled, cloudProgress, localTokens]);
 
   // Auth state
   useEffect(() => {
@@ -489,6 +537,16 @@ const IndexContent = () => {
             />
           </div>
           <div className="flex items-center gap-2">
+            {/* Cloud sync indicator */}
+            {isCloudEnabled && (
+              <div 
+                className="w-8 h-8 rounded-lg bg-calm/10 flex items-center justify-center"
+                title="Cloud sync enabled"
+              >
+                <Cloud className="w-4 h-4 text-calm" />
+              </div>
+            )}
+            
             {user ? (
               <button
                 onClick={handleLogout}
