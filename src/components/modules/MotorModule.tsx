@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { WritingStage, ADLRoutine } from '@/types/jackos';
-import { adlRoutines, letterOrder } from '@/data/appContent';
+import { WritingStage } from '@/types/jackos';
+import { ADLMission } from '@/types/activities';
+import { adlMissions } from '@/data/motorActivities';
+import { letterOrder } from '@/data/appContent';
 import { TracePad } from '@/components/reading/TracePad';
 import { ArrowLeft, Check, Star, ChevronRight, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,7 +26,7 @@ export function MotorModule({ onBack, onTokensEarned }: MotorModuleProps) {
   const [view, setView] = useState<MotorView>('home');
   const [currentLetterIndex, setCurrentLetterIndex] = useState(0);
   const [currentStage, setCurrentStage] = useState<WritingStage>('trace');
-  const [selectedADL, setSelectedADL] = useState<ADLRoutine | null>(null);
+  const [selectedADL, setSelectedADL] = useState<ADLMission | null>(null);
   const [adlStep, setAdlStep] = useState(0);
   const [completedLetters, setCompletedLetters] = useState<string[]>([]);
 
@@ -46,10 +48,10 @@ export function MotorModule({ onBack, onTokensEarned }: MotorModuleProps) {
   const handleADLStepComplete = () => {
     if (!selectedADL) return;
 
-    onTokensEarned(selectedADL.tokensPerStep);
-    toast.success(`+${selectedADL.tokensPerStep} token for this step!`);
+    onTokensEarned(selectedADL.tokenPerStep);
+    toast.success(`+${selectedADL.tokenPerStep} token for this step!`);
 
-    if (adlStep < selectedADL.microSteps.length - 1) {
+    if (adlStep < selectedADL.steps.length - 1) {
       setAdlStep(prev => prev + 1);
     } else {
       toast.success('You did it! All steps complete! 🎉');
@@ -189,10 +191,10 @@ export function MotorModule({ onBack, onTokensEarned }: MotorModuleProps) {
     );
   }
 
-  // ADL steps
+  // ADL steps with visual progression
   if (view === 'adlSteps' && selectedADL) {
-    const currentStep = selectedADL.microSteps[adlStep];
-    const progress = ((adlStep + 1) / selectedADL.microSteps.length) * 100;
+    const currentStepData = selectedADL.steps[adlStep];
+    const progress = ((adlStep + 1) / selectedADL.steps.length) * 100;
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -209,11 +211,11 @@ export function MotorModule({ onBack, onTokensEarned }: MotorModuleProps) {
           </button>
           <div className="flex-1">
             <h1 className="font-semibold text-lg">{selectedADL.title}</h1>
-            <span className="hw-label">Step {adlStep + 1} of {selectedADL.microSteps.length}</span>
+            <span className="hw-label">Step {adlStep + 1} of {selectedADL.steps.length}</span>
           </div>
           <div className="flex items-center gap-1">
             <Star className="w-5 h-5 text-token" />
-            <span className="font-mono text-sm">+{selectedADL.tokensPerStep}/step</span>
+            <span className="font-mono text-sm">+{selectedADL.tokenPerStep}/step</span>
           </div>
         </header>
 
@@ -221,23 +223,71 @@ export function MotorModule({ onBack, onTokensEarned }: MotorModuleProps) {
         <div className="px-4 pt-4">
           <div className="h-3 bg-muted rounded-full overflow-hidden">
             <div 
-              className="h-full bg-primary transition-all" 
+              className="h-full bg-primary transition-all duration-500" 
               style={{ width: `${progress}%` }} 
             />
           </div>
         </div>
 
+        {/* Step dots */}
+        <div className="flex justify-center gap-2 px-4 pt-4">
+          {selectedADL.steps.map((_, idx) => (
+            <div
+              key={idx}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                idx < adlStep 
+                  ? 'bg-calm scale-100' 
+                  : idx === adlStep 
+                    ? 'bg-primary scale-125' 
+                    : 'bg-muted scale-100'
+              }`}
+            />
+          ))}
+        </div>
+
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <span className="text-7xl mb-6">{selectedADL.icon}</span>
-          <h2 className="text-2xl font-bold mb-2">Step {adlStep + 1}</h2>
-          <p className="text-xl text-muted-foreground mb-8">{currentStep}</p>
+          {/* Large animated visual for current step */}
+          <div 
+            key={adlStep}
+            className="relative mb-6 animate-scale-in"
+          >
+            {/* Background glow */}
+            <div className="absolute inset-0 blur-3xl bg-primary/10 rounded-full" />
+            
+            {/* Main step visual */}
+            <div className="relative w-40 h-40 rounded-3xl bg-gradient-to-br from-card to-muted/50 border-4 border-primary/20 flex items-center justify-center shadow-lg">
+              <span 
+                className="text-8xl block animate-fade-in"
+                role="img"
+                aria-label={currentStepData.description}
+              >
+                {currentStepData.visualEmoji}
+              </span>
+            </div>
+          </div>
+
+          {/* Step number badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4 animate-fade-in">
+            <span className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+              {adlStep + 1}
+            </span>
+            <span className="text-sm font-medium text-primary">Step {adlStep + 1}</span>
+          </div>
+
+          {/* Instruction text */}
+          <h2 className="text-2xl font-bold mb-2 animate-fade-in">{currentStepData.instruction}</h2>
+          
+          {/* Description for context */}
+          <p className="text-muted-foreground text-sm mb-8 max-w-xs animate-fade-in">
+            {currentStepData.description}
+          </p>
 
           <button
             onClick={handleADLStepComplete}
-            className="giant-button w-full max-w-xs bg-calm text-calm-foreground"
+            className="giant-button w-full max-w-xs bg-calm text-calm-foreground animate-fade-in"
           >
             <Check className="w-8 h-8" />
-            <span>Done!</span>
+            <span>{adlStep === selectedADL.steps.length - 1 ? 'All Done!' : 'Done!'}</span>
           </button>
         </div>
       </div>
@@ -260,21 +310,21 @@ export function MotorModule({ onBack, onTokensEarned }: MotorModuleProps) {
             Practice everyday skills one step at a time. Earn tokens for each step!
           </p>
 
-          {adlRoutines.map((routine) => (
+          {adlMissions.map((mission) => (
             <button
-              key={routine.id}
+              key={mission.id}
               onClick={() => {
-                setSelectedADL(routine);
+                setSelectedADL(mission);
                 setAdlStep(0);
                 setView('adlSteps');
               }}
               className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card border-2 border-border hover:border-primary/50 transition-colors"
             >
-              <span className="text-4xl">{routine.icon}</span>
+              <span className="text-4xl">{mission.emoji}</span>
               <div className="flex-1 text-left">
-                <span className="font-semibold block">{routine.title}</span>
+                <span className="font-semibold block">{mission.title}</span>
                 <span className="text-sm text-muted-foreground">
-                  {routine.microSteps.length} steps • {routine.tokensPerStep} token each
+                  {mission.steps.length} steps • {mission.tokenPerStep} token each
                 </span>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />

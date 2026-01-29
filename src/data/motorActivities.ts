@@ -1,4 +1,4 @@
-import { MotorActivity, ADLMission, FineMotorGame } from '@/types/activities';
+import { MotorActivity, ADLMission, FineMotorGame, ADLStep } from '@/types/activities';
 
 export const MOTOR_LANES = [
   { id: 'fine-motor', name: 'Fine Motor Forge', emoji: '✋', color: 'bg-token' },
@@ -102,7 +102,17 @@ export const fineMotorGames: FineMotorGame[] = [
   },
 ];
 
-// ADL Missions (12)
+// Helper to create ADL step with full visual data
+function createStep(
+  instruction: string, 
+  visualCue: string, 
+  visualEmoji: string, 
+  description: string
+): ADLStep {
+  return { instruction, visualCue, visualEmoji, description, completed: false };
+}
+
+// ADL Missions (12) with detailed step visuals
 export const adlMissions: ADLMission[] = [
   {
     id: 'adl-socks',
@@ -112,11 +122,11 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 5,
     steps: [
-      { instruction: 'Find matching socks', visualCue: '👀🧦🧦', completed: false },
-      { instruction: 'Scrunch sock into a ball', visualCue: '✊🧦', completed: false },
-      { instruction: 'Put toes in first', visualCue: '🦶➡️🧦', completed: false },
-      { instruction: 'Pull sock up over heel', visualCue: '⬆️🦶', completed: false },
-      { instruction: 'Pull sock all the way up', visualCue: '🧦✨', completed: false },
+      createStep('Find matching socks', '👀🧦🧦', '👀', 'Two eyes looking at two socks to find a matching pair'),
+      createStep('Scrunch sock into a ball', '✊🧦', '✊', 'A hand squeezing the sock into a small ball shape'),
+      createStep('Put toes in first', '🦶➡️🧦', '🦶', 'Toes pointing toward the opening of the scrunched sock'),
+      createStep('Pull sock up over heel', '⬆️🦶', '⬆️', 'Arrow showing sock being pulled up over the heel'),
+      createStep('Pull sock all the way up', '🧦✨', '✨', 'Sock fully on foot with sparkles showing success'),
     ],
   },
   {
@@ -127,13 +137,13 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 3,
     steps: [
-      { instruction: 'Wet your toothbrush', visualCue: '💧🪥', completed: false },
-      { instruction: 'Put toothpaste on (pea size)', visualCue: '🟢🪥', completed: false },
-      { instruction: 'Brush top teeth outsides', visualCue: '⬆️😁', completed: false },
-      { instruction: 'Brush bottom teeth outsides', visualCue: '⬇️😁', completed: false },
-      { instruction: 'Brush chewing surfaces', visualCue: '↔️🦷', completed: false },
-      { instruction: 'Brush tongue gently', visualCue: '👅', completed: false },
-      { instruction: 'Rinse and spit', visualCue: '💦😮', completed: false },
+      createStep('Wet your toothbrush', '💧🪥', '🚰', 'Running water from faucet wetting a toothbrush'),
+      createStep('Put toothpaste on (pea size)', '🟢🪥', '🫛', 'Small pea-sized blob of toothpaste on brush bristles'),
+      createStep('Brush top teeth outsides', '⬆️😁', '😁', 'Smiling mouth showing top teeth being brushed on outside'),
+      createStep('Brush bottom teeth outsides', '⬇️😁', '🦷', 'Bottom teeth visible with toothbrush on outer surface'),
+      createStep('Brush chewing surfaces', '↔️🦷', '🔲', 'Top-down view of teeth showing flat chewing surfaces'),
+      createStep('Brush tongue gently', '👅', '👅', 'Tongue sticking out being gently brushed'),
+      createStep('Rinse and spit', '💦😮', '💦', 'Water being spit into sink'),
     ],
   },
   {
@@ -144,13 +154,13 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 5,
     steps: [
-      { instruction: 'Get your checklist', visualCue: '📋', completed: false },
-      { instruction: 'Find homework folder', visualCue: '📂', completed: false },
-      { instruction: 'Put folder in big pocket', visualCue: '📂➡️🎒', completed: false },
-      { instruction: 'Find lunch box', visualCue: '🥪', completed: false },
-      { instruction: 'Put lunch in bag', visualCue: '🥪➡️🎒', completed: false },
-      { instruction: 'Check water bottle', visualCue: '💧✅', completed: false },
-      { instruction: 'Zip it up!', visualCue: '🤐🎒', completed: false },
+      createStep('Get your checklist', '📋', '📋', 'Paper checklist with items to pack'),
+      createStep('Find homework folder', '📂', '📂', 'Colorful homework folder on desk'),
+      createStep('Put folder in big pocket', '📂➡️🎒', '🎒', 'Folder sliding into the main backpack pocket'),
+      createStep('Find lunch box', '🥪', '🥪', 'Lunch box with sandwich visible'),
+      createStep('Put lunch in bag', '🥪➡️🎒', '🍎', 'Lunch items going into backpack side pocket'),
+      createStep('Check water bottle', '💧✅', '🍶', 'Water bottle with checkmark showing it is filled'),
+      createStep('Zip it up!', '🤐🎒', '🔒', 'Backpack zipper being closed'),
     ],
   },
   {
@@ -161,12 +171,12 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 5,
     steps: [
-      { instruction: 'Find the top button', visualCue: '👀🔘', completed: false },
-      { instruction: 'Hold button with one hand', visualCue: '✊🔘', completed: false },
-      { instruction: 'Find the buttonhole', visualCue: '👀⭕', completed: false },
-      { instruction: 'Push button through hole', visualCue: '🔘➡️⭕', completed: false },
-      { instruction: 'Pull button all the way', visualCue: '🔘✅', completed: false },
-      { instruction: 'Move to next button', visualCue: '⬇️🔘', completed: false },
+      createStep('Find the top button', '👀🔘', '👔', 'Shirt collar with top button highlighted'),
+      createStep('Hold button with one hand', '✊🔘', '🤏', 'Thumb and finger pinching button'),
+      createStep('Find the buttonhole', '👀⭕', '⭕', 'Close-up of buttonhole opening in fabric'),
+      createStep('Push button through hole', '🔘➡️⭕', '➡️', 'Button halfway through the buttonhole'),
+      createStep('Pull button all the way', '🔘✅', '✅', 'Button fully through and fastened'),
+      createStep('Move to next button', '⬇️🔘', '⬇️', 'Arrow pointing down to the next button'),
     ],
   },
   {
@@ -177,13 +187,13 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 5,
     steps: [
-      { instruction: 'Cross the laces (make an X)', visualCue: '❌', completed: false },
-      { instruction: 'Pull one lace under', visualCue: '⬇️', completed: false },
-      { instruction: 'Pull both ends tight', visualCue: '↔️', completed: false },
-      { instruction: 'Make a bunny ear loop', visualCue: '🐰👂', completed: false },
-      { instruction: 'Wrap other lace around', visualCue: '🔄', completed: false },
-      { instruction: 'Push through the hole', visualCue: '➡️⭕', completed: false },
-      { instruction: 'Pull both loops tight', visualCue: '🎀✅', completed: false },
+      createStep('Cross the laces (make an X)', '❌', '✖️', 'Two shoelaces crossed over each other forming an X shape'),
+      createStep('Pull one lace under', '⬇️', '🔄', 'One lace being tucked under the X crossing'),
+      createStep('Pull both ends tight', '↔️', '💪', 'Both hands pulling laces outward to tighten'),
+      createStep('Make a bunny ear loop', '🐰👂', '🐰', 'One lace formed into a loop like a bunny ear'),
+      createStep('Wrap other lace around', '🔄', '🌀', 'Second lace wrapping around the bunny ear loop'),
+      createStep('Push through the hole', '➡️⭕', '👆', 'Finger pushing wrapped lace through the hole'),
+      createStep('Pull both loops tight', '🎀✅', '🎀', 'Finished bow with both loops pulled tight'),
     ],
   },
   {
@@ -194,11 +204,11 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 3,
     steps: [
-      { instruction: 'Hold jacket open', visualCue: '🧥↔️', completed: false },
-      { instruction: 'Find the zipper end', visualCue: '👀🔽', completed: false },
-      { instruction: 'Put pin in the slider', visualCue: '📍➡️', completed: false },
-      { instruction: 'Hold the bottom', visualCue: '✊⬇️', completed: false },
-      { instruction: 'Pull zipper up!', visualCue: '⬆️✨', completed: false },
+      createStep('Hold jacket open', '🧥↔️', '🧥', 'Jacket held open with both sides visible'),
+      createStep('Find the zipper end', '👀🔽', '🔽', 'Bottom of zipper with the insertion pin'),
+      createStep('Put pin in the slider', '📍➡️', '📍', 'Pin being inserted into the zipper slider'),
+      createStep('Hold the bottom', '✊⬇️', '✊', 'Hand holding the bottom of the zipper steady'),
+      createStep('Pull zipper up!', '⬆️✨', '⬆️', 'Zipper slider being pulled upward to close'),
     ],
   },
   {
@@ -209,11 +219,11 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 3,
     steps: [
-      { instruction: 'Hold the brush', visualCue: '✊🪮', completed: false },
-      { instruction: 'Start at the ends', visualCue: '⬇️🪮', completed: false },
-      { instruction: 'Work up to the top', visualCue: '⬆️🪮', completed: false },
-      { instruction: 'Brush the sides', visualCue: '↔️🪮', completed: false },
-      { instruction: 'Check the back', visualCue: '🔙🪮', completed: false },
+      createStep('Hold the brush', '✊🪮', '🪮', 'Hand gripping a hairbrush handle'),
+      createStep('Start at the ends', '⬇️🪮', '⬇️', 'Brush at the bottom tips of hair'),
+      createStep('Work up to the top', '⬆️🪮', '⬆️', 'Brush moving higher up toward the scalp'),
+      createStep('Brush the sides', '↔️🪮', '↔️', 'Brush going along the sides of the head'),
+      createStep('Check the back', '🔙🪮', '🔙', 'Hand reaching to brush the back of the head'),
     ],
   },
   {
@@ -224,13 +234,13 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 3,
     steps: [
-      { instruction: 'Turn on warm water', visualCue: '🚰💧', completed: false },
-      { instruction: 'Wet your hands', visualCue: '🙌💧', completed: false },
-      { instruction: 'Splash water on face', visualCue: '💦😊', completed: false },
-      { instruction: 'Put soap on hands', visualCue: '🧴🙌', completed: false },
-      { instruction: 'Gently rub face', visualCue: '🔄😊', completed: false },
-      { instruction: 'Rinse face well', visualCue: '💦😊', completed: false },
-      { instruction: 'Pat dry with towel', visualCue: '🧣✅', completed: false },
+      createStep('Turn on warm water', '🚰💧', '🚰', 'Faucet handle being turned with water flowing'),
+      createStep('Wet your hands', '🙌💧', '🙌', 'Hands under running water getting wet'),
+      createStep('Splash water on face', '💦😊', '💦', 'Water splashing onto a smiling face'),
+      createStep('Put soap on hands', '🧴🙌', '🧴', 'Soap bottle dispensing onto palms'),
+      createStep('Gently rub face', '🔄😊', '🔄', 'Hands making circular motions on cheeks'),
+      createStep('Rinse face well', '💦😊', '🌊', 'Water washing soap off the face'),
+      createStep('Pat dry with towel', '🧣✅', '🧣', 'Soft towel patting face dry'),
     ],
   },
   {
@@ -241,12 +251,12 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 5,
     steps: [
-      { instruction: 'Hold fork in left hand', visualCue: '🍴←', completed: false },
-      { instruction: 'Hold knife in right hand', visualCue: '🔪→', completed: false },
-      { instruction: 'Press fork down to hold food', visualCue: '⬇️🍴', completed: false },
-      { instruction: 'Saw with knife gently', visualCue: '↔️🔪', completed: false },
-      { instruction: 'Cut a small piece', visualCue: '✂️🍖', completed: false },
-      { instruction: 'Bring fork to mouth', visualCue: '🍴➡️😋', completed: false },
+      createStep('Hold fork in left hand', '🍴←', '🍴', 'Left hand holding fork with tines down'),
+      createStep('Hold knife in right hand', '🔪→', '🔪', 'Right hand gripping knife handle'),
+      createStep('Press fork down to hold food', '⬇️🍴', '⬇️', 'Fork pressing into food to hold it steady'),
+      createStep('Saw with knife gently', '↔️🔪', '↔️', 'Knife making back-and-forth sawing motion'),
+      createStep('Cut a small piece', '✂️🍖', '✂️', 'Small bite-sized piece being cut from food'),
+      createStep('Bring fork to mouth', '🍴➡️😋', '😋', 'Fork with food being raised toward smiling mouth'),
     ],
   },
   {
@@ -257,12 +267,12 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 3,
     steps: [
-      { instruction: 'Put cup on flat surface', visualCue: '🥤⬇️', completed: false },
-      { instruction: 'Hold bottle with two hands', visualCue: '✊🍼✊', completed: false },
-      { instruction: 'Tip slowly toward cup', visualCue: '↘️🥤', completed: false },
-      { instruction: 'Watch the level', visualCue: '👀📊', completed: false },
-      { instruction: 'Stop before overflow', visualCue: '✋🛑', completed: false },
-      { instruction: 'Set bottle down', visualCue: '🍼⬇️', completed: false },
+      createStep('Put cup on flat surface', '🥤⬇️', '🥤', 'Empty cup placed on stable table surface'),
+      createStep('Hold bottle with two hands', '✊🍼✊', '🍼', 'Both hands gripping bottle securely'),
+      createStep('Tip slowly toward cup', '↘️🥤', '↘️', 'Bottle tilting at gentle angle toward cup'),
+      createStep('Watch the level', '👀📊', '👀', 'Eyes watching the liquid level rise in cup'),
+      createStep('Stop before overflow', '✋🛑', '🛑', 'Hand stopping pour before cup overflows'),
+      createStep('Set bottle down', '🍼⬇️', '⬇️', 'Bottle being set back down upright'),
     ],
   },
   {
@@ -273,11 +283,11 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 5,
     steps: [
-      { instruction: 'Put pencils in cup', visualCue: '✏️➡️🥤', completed: false },
-      { instruction: 'Stack papers neatly', visualCue: '📄📄📄', completed: false },
-      { instruction: 'Put books on shelf', visualCue: '📚➡️📖', completed: false },
-      { instruction: 'Throw away trash', visualCue: '🗑️', completed: false },
-      { instruction: 'Wipe desk surface', visualCue: '🧹✨', completed: false },
+      createStep('Put pencils in cup', '✏️➡️🥤', '✏️', 'Pencils being placed into a pencil holder cup'),
+      createStep('Stack papers neatly', '📄📄📄', '📄', 'Papers being tapped into an even stack'),
+      createStep('Put books on shelf', '📚➡️📖', '📚', 'Books being slid onto a bookshelf'),
+      createStep('Throw away trash', '🗑️', '🗑️', 'Crumpled paper going into trash bin'),
+      createStep('Wipe desk surface', '🧹✨', '🧽', 'Cloth wiping across clean desk surface'),
     ],
   },
   {
@@ -288,12 +298,12 @@ export const adlMissions: ADLMission[] = [
     tokenPerStep: 1,
     totalTime: 5,
     steps: [
-      { instruction: 'Pull sheet flat', visualCue: '↔️🛏️', completed: false },
-      { instruction: 'Tuck sheet at bottom', visualCue: '⬇️📦', completed: false },
-      { instruction: 'Pull blanket up', visualCue: '⬆️🛏️', completed: false },
-      { instruction: 'Smooth out bumps', visualCue: '👋🛏️', completed: false },
-      { instruction: 'Put pillow at top', visualCue: '🛋️⬆️', completed: false },
-      { instruction: 'Add stuffed animal', visualCue: '🧸✨', completed: false },
+      createStep('Pull sheet flat', '↔️🛏️', '🛏️', 'Hands pulling sheet across the mattress'),
+      createStep('Tuck sheet at bottom', '⬇️📦', '📦', 'Sheet being tucked under mattress at foot'),
+      createStep('Pull blanket up', '⬆️🛏️', '⬆️', 'Blanket being pulled up toward pillows'),
+      createStep('Smooth out bumps', '👋🛏️', '👋', 'Hand smoothing wrinkles from blanket'),
+      createStep('Put pillow at top', '🛋️⬆️', '🛋️', 'Pillow being placed at head of bed'),
+      createStep('Add stuffed animal', '🧸✨', '🧸', 'Teddy bear placed on top of made bed'),
     ],
   },
 ];
