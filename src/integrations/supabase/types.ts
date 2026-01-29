@@ -41,6 +41,48 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_summaries: {
+        Row: {
+          bravery_attempts: number | null
+          calm_toolkit_uses: number | null
+          created_at: string | null
+          date: string
+          hardest_task: string | null
+          id: string
+          notes: string | null
+          tasks_completed: number | null
+          tokens_earned: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bravery_attempts?: number | null
+          calm_toolkit_uses?: number | null
+          created_at?: string | null
+          date: string
+          hardest_task?: string | null
+          id?: string
+          notes?: string | null
+          tasks_completed?: number | null
+          tokens_earned?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bravery_attempts?: number | null
+          calm_toolkit_uses?: number | null
+          created_at?: string | null
+          date?: string
+          hardest_task?: string | null
+          id?: string
+          notes?: string | null
+          tasks_completed?: number | null
+          tokens_earned?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       google_calendar_tokens: {
         Row: {
           access_token: string
