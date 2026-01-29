@@ -231,9 +231,9 @@ const IndexContent = () => {
 
   const handleBraveryComplete = useCallback(() => {
     setShowBraveryTimer(false);
-    setTokensEarned((prev) => prev + 3);
+    // Bravery no longer gives tokens - only reading/math/writing
     setBraveryAttempts((prev) => prev + 1);
-    toast.success('+3 tokens for bravery! 🦁');
+    toast.success('Great bravery practice! 🦁');
     celebrate("You faced something hard. That's real courage.");
   }, [celebrate]);
 
@@ -243,8 +243,14 @@ const IndexContent = () => {
     setCompanionCalm();
   }, [setCompanionCalm]);
 
+  // Only Reading, Math, and Writing award tokens
   const handleTokensEarned = useCallback((tokens: number) => {
     setTokensEarned((prev) => prev + tokens);
+  }, []);
+
+  // No-op for modules that don't award tokens
+  const handleNoTokens = useCallback((_tokens: number) => {
+    // These modules don't award tokens anymore
   }, []);
 
   const handleSpendTokens = useCallback((amount: number) => {
@@ -258,21 +264,21 @@ const IndexContent = () => {
   const renderModuleContent = () => {
     switch (currentModule) {
       case 'timers':
-        return <TimerModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
+        return <TimerModule onBack={() => setCurrentModule('today')} onTokensEarned={handleNoTokens} />;
       case 'reading':
         return <ReadingStudio onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
       case 'sensory':
-        return <SensoryModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
+        return <SensoryModule onBack={() => setCurrentModule('today')} onTokensEarned={handleNoTokens} />;
       case 'math':
         return <MathModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
       case 'writing':
         return <WritingModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
       case 'science':
-        return <ScienceModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
+        return <ScienceModule onBack={() => setCurrentModule('today')} onTokensEarned={handleNoTokens} />;
       case 'motor':
-        return <MotorModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
+        return <MotorModule onBack={() => setCurrentModule('today')} onTokensEarned={handleNoTokens} />;
       case 'social':
-        return <SocialModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
+        return <SocialModule onBack={() => setCurrentModule('today')} onTokensEarned={handleNoTokens} />;
       case 'bravery':
         return (
           <div className="min-h-screen bg-background p-6">
