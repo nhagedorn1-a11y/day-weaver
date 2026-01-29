@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
-import { Check, RefreshCw, Eye, Ear, Hand } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Eye, Ear, Hand } from 'lucide-react';
+import { useSound } from '@/contexts/SoundContext';
 
 interface WordCardProps {
   word: string;
@@ -22,8 +23,10 @@ export function WordCard({
   const [tappedPhonemes, setTappedPhonemes] = useState<Set<number>>(new Set());
   const [showingCorrection, setShowingCorrection] = useState(false);
   const [correctionStep, setCorrectionStep] = useState<CorrectionStep>('myTurn');
+  const { playTap, playReveal, playCorrect, playComplete } = useSound();
 
   const handleReveal = () => {
+    playReveal(); // Play reveal sound
     setPhase('revealed');
   };
 
@@ -32,14 +35,18 @@ export function WordCard({
   };
 
   const handlePhonemeTap = (index: number) => {
-    const newTapped = new Set(tappedPhonemes);
-    newTapped.add(index);
-    setTappedPhonemes(newTapped);
+    if (!tappedPhonemes.has(index)) {
+      playTap(); // Play tap sound
+      const newTapped = new Set(tappedPhonemes);
+      newTapped.add(index);
+      setTappedPhonemes(newTapped);
+    }
   };
 
   const allPhonemesTapped = tappedPhonemes.size === phonemes.length;
 
   const handleCorrect = () => {
+    playCorrect(); // Play success sound
     setPhase('done');
     onComplete?.();
   };
@@ -50,12 +57,14 @@ export function WordCard({
   };
 
   const handleCorrectionNext = () => {
+    playTap(); // Play tap sound for progression
     if (correctionStep === 'myTurn') {
       setCorrectionStep('together');
     } else if (correctionStep === 'together') {
       setCorrectionStep('yourTurn');
     } else {
       // Finished correction - mark as complete
+      playComplete(); // Play completion sound
       setShowingCorrection(false);
       setCorrectionStep('myTurn');
       setPhase('done');

@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Volume2, ArrowRight, Check } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { ArrowRight, Check } from 'lucide-react';
+import { useSound } from '@/contexts/SoundContext';
 
 interface BlendBoxesProps {
   phonemes: string[];
@@ -15,6 +16,7 @@ export function BlendBoxes({ phonemes, word, onComplete, showWord = false }: Ble
   const [blendProgress, setBlendProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [showError, setShowError] = useState(false);
+  const { playTap, playBlend, playComplete } = useSound();
 
   const allTapped = tappedPhonemes.size === phonemes.length;
 
@@ -23,6 +25,7 @@ export function BlendBoxes({ phonemes, word, onComplete, showWord = false }: Ble
 
     // Must tap in sequence for OG method
     if (index === currentExpected) {
+      playTap(); // Play tap sound on correct tap
       const newTapped = new Set(tappedPhonemes);
       newTapped.add(index);
       setTappedPhonemes(newTapped);
@@ -33,10 +36,11 @@ export function BlendBoxes({ phonemes, word, onComplete, showWord = false }: Ble
       setShowError(true);
       setTimeout(() => setShowError(false), 800);
     }
-  }, [currentExpected, tappedPhonemes, isBlending, isComplete]);
+  }, [currentExpected, tappedPhonemes, isBlending, isComplete, playTap]);
 
   const handleBlend = useCallback(() => {
     setIsBlending(true);
+    playBlend(); // Play blend swoosh sound
     
     // Animate the blend - sweep through each phoneme
     let progress = 0;
@@ -47,10 +51,11 @@ export function BlendBoxes({ phonemes, word, onComplete, showWord = false }: Ble
       if (progress >= phonemes.length * 10) {
         clearInterval(interval);
         setIsComplete(true);
+        playComplete(); // Play completion sound
         onComplete?.();
       }
     }, 50);
-  }, [phonemes.length, onComplete]);
+  }, [phonemes.length, onComplete, playBlend, playComplete]);
 
   const handleReset = useCallback(() => {
     setTappedPhonemes(new Set());

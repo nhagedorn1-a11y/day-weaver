@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Volume2 } from 'lucide-react';
+import { useSound } from '@/contexts/SoundContext';
 
 interface GraphemeCardProps {
   grapheme: string;
@@ -28,6 +29,7 @@ export function GraphemeCard({
 }: GraphemeCardProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [justTapped, setJustTapped] = useState(false);
+  const { playTap } = useSound();
 
   const sizeClasses = {
     small: 'w-20 h-24',
@@ -49,11 +51,12 @@ export function GraphemeCard({
 
   const handleTap = useCallback(() => {
     setJustTapped(true);
+    playTap(); // Play tap sound
     onTap?.();
     
     // Visual feedback duration
     setTimeout(() => setJustTapped(false), 400);
-  }, [onTap]);
+  }, [onTap, playTap]);
 
   return (
     <button

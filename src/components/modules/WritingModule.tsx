@@ -5,6 +5,7 @@ import {
   Pencil, Clock, Star, ChevronRight, Settings, Flame, Check, 
   ArrowLeft, Eye, Hand 
 } from 'lucide-react';
+import { useSound } from '@/contexts/SoundContext';
 
 interface WritingModuleProps {
   onBack: () => void;
@@ -25,6 +26,7 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
   const [view, setView] = useState<WritingView>('home');
   const [selectedLetter, setSelectedLetter] = useState<LetterCardType | null>(null);
   const [currentStage, setCurrentStage] = useState<'trace' | 'dotToDot' | 'copy' | 'independent'>('trace');
+  const { playTap, playComplete, playTokenEarned } = useSound();
 
   const [profile] = useState<WritingProfile>({
     childId: 'child-1',
@@ -39,6 +41,7 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
   const lowercaseLetters = useMemo(() => getLowercaseLetters(), []);
 
   const handleLetterSelect = (letter: LetterCardType) => {
+    playTap(); // Play tap sound on letter selection
     setSelectedLetter(letter);
     setView('practice');
   };
@@ -77,7 +80,10 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
             {(['trace', 'dotToDot', 'copy', 'independent'] as const).map((stage) => (
               <button
                 key={stage}
-                onClick={() => setCurrentStage(stage)}
+                onClick={() => {
+                  playTap(); // Play tap sound on stage change
+                  setCurrentStage(stage);
+                }}
                 className={`px-3 py-2 rounded-xl text-sm font-medium ${
                   currentStage === stage 
                     ? 'bg-primary text-primary-foreground' 
@@ -103,6 +109,8 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
 
           <button
             onClick={() => {
+              playComplete(); // Play completion sound
+              playTokenEarned(); // Play token earned sound
               onTokensEarned(1);
               setView('home');
             }}
