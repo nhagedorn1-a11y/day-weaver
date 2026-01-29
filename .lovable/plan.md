@@ -1,346 +1,240 @@
 
-# Elevating JackOS: MIT Media Lab × Teenage Engineering × Disco Elysium
+# Debugging Plan: Comprehensive Lesson Plan and Mini-App Functionality Audit
 
-## ✅ Completed Updates
+## Overview
 
-### Reading Studio Overhaul (OG-Aligned)
-- **SessionRunner**: Refactored with proper I Do / We Do / You Do teaching flow, modular step components, error tracking, and adaptive pacing
-- **BlendBoxes**: Sequential tapping requirement (left to right), animated blend sweep, gentle error feedback for out-of-order taps
-- **WordCard**: Phased reveal → tap sounds → blend flow, proper My Turn / Together / Your Turn error correction
-- **TracePad**: Improved completion detection with coverage threshold, multisensory reminders, visual feedback
+After thoroughly reviewing the codebase, I've identified several issues and potential problems that could cause lesson plans and mini-apps to hang or fail during execution. This plan addresses bugs, edge cases, and missing functionality across all modules.
 
 ---
 
-## Current State Analysis
+## Critical Issues Found
 
-The app already has strong fundamentals:
-- Clean design system with Space Grotesk/Space Mono typography
-- Now/Next/Later task visualization
-- Token economy with star-based rewards
-- Calm toolkit with breathing exercises
-- Visual timers with color-coded phases
-- Multi-module architecture (Reading, Math, Motor, Sensory, Social, Bravery)
+### 1. Reading Session Runner - Warmup Words Missing Phoneme Data
 
-However, it's missing the **soul** that makes these inspirations legendary. Here's what would transform this from "polished functional app" to "something you want to show everyone":
+**Location:** `src/components/reading/SessionRunner.tsx` (lines 46-50)
 
----
+**Problem:** The `warmUpWords` from lessons are plain strings (e.g., `"mat"`), but the `WarmupStep` expects objects with `word` and `phonemes` properties. The fallback logic splits the word into individual characters, which doesn't work for digraphs.
 
-## The Vision: "The Machine That Understands You"
-
-### Inspiration Breakdown
-
-| Source | Core Quality | Application |
-|--------|-------------|-------------|
-| **MIT Media Lab** | Experimental interfaces, tangible computing, data as art | Status as generative visuals, physicality in digital |
-| **Teenage Engineering** | Hardware clarity, intentional constraints, playful precision | Knob-like controls, systematic visual language, delightful feedback |
-| **Disco Elysium** | Inner voice as character, narrative depth, consequence | Jack's internal monologue externalized, emotional archaeology |
-
----
-
-## Phase 1: The Living Interface
-
-### 1.1 Ambient State Visualization — "The Mood Canvas"
-
-Replace static backgrounds with generative, responsive visuals that reflect the current state without demanding attention.
-
-**Implementation:**
-- Create `src/components/ambient/AmbientCanvas.tsx` — a subtle WebGL or CSS-only generative layer
-- Particles/gradients that respond to:
-  - Time of day (warm sunrise → cool afternoon → twilight)
-  - Current task category (reading = soft paper texture, bravery = lion's mane wisps)
-  - Tokens earned (more sparkle density as day progresses)
-  - Regulation state (calm toolkit activation creates visible stillness)
-
-**Technical approach:**
-- CSS custom properties animated via `requestAnimationFrame`
-- No heavy libraries — use CSS filters, blend modes, and SVG patterns
-- Performance budget: <5% CPU on mobile
-
-### 1.2 The Status Bar — "Mission Control Strip"
-
-Replace the simple greeting header with a TE-inspired status strip showing compressed but rich information.
-
-**Design:**
-- Horizontal hardware-style bar with segmented "readouts"
-- Segments: Time • Weather emoji • Moon phase • Token gauge • Regulation indicator
-- Monospace readouts with chunky separators
-- Tap to expand any segment for detail
-
-**Example layout:**
-```text
-┌──────────────────────────────────────────────────────┐
-│ 09:34  │  ☀️ 68°  │  🌙 Waxing  │  ⭐ 7/15  │  😊  │
-└──────────────────────────────────────────────────────┘
+**Current Code:**
+```typescript
+const warmupWithPhonemes = lesson.warmUpWords.slice(0, 3).map(warmupWord => {
+  const wordData = lesson.wordList.find(w => w.word === warmupWord);
+  return wordData || { id: warmupWord, word: warmupWord, phonemes: warmupWord.split(''), isSightWord: false };
+});
 ```
 
----
-
-## Phase 2: The Inner Voice System (Disco Elysium Inspiration)
-
-### 2.1 Jack's Companion Voice — "The Little Guy"
-
-Create an externalized inner voice that helps Jack navigate challenges. Not a chatbot — a personality.
-
-**The Character:**
-- Abstract mascot: a simple geometric shape with minimal features (circle with two dots for eyes)
-- Different "moods" based on context (encouraging, curious, calm, celebrating)
-- Speaks in thought bubbles, not speech
-
-**Trigger moments:**
-- Task resistance: "This one feels big, huh? What if we just... look at it?"
-- Bravery practice: "Your brain is being noisy. That's okay. We're here."
-- Token milestone: "Look at all those stars. You made those happen."
-- Completion: "Done. Just like that. See?"
-
-**Implementation:**
-- `src/components/companion/LittleGuy.tsx` — SVG character with CSS animations
-- `src/components/companion/ThoughtBubble.tsx` — contextual speech system
-- `src/hooks/useCompanionContext.ts` — determines when/what to say
-
-### 2.2 The Feeling Check — "Emotional Archaeology"
-
-Replace simple body checks with a Disco Elysium-inspired introspection moment.
-
-**Design:**
-- Abstract body silhouette with tappable "zones"
-- Each zone reveals a poetic prompt:
-  - Head: "What's spinning around up there?"
-  - Chest: "Is it tight or spacious in there?"
-  - Hands: "What do they want to do right now?"
-  - Tummy: "Any butterflies? Any emptiness?"
-- Parent mode shows accumulated patterns over time
+**Fix:** The fallback `warmupWord.split('')` breaks digraph words (e.g., "ship" would become `['s','h','i','p']` instead of `['sh','i','p']`). Need to ensure warmup words always exist in wordList or use proper phoneme data.
 
 ---
 
-## Phase 3: The Hardware Language (Teenage Engineering)
+### 2. Math Session Runner - Missing Concepts Crash
 
-### 3.1 The Control Surface
+**Location:** `src/components/modules/MathSessionRunner.tsx` (lines 81-123)
 
-Transform key interactions into hardware-inspired controls.
+**Problem:** When `lesson.newConcepts` is empty (review lessons), accessing `lesson.newConcepts[0]` returns `undefined`, which could cause runtime issues in the teaching step UI.
 
-**Timer Controls:**
-- Rotary dial for time selection (draggable circular input)
-- Physical "click" detents at 5-minute intervals
-- Hardware-style LCD segmented display for countdown
-
-**Token Economy:**
-- Physical coin-slot animation when earning tokens
-- Tokens as metal discs with embossed numbers
-- Satisfying "clink" visual feedback (no sound by default)
-
-**Implementation:**
-- `src/components/controls/RotaryDial.tsx` — touch/drag circular input
-- `src/components/controls/SegmentedDisplay.tsx` — LCD-style number display
-- `src/components/controls/CoinSlot.tsx` — token earning animation
-
-### 3.2 The Module Rack
-
-Redesign the module navigation as a "rack-mounted" system.
-
-**Design:**
-- Modules appear as mounted units in a vertical rack
-- Each has a "status LED" (dot showing active/available/locked)
-- Subtle depth with shadows suggesting physical modules
-- Sliding/locking animation when entering a module
-
-### 3.3 Micro-interactions That Matter
-
-Every touch should feel intentional:
-
-- **Button presses:** Slight inward shadow + scale(0.97) + color shift
-- **Swipe completions:** Momentum-based ease-out
-- **State changes:** 300ms transitions with ease-calm timing
-- **Success moments:** Subtle bounce without chaos
-
----
-
-## Phase 4: Narrative Depth
-
-### 4.1 The Daily Story
-
-At day's end, generate a simple narrative summary.
-
-**Example:**
-> "Today, Jack faced 8 challenges. The hardest was Reading Time (15 minutes felt like a mountain). He earned 12 stars. He used the calm corner once. Tomorrow is a new day."
-
-**Implementation:**
-- `src/components/story/DailySummary.tsx`
-- Track key metrics throughout day
-- Simple template-based generation
-
-### 4.2 The Streak System — "The Journey"
-
-Track persistence over time without pressure.
-
-**Design:**
-- Not "don't break the streak" but "look how far you've come"
-- Visual timeline of completed days
-- Each day has a unique "fingerprint" based on activities
-- Weekly "postcards" showing week's patterns
-
-### 4.3 Parent Handoff Notes
-
-When parents switch devices, show context.
-
-**Example:**
-> "This afternoon: 3 transitions (1 needed extension). Reading was smooth. Currently at 8 tokens, aiming for screen time reward."
-
----
-
-## Phase 5: The Sensory Layer
-
-### 5.1 Optional Sound Design
-
-All sounds off by default, but available:
-
-- **Ambient tones:** Low-frequency drones for calm mode
-- **Completion sounds:** Single sine wave "ding" (not cheerful — satisfying)
-- **Timer warnings:** Gentle bell, not alarm
-- **Haptics:** Where available, subtle vibration patterns
-
-**Implementation:**
-- Web Audio API for synthesized sounds (no audio files)
-- `src/hooks/useSoundscape.ts` — manages audio context and preferences
-
-### 5.2 Visual Rhythm
-
-Create a system-wide "heartbeat" that subtly pulses:
-
-- During active tasks: Slow, calming rhythm (4-second cycle)
-- Transitions: Slightly faster (2-second)
-- Celebration: Quick pulse then settle
-- Calm mode: Match breathing (in-hold-out cycle)
-
----
-
-## Phase 6: Polish Details
-
-### 6.1 Loading States as Moments
-
-Replace spinners with purpose:
-
-- "Getting your day ready..."
-- "Finding where we left off..."
-- Subtle progress indicators that feel calm
-
-### 6.2 Empty States as Invitations
-
-When no tasks exist:
-> "The day is empty. That's actually kind of nice, isn't it? But if you want, we can add something."
-
-### 6.3 Error States as Gentleness
-
-When something breaks:
-> "Something got tangled. Let's try that again. No rush."
-
----
-
-## Technical Implementation Plan
-
-### New Files to Create
-
-```text
-src/components/
-├── ambient/
-│   ├── AmbientCanvas.tsx        # Generative background
-│   └── MoodGradient.tsx         # Time-of-day colors
-├── companion/
-│   ├── LittleGuy.tsx            # Mascot character
-│   ├── ThoughtBubble.tsx        # Contextual messages
-│   └── CompanionProvider.tsx    # Context for companion state
-├── controls/
-│   ├── RotaryDial.tsx           # Hardware-style dial
-│   ├── SegmentedDisplay.tsx     # LCD number display
-│   ├── CoinSlot.tsx             # Token animation
-│   └── StatusStrip.tsx          # Mission control bar
-├── story/
-│   ├── DailySummary.tsx         # End-of-day narrative
-│   ├── JourneyTimeline.tsx      # Streak visualization
-│   └── ParentHandoff.tsx        # Context notes
-
-src/hooks/
-├── useCompanionContext.ts       # When companion speaks
-├── useSoundscape.ts             # Optional audio
-├── useAmbientState.ts           # Drives visual state
-└── useJourneyTracker.ts         # Persistence over time
+**Current Code:**
+```typescript
+const concept = lesson.newConcepts[0];
+// Later used as: {concept && (<...>{concept.emoji}...)}
 ```
 
-### Files to Enhance
+**Fix:** The conditional check exists but needs verification. Review lessons bypass the teach step entirely, but the flow from warmup to teach could still trigger this.
 
-- `src/index.css` — Add CSS custom properties for ambient state
-- `src/pages/Index.tsx` — Integrate ambient layer and status strip
-- `src/components/TokenProgress.tsx` — Add coin-slot animation
-- `src/components/VisualTimer.tsx` — Add rotary dial option
-- `src/components/CalmToolkit.tsx` — Add emotional archaeology
+---
 
-### Database Schema Addition
+### 3. Writing Module - Stage Completion Callbacks Are Empty
 
-```sql
--- Track daily summaries for narrative generation
-CREATE TABLE IF NOT EXISTS daily_summaries (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
-  date date NOT NULL,
-  tasks_completed integer DEFAULT 0,
-  tokens_earned integer DEFAULT 0,
-  calm_toolkit_uses integer DEFAULT 0,
-  hardest_task text,
-  bravery_attempts integer DEFAULT 0,
-  notes text,
-  created_at timestamptz DEFAULT now()
-);
+**Location:** `src/components/modules/WritingModule.tsx` (lines 106-135)
 
--- Enable RLS
-ALTER TABLE daily_summaries ENABLE ROW LEVEL SECURITY;
+**Problem:** All writing stage components (TracePad, DotToDotPad, CopyPad, IndependentPad) have empty `onComplete` callbacks, meaning completing a tracing exercise doesn't trigger any progression.
 
--- RLS policies for user access
-CREATE POLICY "Users can view own summaries" ON daily_summaries
-  FOR SELECT USING (auth.uid() = user_id);
-  
-CREATE POLICY "Users can insert own summaries" ON daily_summaries
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-  
-CREATE POLICY "Users can update own summaries" ON daily_summaries
-  FOR UPDATE USING (auth.uid() = user_id);
+**Current Code:**
+```typescript
+<TracePad 
+  letter={selectedLetter.letter} 
+  size={220}
+  onComplete={() => {
+    // Auto-advance to next stage after completion
+  }}
+/>
 ```
 
----
-
-## Priority Ranking
-
-**High Impact, Medium Effort:**
-1. Ambient Canvas + Mood Gradient (transforms entire feel)
-2. Status Strip redesign (TE aesthetic immediately visible)
-3. Little Guy companion (emotional connection)
-
-**High Impact, Higher Effort:**
-4. Rotary dial timer control (signature interaction)
-5. Daily Summary narrative (makes app memorable)
-
-**Medium Impact, Lower Effort:**
-6. Coin slot token animation (satisfying moment)
-7. Improved empty/error states (polish)
-8. Thought bubbles for companion (depth)
-
-**Nice to Have:**
-9. Optional soundscape
-10. Journey timeline
-11. Parent handoff notes
+**Fix:** Implement proper stage advancement logic that moves through trace -> dotToDot -> copy -> independent automatically, or provides clear feedback.
 
 ---
 
-## The Philosophy
+### 4. BlendBoxes Instruction Component Undefined
 
-The goal is not to add features. It's to add **meaning**.
+**Location:** `src/components/reading/BlendBoxes.tsx` (line 90)
 
-Every element should make Jack feel:
-- **Understood** (the companion knows what's hard)
-- **Capable** (the interface treats him like an operator, not a patient)
-- **Curious** (what will today's story say?)
+**Problem:** The `Hand` component is defined at the bottom of the file but used in the JSX before its definition. While this works due to hoisting, it's fragile.
 
-Every element should make parents feel:
-- **Supported** (the app is the third party, not them)
-- **Informed** (they know what happened without interrogating)
-- **Hopeful** (they can see progress over time)
+**Status:** Not a blocking issue, but could cause confusion.
 
-This is not an app. It's a machine that understands you.
+---
+
+### 5. Motor Module - ADL Step Data Access
+
+**Location:** `src/components/modules/MotorModule.tsx` (lines 195-294)
+
+**Problem:** The ADL missions rely on `currentStepData.visualEmoji` and `currentStepData.description`, but if `selectedADL.steps[adlStep]` is undefined (edge case), it will crash.
+
+**Fix:** Add null checks before accessing step data.
+
+---
+
+### 6. Science Module - Missing Activity Filter Edge Case
+
+**Location:** `src/components/modules/ScienceModule.tsx` (lines 329-379)
+
+**Problem:** When filtering activities by duration, if no activities match the selected duration, the UI shows "No X-minute activities" but doesn't reset `selectedDuration` or guide the user.
+
+**Status:** UX improvement needed, not a blocking bug.
+
+---
+
+### 7. Sensory Module - Missing Heavy Work Activity Index
+
+**Location:** `src/components/modules/SensoryModule.tsx` (lines 256-265)
+
+**Problem:** The "Move Break" button hardcodes `heavyWorkActivities[1]` (Bear walk). If this array index doesn't exist, it will crash.
+
+**Current Code:**
+```typescript
+onClick={() => {
+  setSelectedActivity(heavyWorkActivities[1]); // Bear walk
+  setView('timer');
+}}
+```
+
+**Fix:** Add bounds checking or use `.find()` to locate the activity by ID.
+
+---
+
+### 8. TracePad Completion Threshold Too Low
+
+**Location:** `src/components/reading/TracePad.tsx` (lines 17-18)
+
+**Problem:** The coverage threshold of 12% and minimum 20 points may be too lenient or too strict depending on the letter being traced. Complex letters may need more coverage.
+
+**Status:** Calibration issue, not a blocking bug.
+
+---
+
+### 9. Reading Lesson Generator - Review Lesson Edge Case
+
+**Location:** `src/data/lessonGenerator.ts` (lines 132-176)
+
+**Problem:** `generateReviewLesson` can return a lesson with empty `newGraphemes` array, which is handled, but the `teachingScript` references patterns that don't exist in review context.
+
+**Status:** Works but could be cleaner.
+
+---
+
+### 10. Math Lesson Generator - Concept Tag Mismatch
+
+**Location:** `src/data/mathLessonGenerator.ts` (lines 6-16) and `src/data/mathProblemLibrary.ts`
+
+**Problem:** The `MATH_LESSON_SEQUENCE` references concept tags like `'number-order'` and `'before-after'` that don't exist in `mathProblems`. This will return empty problem arrays.
+
+**Missing Concepts:**
+- `number-order`
+- `before-after`
+
+---
+
+## Implementation Plan
+
+### Phase 1: Critical Bug Fixes
+
+1. **Fix Warmup Words Phoneme Data**
+   - Ensure all warmup words have proper phoneme breakdowns
+   - Improve fallback logic to handle digraphs correctly
+
+2. **Add Empty State Handling for Writing Stages**
+   - Implement auto-advancement between writing stages
+   - Add visual feedback for stage completion
+
+3. **Fix Hardcoded Array Index in Sensory Module**
+   - Use safe array access or find by ID
+
+4. **Add Missing Math Concept Tags**
+   - Add `number-order` and `before-after` problems to `mathProblemLibrary.ts`
+
+### Phase 2: Edge Case Handling
+
+5. **Add Null Checks for ADL Step Data**
+   - Protect against undefined step access
+
+6. **Improve Review Lesson Handling**
+   - Skip teach phase for review lessons in session runner
+
+7. **Math Session Runner - Review Lesson Flow**
+   - Ensure review lessons skip the teach step properly
+
+### Phase 3: UX Improvements
+
+8. **TracePad Calibration**
+   - Adjust thresholds based on letter complexity
+
+9. **Science Activity Duration Filter**
+   - Add helpful messaging when no activities match
+
+10. **Writing Module Completion Flow**
+    - Add clear progression indicators and stage badges
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/reading/SessionRunner.tsx` | Fix warmup phoneme data handling |
+| `src/components/modules/WritingModule.tsx` | Add stage completion callbacks and progression |
+| `src/components/modules/SensoryModule.tsx` | Fix hardcoded array index |
+| `src/components/modules/MotorModule.tsx` | Add null checks for step data |
+| `src/data/mathProblemLibrary.ts` | Add missing concept problems |
+| `src/data/mathLessonGenerator.ts` | Verify concept tag references |
+| `src/components/modules/MathSessionRunner.tsx` | Improve review lesson flow |
+
+---
+
+## Technical Details
+
+### Warmup Words Fix Strategy
+
+The warmup words need to match entries in the `wordList`. The current fallback creates incorrect phoneme arrays for digraph words. The fix will:
+
+1. Ensure `warmUpWords` always reference words that exist in `wordList`
+2. Improve the fallback to use a phoneme-aware split function that handles digraphs (sh, ch, th, etc.)
+
+### Writing Stage Progression
+
+Currently, completing a trace doesn't advance to the next stage. The fix will:
+
+1. Track current stage in state
+2. On completion, auto-advance with a brief celebration animation
+3. After all 4 stages, award tokens and return to home
+
+### Math Problem Library Additions
+
+Add the following problem sets:
+- `number-order`: Problems about sequencing numbers (what comes before/after)
+- `before-after`: Problems about number relationships
+
+---
+
+## Testing Checklist
+
+After implementation, verify:
+
+- [ ] Reading: Complete warmup, review, teach, practice, sentence, and finish steps
+- [ ] Reading: Digraph words blend correctly in BlendBoxes
+- [ ] Math: Complete warmup through finish, including review lessons
+- [ ] Writing: Complete all 4 stages (trace, dot-to-dot, copy, independent)
+- [ ] Science: Complete a multi-step activity from start to finish
+- [ ] Motor: Complete ADL missions with visual step progression
+- [ ] Sensory: All 4 home buttons work correctly
+- [ ] Tokens: Awarded only for Reading, Math, and Writing
+
