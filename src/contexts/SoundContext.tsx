@@ -30,94 +30,112 @@ interface SoundContextType {
 
 const SoundContext = createContext<SoundContextType | null>(null);
 
-// Phoneme pronunciation map - uses phonetic spellings that force TTS to say SOUNDS not letter names
-// Format: letter/grapheme -> phonetic spelling the TTS engine will pronounce correctly
+// Phoneme pronunciation map - maps IPA phonemes from graphemeLibrary to TTS-friendly pronunciations
+// The graphemeLibrary uses phonemes like '/b/', '/m/', '/ă/' - we map those to speakable text
 const PHONEME_PRONUNCIATIONS: Record<string, string> = {
-  // === SHORT VOWELS (most common sounds) ===
-  'a': 'aah',      // /æ/ as in "cat" - open mouth "aah" 
-  'e': 'eeh',      // /ɛ/ as in "bed" - short "eh"
-  'i': 'iih',      // /ɪ/ as in "sit" - short "ih"
-  'o': 'awe',      // /ɒ/ as in "hot" - open "aw"
-  'u': 'uhh',      // /ʌ/ as in "cup" - short "uh"
+  // === CONSONANTS (IPA notation from graphemeLibrary) ===
+  '/b/': 'buh',      // bear - quick lip pop
+  '/k/': 'kuh',      // cat, kite - back of tongue
+  '/d/': 'duh',      // dog - tongue tap
+  '/f/': 'fff',      // fish - continuous friction
+  '/g/': 'guh',      // goat - throat sound  
+  '/h/': 'huh',      // hat - breath out
+  '/j/': 'juh',      // jam - soft g sound
+  '/l/': 'lll',      // lion - tongue tip continuous
+  '/m/': 'mmm',      // mouse - lips hum
+  '/n/': 'nnn',      // nest - tongue behind teeth
+  '/p/': 'puh',      // pig - lips pop
+  '/kw/': 'kwuh',    // queen - k + w blend
+  '/r/': 'rrr',      // rabbit - tongue curled
+  '/s/': 'sss',      // snake - continuous hiss
+  '/t/': 'tuh',      // turtle - tongue tap
+  '/v/': 'vvv',      // van - teeth on lip vibrate
+  '/w/': 'wuh',      // wave - lips rounded
+  '/ks/': 'ks',      // fox - combo sound
+  '/y/': 'yuh',      // yo-yo - tongue glide
+  '/z/': 'zzz',      // zebra - buzzing
   
-  // === CONSONANTS (continuous sounds stretched, stops minimal) ===
-  // Continuous sounds - can be held/stretched
-  'f': 'ffff',     // friction sound
-  'l': 'llll',     // tongue tip up
-  'm': 'mmmm',     // lips together, hum
-  'n': 'nnnn',     // tongue behind teeth
-  'r': 'rrrr',     // tongue curled back
-  's': 'ssss',     // snake sound
-  'v': 'vvvv',     // teeth on lip, vibrate
-  'w': 'wwww',     // lips rounded
-  'y': 'yyyy',     // tongue up, glide
-  'z': 'zzzz',     // buzzing s
+  // === SHORT VOWELS (IPA notation with breve) ===
+  '/ă/': 'aah',      // apple - short a as in "cat"
+  '/ĕ/': 'ehh',      // egg - short e as in "bed"
+  '/ĭ/': 'ihh',      // itch - short i as in "sit"
+  '/ŏ/': 'aww',      // octopus - short o as in "hot"
+  '/ŭ/': 'uhh',      // umbrella - short u as in "cup"
   
-  // Stop sounds - quick burst, minimal vowel
-  'b': 'b',        // lips pop
-  'c': 'k',        // back of tongue
-  'd': 'd',        // tongue tap
-  'g': 'g',        // throat sound
-  'h': 'h',        // breath out
-  'j': 'j',        // soft g sound
-  'k': 'k',        // back of tongue pop
-  'p': 'p',        // lips pop (no "uh")
-  'q': 'kw',       // always with u
-  't': 't',        // tongue tap (no "uh")
-  'x': 'ks',       // combo sound
+  // === LONG VOWELS (IPA notation with macron) ===
+  '/ā/': 'ay',       // cake, rain, play - long a
+  '/ē/': 'ee',       // eve, leaf, bee - long e
+  '/ī/': 'eye',      // bike - long i
+  '/ō/': 'oh',       // bone, boat, snow - long o
+  '/ū/': 'you',      // cube - long u
   
-  // === DIGRAPHS (two letters, one sound) ===
-  'sh': 'shhhh',   // quiet sound
-  'ch': 'ch',      // train sound
-  'th': 'thhh',    // tongue between teeth (voiceless)
-  'wh': 'wh',      // breathy w
-  'ph': 'ffff',    // same as f
-  'ck': 'k',       // same as k
-  'ng': 'ng',      // back of tongue, nasal
-  'nk': 'nk',      // n + k blend
+  // === DIGRAPHS ===
+  '/sh/': 'shh',     // ship - quiet sound
+  '/ch/': 'chuh',    // cheese - train sound
+  '/th/': 'thh',     // thumb - tongue between teeth
+  '/wh/': 'whuh',    // whale - breathy w
+  '/ng/': 'nng',     // ring - nasal sound
   
-  // === LONG VOWELS (say their name) ===
-  'a_e': 'ay',     // cake
-  'e_e': 'ee',     // these
-  'i_e': 'eye',    // like
-  'o_e': 'oh',     // home
-  'u_e': 'you',    // cute
+  // === BLENDS (two sounds together) ===
+  '/bl/': 'bluh',
+  '/br/': 'bruh',
+  '/cl/': 'cluh',
+  '/cr/': 'cruh',
+  '/dr/': 'druh',
+  '/fl/': 'fluh',
+  '/fr/': 'fruh',
+  '/gl/': 'gluh',
+  '/gr/': 'gruh',
+  '/pl/': 'pluh',
+  '/pr/': 'pruh',
+  '/sk/': 'skuh',
+  '/sl/': 'sluh',
+  '/sm/': 'smuh',
+  '/sn/': 'snuh',
+  '/sp/': 'spuh',
+  '/st/': 'stuh',
+  '/sw/': 'swuh',
+  '/tr/': 'truh',
+  '/tw/': 'twuh',
   
-  // === VOWEL TEAMS ===
-  'ee': 'ee',      // tree
-  'ea': 'ee',      // read
-  'ai': 'ay',      // rain
-  'ay': 'ay',      // play
-  'oa': 'oh',      // boat
-  'ow': 'oh',      // snow (also "ow" as in cow)
-  'ou': 'ow',      // out
-  'oo': 'oo',      // moon
-  'oi': 'oy',      // oil
-  'oy': 'oy',      // boy
-  'au': 'aw',      // caught
-  'aw': 'aw',      // saw
-  'ew': 'you',     // new
-  'ue': 'oo',      // blue
-  'ie': 'eye',     // pie
+  // === VOWEL TEAMS & DIPHTHONGS ===
+  '/oo/': 'oo',      // moon
+  '/ou/': 'ow',      // house - "ow" sound
+  '/oi/': 'oy',      // coin, toy
+  '/aw/': 'aw',      // sauce, paw
   
   // === R-CONTROLLED VOWELS ===
-  'ar': 'ar',      // car
-  'er': 'er',      // her
-  'ir': 'er',      // bird
-  'or': 'or',      // for
-  'ur': 'er',      // fur
+  '/ar/': 'ar',      // car
+  '/er/': 'er',      // fern, bird, turtle
+  '/or/': 'or',      // corn
   
-  // === IPA NOTATION (for lesson data) ===
-  '/æ/': 'aah',
-  '/ɛ/': 'eeh', 
-  '/ɪ/': 'iih',
-  '/ɒ/': 'awe',
-  '/ʌ/': 'uhh',
-  '/ʃ/': 'shhhh',
-  '/tʃ/': 'ch',
-  '/θ/': 'thhh',
-  '/ð/': 'thhh',
-  '/ŋ/': 'ng',
+  // === FALLBACK SIMPLE LETTERS (without slashes) ===
+  'a': 'aah',
+  'b': 'buh',
+  'c': 'kuh',
+  'd': 'duh',
+  'e': 'ehh',
+  'f': 'fff',
+  'g': 'guh',
+  'h': 'huh',
+  'i': 'ihh',
+  'j': 'juh',
+  'k': 'kuh',
+  'l': 'lll',
+  'm': 'mmm',
+  'n': 'nnn',
+  'o': 'aww',
+  'p': 'puh',
+  'q': 'kwuh',
+  'r': 'rrr',
+  's': 'sss',
+  't': 'tuh',
+  'u': 'uhh',
+  'v': 'vvv',
+  'w': 'wuh',
+  'x': 'ks',
+  'y': 'yuh',
+  'z': 'zzz',
 };
 
 function getPhonemeSound(phoneme: string): string {
