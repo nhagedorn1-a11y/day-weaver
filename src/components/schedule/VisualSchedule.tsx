@@ -1,7 +1,7 @@
 import { Task, TASK_ICONS } from '@/types/jackos';
 import { 
   Clock, Star, Check, ChevronRight, Sparkles, Calendar, 
-  Pencil, Trash2, GripVertical 
+  Pencil, Trash2, GripVertical, X, Save
 } from 'lucide-react';
 import {
   DndContext,
@@ -19,16 +19,17 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { toast } from 'sonner';
 
 interface VisualScheduleProps {
   tasks: Task[];
   currentTaskIndex: number;
   onTaskClick: (task: Task) => void;
   onTasksChange?: (tasks: Task[]) => void;
+  onTaskUpdate?: (taskId: string, updates: Partial<Task>) => void;
   onTaskDelete?: (taskId: string) => void;
   compact?: boolean;
-  editable?: boolean;
 }
 
 export function VisualSchedule({ 
@@ -36,11 +37,12 @@ export function VisualSchedule({
   currentTaskIndex, 
   onTaskClick, 
   onTasksChange,
+  onTaskUpdate,
   onTaskDelete,
   compact = false,
-  editable = false,
 }: VisualScheduleProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -68,9 +70,39 @@ export function VisualSchedule({
     if (over && active.id !== over.id && onTasksChange) {
       const oldIndex = tasks.findIndex(t => t.id === active.id);
       const newIndex = tasks.findIndex(t => t.id === over.id);
-      onTasksChange(arrayMove(tasks, oldIndex, newIndex));
+      const newTasks = arrayMove(tasks, oldIndex, newIndex);
+      // Update scheduled times based on new order
+      const updatedTasks = newTasks.map((task, idx) => ({
+        ...task,
+        scheduledTime: `${String(7 + Math.floor(idx / 2)).padStart(2, '0')}:${idx % 2 === 0 ? '00' : '30'}`,
+      }));
+      onTasksChange(updatedTasks);
+      toast.success('Schedule reordered');
     }
   };
+
+  const handleDelete = useCallback((taskId: string) => {
+    if (onTaskDelete) {
+      onTaskDelete(taskId);
+      toast.success('Task removed');
+    }
+  }, [onTaskDelete]);
+
+  const handleStartEdit = useCallback((taskId: string) => {
+    setEditingId(taskId);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingId(null);
+  }, []);
+
+  const handleSaveEdit = useCallback((taskId: string, updates: Partial<Task>) => {
+    if (onTaskUpdate) {
+      onTaskUpdate(taskId, updates);
+      toast.success('Task updated');
+    }
+    setEditingId(null);
+  }, [onTaskUpdate]);
 
   const activeTask = activeId ? tasks.find(t => t.id === activeId) : null;
 
@@ -120,163 +152,30 @@ export function VisualSchedule({
     );
   }
 
-  const renderTaskItem = (task: Task, index: number, isDragOverlay = false) => {
-    const isCurrent = index === currentTaskIndex;
-    const isNext = index === currentTaskIndex + 1;
-    const isCompleted = task.completed;
-
-    return (
-      <div
-        className={`group flex items-center gap-3 p-3 rounded-xl transition-all ${
-          isDragOverlay 
-            ? 'bg-primary text-primary-foreground shadow-2xl scale-105'
-            : isCurrent
-              ? 'bg-gradient-to-r from-now to-primary text-now-foreground shadow-lg scale-[1.02]'
-              : isNext
-                ? 'bg-gradient-to-r from-next/20 to-next/10 border border-next/30'
-                : isCompleted
-                  ? 'bg-muted/30 opacity-60'
-                  : 'bg-card/50 border border-transparent hover:border-border'
-        }`}
-      >
-        {/* Drag handle (only in editable mode) */}
-        {editable && !isDragOverlay && (
-          <div className="w-6 flex items-center justify-center cursor-grab active:cursor-grabbing">
-            <GripVertical className="w-4 h-4 text-muted-foreground" />
-          </div>
-        )}
-
-        {/* Time column */}
-        <div className={`w-12 text-center flex-shrink-0 ${isCurrent ? '' : 'text-muted-foreground'}`}>
-          <span className={`font-mono font-bold ${isCurrent ? 'text-base' : 'text-sm'}`}>
-            {task.scheduledTime || '--:--'}
-          </span>
-        </div>
-
-        {/* Status/icon indicator */}
-        <div className={`relative w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
-          isCompleted
-            ? 'bg-calm text-calm-foreground'
-            : isCurrent
-              ? 'bg-white/20 shadow-inner'
-              : 'bg-muted'
-        }`}>
-          {isCompleted ? (
-            <Check className="w-5 h-5" />
-          ) : (
-            <span className={`${isCurrent ? 'text-2xl' : 'text-xl'}`}>{getIconEmoji(task.icon)}</span>
-          )}
-        </div>
-
-        {/* Task info */}
-        <div className="flex-1 min-w-0" onClick={() => onTaskClick(task)}>
-          <h4 className={`font-semibold truncate transition-all cursor-pointer ${
-            isCurrent ? 'text-lg' : isCompleted ? 'text-sm line-through opacity-70' : 'text-sm'
-          }`}>
-            {task.title}
-          </h4>
-          <div className={`flex items-center gap-3 text-xs ${
-            isCurrent ? 'text-now-foreground/80' : 'text-muted-foreground'
-          }`}>
-            {task.duration && (
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {task.duration}m
-              </span>
-            )}
-            <span className="flex items-center gap-1">
-              <Star className="w-3 h-3" fill={isCurrent ? 'currentColor' : 'none'} />
-              {task.tokens}
-            </span>
-          </div>
-        </div>
-
-        {/* Actions */}
-        {editable && !isDragOverlay && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onTaskDelete?.(task.id); }}
-            className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
-
-        {/* Status indicators */}
-        {isCurrent && !editable && (
-          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/20">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="text-xs font-semibold">Now</span>
-          </div>
-        )}
-        {isNext && !isCompleted && !editable && (
-          <ChevronRight className="w-4 h-4 text-next opacity-50" />
-        )}
-      </div>
-    );
-  };
-
-  // Non-editable simple list
-  if (!editable) {
-    return (
-      <div className="space-y-4">
-        {/* Progress header */}
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Today's Schedule
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-              <div 
-                className="h-full rounded-full bg-calm transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <span className="text-xs font-mono text-muted-foreground">
-              {completedCount}/{sortedTasks.length}
-            </span>
-          </div>
-        </div>
-
-        {/* Timeline */}
-        <div className="space-y-1">
-          {sortedTasks.map((task, index) => (
-            <div key={task.id}>
-              {renderTaskItem(task, index)}
-            </div>
-          ))}
-        </div>
-
-        {/* All done celebration */}
-        {completedCount === sortedTasks.length && sortedTasks.length > 0 && (
-          <div className="text-center py-6 px-4 bg-gradient-to-r from-calm/20 to-token/20 rounded-2xl border border-calm/30">
-            <div className="text-4xl mb-2">🎉</div>
-            <h3 className="text-lg font-bold text-calm">All Done!</h3>
-            <p className="text-sm text-muted-foreground">Amazing work today!</p>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Editable with drag-and-drop
   return (
     <div className="space-y-4">
       {/* Progress header */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <Pencil className="w-4 h-4 text-primary" />
-          <span className="text-xs font-bold uppercase tracking-wider text-primary">
-            Editing Schedule
+          <Calendar className="w-4 h-4 text-muted-foreground" />
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Today's Schedule
           </span>
         </div>
-        <span className="text-xs text-muted-foreground">
-          Drag to reorder
-        </span>
+        <div className="flex items-center gap-2">
+          <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div 
+              className="h-full rounded-full bg-calm transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-xs font-mono text-muted-foreground">
+            {completedCount}/{sortedTasks.length}
+          </span>
+        </div>
       </div>
 
+      {/* Editable Timeline with Drag-and-Drop */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -291,8 +190,12 @@ export function VisualSchedule({
                 task={task}
                 index={index}
                 currentTaskIndex={currentTaskIndex}
+                isEditing={editingId === task.id}
                 onTaskClick={onTaskClick}
-                onTaskDelete={onTaskDelete}
+                onStartEdit={handleStartEdit}
+                onCancelEdit={handleCancelEdit}
+                onSaveEdit={handleSaveEdit}
+                onDelete={handleDelete}
                 getIconEmoji={getIconEmoji}
               />
             ))}
@@ -300,20 +203,45 @@ export function VisualSchedule({
         </SortableContext>
 
         <DragOverlay>
-          {activeTask && renderTaskItem(activeTask, -1, true)}
+          {activeTask && (
+            <div className="bg-primary text-primary-foreground shadow-2xl scale-105 p-3 rounded-xl flex items-center gap-3">
+              <GripVertical className="w-4 h-4" />
+              <span className="font-mono text-sm">{activeTask.scheduledTime}</span>
+              <span className="text-xl">{getIconEmoji(activeTask.icon)}</span>
+              <span className="font-semibold">{activeTask.title}</span>
+            </div>
+          )}
         </DragOverlay>
       </DndContext>
+
+      {/* All done celebration */}
+      {completedCount === sortedTasks.length && sortedTasks.length > 0 && (
+        <div className="text-center py-6 px-4 bg-gradient-to-r from-calm/20 to-token/20 rounded-2xl border border-calm/30">
+          <div className="text-4xl mb-2">🎉</div>
+          <h3 className="text-lg font-bold text-calm">All Done!</h3>
+          <p className="text-sm text-muted-foreground">Amazing work today!</p>
+        </div>
+      )}
+
+      {/* Help text */}
+      <p className="text-xs text-muted-foreground text-center">
+        Tap to complete • Long-press to edit • Drag to reorder
+      </p>
     </div>
   );
 }
 
-// Sortable wrapper for task items
+// Sortable wrapper for task items with inline editing
 interface SortableTaskItemProps {
   task: Task;
   index: number;
   currentTaskIndex: number;
+  isEditing: boolean;
   onTaskClick: (task: Task) => void;
-  onTaskDelete?: (taskId: string) => void;
+  onStartEdit: (taskId: string) => void;
+  onCancelEdit: () => void;
+  onSaveEdit: (taskId: string, updates: Partial<Task>) => void;
+  onDelete: (taskId: string) => void;
   getIconEmoji: (iconId: string) => string;
 }
 
@@ -321,10 +249,19 @@ function SortableTaskItem({
   task, 
   index, 
   currentTaskIndex, 
+  isEditing,
   onTaskClick, 
-  onTaskDelete,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDelete,
   getIconEmoji 
 }: SortableTaskItemProps) {
+  const [editTitle, setEditTitle] = useState(task.title);
+  const [editTime, setEditTime] = useState(task.scheduledTime || '');
+  const [editDuration, setEditDuration] = useState(task.duration?.toString() || '5');
+  const [selectedIcon, setSelectedIcon] = useState(task.icon);
+
   const {
     attributes,
     listeners,
@@ -341,24 +278,129 @@ function SortableTaskItem({
   };
 
   const isCurrent = index === currentTaskIndex;
+  const isNext = index === currentTaskIndex + 1;
   const isCompleted = task.completed;
+
+  const handleSave = () => {
+    onSaveEdit(task.id, {
+      title: editTitle,
+      scheduledTime: editTime,
+      duration: parseInt(editDuration) || 5,
+      icon: selectedIcon,
+    });
+  };
+
+  // Inline editing mode
+  if (isEditing) {
+    return (
+      <div ref={setNodeRef} style={style} className="touch-none">
+        <div className="p-4 rounded-xl bg-card border-2 border-primary shadow-lg space-y-3">
+          {/* Title input */}
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground block mb-1">Task Name</label>
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              autoFocus
+            />
+          </div>
+
+          {/* Time & Duration row */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-xs font-semibold text-muted-foreground block mb-1">Time</label>
+              <input
+                type="time"
+                value={editTime}
+                onChange={(e) => setEditTime(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="w-24">
+              <label className="text-xs font-semibold text-muted-foreground block mb-1">Duration</label>
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  value={editDuration}
+                  onChange={(e) => setEditDuration(e.target.value)}
+                  min="1"
+                  max="120"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <span className="text-sm text-muted-foreground">min</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Icon picker */}
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground block mb-1">Icon</label>
+            <div className="flex flex-wrap gap-2">
+              {TASK_ICONS.slice(0, 12).map((icon) => (
+                <button
+                  key={icon.id}
+                  type="button"
+                  onClick={() => setSelectedIcon(icon.id)}
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all ${
+                    selectedIcon === icon.id 
+                      ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2' 
+                      : 'bg-muted hover:bg-muted/80'
+                  }`}
+                >
+                  {icon.emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={handleSave}
+              className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-primary text-primary-foreground font-semibold"
+            >
+              <Save className="w-4 h-4" />
+              Save
+            </button>
+            <button
+              onClick={onCancelEdit}
+              className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-secondary text-secondary-foreground font-semibold"
+            >
+              <X className="w-4 h-4" />
+              Cancel
+            </button>
+            <button
+              onClick={() => onDelete(task.id)}
+              className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-destructive/10 text-destructive font-semibold"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={setNodeRef} style={style} className="touch-none">
       <div
         className={`group flex items-center gap-3 p-3 rounded-xl transition-all ${
           isCurrent
-            ? 'bg-gradient-to-r from-now to-primary text-now-foreground shadow-lg'
-            : isCompleted
-              ? 'bg-muted/30 opacity-60'
-              : 'bg-card/50 border border-border hover:border-primary/30'
+            ? 'bg-gradient-to-r from-now to-primary text-now-foreground shadow-lg scale-[1.02]'
+            : isNext
+              ? 'bg-gradient-to-r from-next/20 to-next/10 border border-next/30'
+              : isCompleted
+                ? 'bg-muted/30 opacity-60'
+                : 'bg-card/50 border border-border hover:border-primary/30'
         }`}
       >
         {/* Drag handle */}
         <div 
           {...attributes} 
           {...listeners}
-          className="w-6 flex items-center justify-center cursor-grab active:cursor-grabbing"
+          className="w-6 flex items-center justify-center cursor-grab active:cursor-grabbing opacity-40 group-hover:opacity-100 transition-opacity"
         >
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         </div>
@@ -375,27 +417,50 @@ function SortableTaskItem({
           {isCompleted ? <Check className="w-5 h-5" /> : <span className="text-xl">{getIconEmoji(task.icon)}</span>}
         </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onTaskClick(task)}>
+        {/* Info - click to complete, double-click to edit */}
+        <div 
+          className="flex-1 min-w-0 cursor-pointer" 
+          onClick={() => onTaskClick(task)}
+          onDoubleClick={(e) => { e.stopPropagation(); onStartEdit(task.id); }}
+        >
           <h4 className={`font-semibold truncate ${isCompleted ? 'line-through opacity-70' : ''}`}>
             {task.title}
           </h4>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {task.duration && <span>{task.duration}m</span>}
-            <span className="flex items-center gap-0.5 text-token">
-              <Star className="w-3 h-3" fill="currentColor" />
+          <div className={`flex items-center gap-2 text-xs ${isCurrent ? 'text-now-foreground/80' : 'text-muted-foreground'}`}>
+            {task.duration && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{task.duration}m</span>}
+            <span className="flex items-center gap-0.5">
+              <Star className="w-3 h-3" fill={isCurrent ? 'currentColor' : 'none'} />
               {task.tokens}
             </span>
           </div>
         </div>
 
-        {/* Delete */}
+        {/* Edit button */}
         <button
-          onClick={(e) => { e.stopPropagation(); onTaskDelete?.(task.id); }}
+          onClick={(e) => { e.stopPropagation(); onStartEdit(task.id); }}
+          className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
+
+        {/* Delete button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
           className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <Trash2 className="w-4 h-4" />
         </button>
+
+        {/* Status indicators */}
+        {isCurrent && (
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/20">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="text-xs font-semibold">Now</span>
+          </div>
+        )}
+        {isNext && !isCompleted && (
+          <ChevronRight className="w-4 h-4 text-next opacity-50" />
+        )}
       </div>
     </div>
   );

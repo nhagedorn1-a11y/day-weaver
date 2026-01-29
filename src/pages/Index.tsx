@@ -381,7 +381,7 @@ const IndexContent = () => {
             </div>
           </>
         ) : (
-          /* Full Schedule View */
+          /* Full Schedule View - Fully Editable */
           <div className="px-5">
             <VisualSchedule
               tasks={tasks}
@@ -394,6 +394,15 @@ const IndexContent = () => {
                 } else if (!task.completed) {
                   handleTaskComplete(task.id);
                 }
+              }}
+              onTasksChange={(newTasks) => setTasks(newTasks)}
+              onTaskUpdate={(taskId, updates) => {
+                setTasks(prev => prev.map(t => 
+                  t.id === taskId ? { ...t, ...updates } : t
+                ));
+              }}
+              onTaskDelete={(taskId) => {
+                setTasks(prev => prev.filter(t => t.id !== taskId));
               }}
             />
           </div>
