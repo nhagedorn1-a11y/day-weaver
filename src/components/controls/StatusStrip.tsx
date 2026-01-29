@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Star, Smile, Meh, Frown, Moon } from 'lucide-react';
+import { useWeather } from '@/hooks/useWeather';
 
 interface StatusStripProps {
   tokensEarned: number;
@@ -30,13 +31,6 @@ const getMoonPhase = () => {
   return { emoji: phases[phaseIndex], name: names[phaseIndex] };
 };
 
-// Get weather emoji (placeholder - would use real API)
-const getWeatherEmoji = () => {
-  const hour = new Date().getHours();
-  if (hour >= 6 && hour < 18) return { emoji: '☀️', temp: '68°' };
-  return { emoji: '🌙', temp: '58°' };
-};
-
 export function StatusStrip({ 
   tokensEarned, 
   tokensGoal, 
@@ -46,6 +40,7 @@ export function StatusStrip({
 }: StatusStripProps) {
   const [time, setTime] = useState(new Date());
   const [expandedSegment, setExpandedSegment] = useState<string | null>(null);
+  const { weather } = useWeather();
 
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
@@ -53,7 +48,6 @@ export function StatusStrip({
   }, []);
 
   const moonPhase = getMoonPhase();
-  const weather = getWeatherEmoji();
 
   const regulationEmojis = {
     good: <Smile className="w-4 h-4 text-calm" />,
@@ -90,13 +84,15 @@ export function StatusStrip({
       id: 'weather',
       content: (
         <span className="text-sm">
-          {weather.emoji} <span className="font-mono text-xs">{weather.temp}</span>
+          {weather?.emoji ?? '☀️'} <span className="font-mono text-xs">{weather ? `${weather.temperature}°` : '--°'}</span>
         </span>
       ),
       expanded: (
         <div className="text-center">
-          <div className="text-2xl mb-1">{weather.emoji}</div>
-          <div className="font-mono text-sm">{weather.temp}</div>
+          <div className="text-2xl mb-1">{weather?.emoji ?? '☀️'}</div>
+          <div className="font-mono text-sm">{weather ? `${weather.temperature}${weather.temperatureUnit}` : '--°F'}</div>
+          <div className="text-xs text-muted-foreground">{weather?.description ?? 'Loading...'}</div>
+          <div className="text-xs text-muted-foreground mt-1">{weather?.location ?? 'Palisades, NY'}</div>
         </div>
       ),
     },
