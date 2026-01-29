@@ -23,11 +23,15 @@ import { TimerModule } from '@/components/modules/TimerModule';
 import { ScheduleBuilder } from '@/components/schedule/ScheduleBuilder';
 import { VisualSchedule } from '@/components/schedule/VisualSchedule';
 import { GoogleCalendarSync } from '@/components/GoogleCalendarSync';
+import { AmbientCanvas } from '@/components/ambient/AmbientCanvas';
+import { StatusStrip } from '@/components/controls/StatusStrip';
+import { CompanionProvider, useCompanion } from '@/components/companion/CompanionProvider';
+import { DailySummary } from '@/components/story/DailySummary';
 import { morningRoutine, afterSchoolRoutine, bedtimeRoutine, rewards } from '@/data/sampleSchedule';
 import { appModules } from '@/data/appContent';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Shield, Menu, Calendar, Plus, List, LayoutGrid, LogIn, User } from 'lucide-react';
+import { Shield, Menu, Plus, List, LayoutGrid, LogIn, User, BookOpen } from 'lucide-react';
 
 const allTasks: Task[] = [...morningRoutine, ...afterSchoolRoutine, ...bedtimeRoutine].map((t, i) => ({
   ...t,
@@ -46,8 +50,9 @@ const microGoals: Record<string, string> = {
 
 type ViewMode = 'focus' | 'schedule';
 
-const Index = () => {
+const IndexContent = () => {
   const navigate = useNavigate();
+  const { celebrate, encourage, calm: setCompanionCalm } = useCompanion();
   const [mode, setMode] = useState<UserMode>('child');
   const [viewMode, setViewMode] = useState<ViewMode>('focus');
   const [currentModule, setCurrentModule] = useState<AppModule>('today');
@@ -57,7 +62,11 @@ const Index = () => {
   const [tokensEarned, setTokensEarned] = useState(0);
   const [showCalmToolkit, setShowCalmToolkit] = useState(false);
   const [showBraveryTimer, setShowBraveryTimer] = useState(false);
+  const [showDailySummary, setShowDailySummary] = useState(false);
+  const [regulationLevel, setRegulationLevel] = useState<'good' | 'okay' | 'hard'>('good');
   const [user, setUser] = useState<any>(null);
+  const [calmToolkitUses, setCalmToolkitUses] = useState(0);
+  const [braveryAttempts, setBraveryAttempts] = useState(0);
   
   const [showTaskStarter, setShowTaskStarter] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
@@ -133,12 +142,13 @@ const Index = () => {
     if (task) {
       setTokensEarned((prev) => prev + task.tokens);
       toast.success(`+${task.tokens} token${task.tokens > 1 ? 's' : ''}! 🌟`);
+      celebrate();
     }
     setShowTimer(false);
     setShowTaskStarter(false);
     setIsTaskLocked(false);
     setTransitionSeconds(120);
-  }, [tasks]);
+  }, [tasks, celebrate]);
 
   const handleStartMicro = useCallback(() => {
     setTokensEarned((prev) => prev + 1);
@@ -169,8 +179,16 @@ const Index = () => {
   const handleBraveryComplete = useCallback(() => {
     setShowBraveryTimer(false);
     setTokensEarned((prev) => prev + 3);
+    setBraveryAttempts((prev) => prev + 1);
     toast.success('+3 tokens for bravery! 🦁');
-  }, []);
+    celebrate("You faced something hard. That's real courage.");
+  }, [celebrate]);
+
+  const handleOpenCalmToolkit = useCallback(() => {
+    setShowCalmToolkit(true);
+    setCalmToolkitUses((prev) => prev + 1);
+    setCompanionCalm();
+  }, [setCompanionCalm]);
 
   const handleTokensEarned = useCallback((tokens: number) => {
     setTokensEarned((prev) => prev + tokens);
@@ -179,6 +197,9 @@ const Index = () => {
   const handleSpendTokens = useCallback((amount: number) => {
     setTokensEarned((prev) => Math.max(0, prev - amount));
   }, []);
+
+  const completedTasks = tasks.filter(t => t.completed).length;
+  const hardestTask = tasks.find(t => t.duration && t.duration >= 15)?.title;
 
   // Render module content
   const renderModuleContent = () => {
@@ -404,8 +425,15 @@ const Index = () => {
 
   const greeting = getGreeting();
 
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+    <div className="min-h-screen relative">
+      {/* Ambient background layer */}
+      <AmbientCanvas 
+        tokensEarned={tokensEarned} 
+        isCalm={showCalmToolkit}
+        currentModule={currentModule}
+      />
       {/* Header with greeting */}
       <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="flex items-center justify-between p-4 safe-top">
@@ -416,16 +444,15 @@ const Index = () => {
             <Menu className="w-5 h-5" />
           </button>
           
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-lg">{greeting.emoji}</span>
-              <h1 className="font-bold text-lg">{greeting.text}, Jack!</h1>
-            </div>
-            <span className="text-xs font-medium text-muted-foreground">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-            </span>
+          <div className="flex-1 flex justify-center">
+            <StatusStrip 
+              tokensEarned={tokensEarned}
+              tokensGoal={TOKENS_GOAL}
+              regulationLevel={regulationLevel}
+              onTokenTap={() => setCurrentModule('rewards')}
+              onRegulationTap={handleOpenCalmToolkit}
+            />
           </div>
-
           <div className="flex items-center gap-2">
             {user ? (
               <button
@@ -456,6 +483,22 @@ const Index = () => {
             </button>
           </div>
         </div>
+        
+        {/* Mode indicator for parent with daily summary access */}
+        {mode === 'parent' && (
+          <div className="px-4 pb-2 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </span>
+            <button
+              onClick={() => setShowDailySummary(true)}
+              className="text-xs text-primary font-medium flex items-center gap-1"
+            >
+              <BookOpen className="w-3 h-3" />
+              View Story
+            </button>
+          </div>
+        )}
       </header>
 
       <main className="pb-32">
@@ -496,10 +539,21 @@ const Index = () => {
         currentModule={currentModule}
       />
 
-      <CalmButton onClick={() => setShowCalmToolkit(true)} />
+      <CalmButton onClick={handleOpenCalmToolkit} />
       {showCalmToolkit && <CalmToolkit onClose={() => setShowCalmToolkit(false)} />}
       {showBraveryTimer && (
         <BraveryTimer duration={30} copingPhrase="I can handle this feeling." onComplete={handleBraveryComplete} onCancel={() => setShowBraveryTimer(false)} />
+      )}
+      {showDailySummary && (
+        <DailySummary
+          tasksCompleted={completedTasks}
+          totalTasks={tasks.length}
+          tokensEarned={tokensEarned}
+          calmToolkitUses={calmToolkitUses}
+          braveryAttempts={braveryAttempts}
+          hardestTask={hardestTask}
+          onClose={() => setShowDailySummary(false)}
+        />
       )}
       {showScheduleBuilder && (
         <ScheduleBuilder
@@ -511,5 +565,12 @@ const Index = () => {
     </div>
   );
 };
+
+// Wrap with CompanionProvider
+const Index = () => (
+  <CompanionProvider>
+    <IndexContent />
+  </CompanionProvider>
+);
 
 export default Index;
