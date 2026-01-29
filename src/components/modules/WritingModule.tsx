@@ -6,6 +6,10 @@ import {
   ArrowLeft, Eye, Hand 
 } from 'lucide-react';
 import { useSound } from '@/contexts/SoundContext';
+import { TracePad } from '@/components/writing/TracePad';
+import { DotToDotPad } from '@/components/writing/DotToDotPad';
+import { CopyPad } from '@/components/writing/CopyPad';
+import { IndependentPad } from '@/components/writing/IndependentPad';
 
 interface WritingModuleProps {
   onBack: () => void;
@@ -97,14 +101,38 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
             ))}
           </div>
 
-          {/* Practice area placeholder */}
-          <div className="w-full max-w-sm h-48 rounded-2xl bg-white border-2 border-border flex items-center justify-center">
-            <span className="text-muted-foreground">
-              {currentStage === 'trace' ? 'Trace the letter with your finger' :
-               currentStage === 'dotToDot' ? 'Connect the dots' :
-               currentStage === 'copy' ? 'Copy the letter below' :
-               'Write it on your own!'}
-            </span>
+          {/* Practice area - actual components */}
+          <div className="w-full max-w-sm flex justify-center">
+            {currentStage === 'trace' && (
+              <TracePad 
+                letter={selectedLetter.letter} 
+                size={220}
+                onComplete={() => {
+                  // Auto-advance to next stage after completion
+                }}
+              />
+            )}
+            {currentStage === 'dotToDot' && (
+              <DotToDotPad 
+                letter={selectedLetter.letter} 
+                size={220}
+                onComplete={() => {}}
+              />
+            )}
+            {currentStage === 'copy' && (
+              <CopyPad 
+                letter={selectedLetter.letter} 
+                size={220}
+                onComplete={() => {}}
+              />
+            )}
+            {currentStage === 'independent' && (
+              <IndependentPad 
+                letter={selectedLetter.letter} 
+                size={220}
+                onComplete={() => {}}
+              />
+            )}
           </div>
 
           <button
