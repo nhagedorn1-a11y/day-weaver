@@ -40,9 +40,10 @@ export interface ScienceActivity extends Activity {
   labCardId?: string;
   visualSteps?: Array<{
     emoji: string;
+    label: string;
+    description?: string; // Accessibility description of the visual
     phase?: string;
     planet?: string;
-    label: string;
     size?: string;
   }>;
 }
