@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ReadingProfile } from '@/types/reading';
-import { readingLessons, getLesson } from '@/data/readingLessons';
-import { Book, Clock, Star, ChevronRight, Settings, Flame, Check, Award } from 'lucide-react';
+import { readingLessons, getLesson, getDailyLesson, TOTAL_LESSONS } from '@/data/readingLessons';
+import { Book, Clock, Star, ChevronRight, Settings, Flame, Check, Award, Shuffle, RefreshCw } from 'lucide-react';
 
 interface ReadingStudioHomeProps {
   profile: ReadingProfile;
@@ -19,7 +19,19 @@ const SESSION_STEPS = [
 ];
 
 export function ReadingStudioHome({ profile, onStartSession, onOpenSettings }: ReadingStudioHomeProps) {
-  const currentLesson = getLesson(profile.currentLessonId) || readingLessons[0];
+  // Get current lesson index from profile
+  const currentLessonIndex = useMemo(() => {
+    const staticLesson = readingLessons.find(l => l.id === profile.currentLessonId);
+    return staticLesson ? staticLesson.order - 1 : 0;
+  }, [profile.currentLessonId]);
+
+  // Generate today's lesson (randomized words each day)
+  const todaysLesson = useMemo(() => {
+    const daily = getDailyLesson(currentLessonIndex);
+    return daily || getLesson(profile.currentLessonId) || readingLessons[0];
+  }, [currentLessonIndex, profile.currentLessonId]);
+
+  const isReviewDay = todaysLesson.id.startsWith('review-');
 
   return (
     <div className="min-h-screen bg-background">
@@ -31,7 +43,9 @@ export function ReadingStudioHome({ profile, onStartSession, onOpenSettings }: R
           </div>
           <div>
             <h1 className="font-semibold text-lg">Reading Studio</h1>
-            <span className="hw-label">Lesson {currentLesson.order} of {readingLessons.length}</span>
+            <span className="hw-label">
+              {isReviewDay ? 'Review Day!' : `Lesson ${currentLessonIndex + 1} of ${TOTAL_LESSONS}`}
+            </span>
           </div>
         </div>
         <button
@@ -62,46 +76,67 @@ export function ReadingStudioHome({ profile, onStartSession, onOpenSettings }: R
         </div>
 
         {/* Today's lesson card */}
-        <div className="bg-card rounded-3xl border-2 border-border p-6">
+        <div className={`rounded-3xl border-2 p-6 ${isReviewDay ? 'bg-gradient-to-br from-token/10 to-calm/10 border-token/30' : 'bg-card border-border'}`}>
           <div className="flex items-center justify-between mb-4">
-            <span className="hw-label">Today's Lesson</span>
+            <div className="flex items-center gap-2">
+              {isReviewDay && <Shuffle className="w-4 h-4 text-token" />}
+              <span className="hw-label">{isReviewDay ? 'Review Session' : "Today's Lesson"}</span>
+            </div>
             <div className="flex items-center gap-1 text-muted-foreground">
               <Clock className="w-4 h-4" />
               <span className="text-sm font-mono">{profile.sessionMinutes} min</span>
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold mb-2">{currentLesson.title}</h2>
+          <h2 className="text-2xl font-bold mb-2">{todaysLesson.title}</h2>
           <p className="text-muted-foreground mb-4">
-            Learn the {currentLesson.newGraphemes[0]?.phoneme} sound
+            {isReviewDay 
+              ? 'Practice words and sounds you\'ve learned'
+              : todaysLesson.newGraphemes[0]?.phoneme 
+                ? `Learn the ${todaysLesson.newGraphemes[0].phoneme} sound`
+                : 'Practice reading today'
+            }
           </p>
 
           {/* New grapheme preview with visual cue */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-20 h-24 rounded-xl bg-primary text-primary-foreground flex flex-col items-center justify-center">
-              {currentLesson.newGraphemes[0]?.keywordEmoji && (
-                <span className="text-2xl mb-0.5">{currentLesson.newGraphemes[0].keywordEmoji}</span>
-              )}
-              <span className="text-3xl font-bold">{currentLesson.newGraphemes[0]?.grapheme}</span>
-              <span className="text-xs font-mono opacity-80">{currentLesson.newGraphemes[0]?.phoneme}</span>
-            </div>
-            <div className="flex-1">
-              <span className="text-sm text-muted-foreground">
-                {currentLesson.newGraphemes[0]?.keyword && (
-                  <>{currentLesson.newGraphemes[0].keywordEmoji} = "{currentLesson.newGraphemes[0].keyword}"</>
+          {todaysLesson.newGraphemes[0] && (
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-20 h-24 rounded-xl bg-primary text-primary-foreground flex flex-col items-center justify-center">
+                {todaysLesson.newGraphemes[0].keywordEmoji && (
+                  <span className="text-2xl mb-0.5">{todaysLesson.newGraphemes[0].keywordEmoji}</span>
                 )}
-              </span>
-              <p className="font-medium mt-1">Words like: {currentLesson.wordList.slice(0, 3).map(w => w.word).join(', ')}</p>
+                <span className="text-3xl font-bold">{todaysLesson.newGraphemes[0].grapheme}</span>
+                <span className="text-xs font-mono opacity-80">{todaysLesson.newGraphemes[0].phoneme}</span>
+              </div>
+              <div className="flex-1">
+                <span className="text-sm text-muted-foreground">
+                  {todaysLesson.newGraphemes[0].keyword && (
+                    <>{todaysLesson.newGraphemes[0].keywordEmoji} = "{todaysLesson.newGraphemes[0].keyword}"</>
+                  )}
+                </span>
+                <p className="font-medium mt-1">Words like: {todaysLesson.wordList.slice(0, 3).map(w => w.word).join(', ')}</p>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Review day word preview */}
+          {isReviewDay && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {todaysLesson.wordList.slice(0, 6).map((word) => (
+                <span key={word.id} className="px-3 py-1.5 rounded-lg bg-background/50 font-mono font-medium">
+                  {word.word}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Start button */}
           <button
-            onClick={() => onStartSession(currentLesson.id)}
+            onClick={() => onStartSession(todaysLesson.id)}
             className="giant-button w-full bg-primary text-primary-foreground hover:scale-105 transition-transform"
           >
-            <Book className="w-8 h-8" />
-            <span>Start Reading</span>
+            {isReviewDay ? <RefreshCw className="w-8 h-8" /> : <Book className="w-8 h-8" />}
+            <span>{isReviewDay ? 'Start Review' : 'Start Reading'}</span>
           </button>
         </div>
 
@@ -109,7 +144,7 @@ export function ReadingStudioHome({ profile, onStartSession, onOpenSettings }: R
         <div>
           <span className="hw-label block mb-3">Today's Plan</span>
           <div className="space-y-2">
-            {SESSION_STEPS.map((step, index) => (
+            {SESSION_STEPS.map((step) => (
               <div
                 key={step.id}
                 className="flex items-center gap-4 p-3 rounded-xl bg-muted/50"
@@ -130,9 +165,9 @@ export function ReadingStudioHome({ profile, onStartSession, onOpenSettings }: R
         <div>
           <span className="hw-label block mb-3">All Lessons</span>
           <div className="space-y-2">
-            {readingLessons.map((lesson, index) => {
+            {readingLessons.map((lesson) => {
               const isCurrent = lesson.id === profile.currentLessonId;
-              const isPast = lesson.order < (currentLesson?.order || 1);
+              const isPast = lesson.order < (currentLessonIndex + 1);
               
               return (
                 <div
