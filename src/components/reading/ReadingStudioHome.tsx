@@ -76,15 +76,22 @@ export function ReadingStudioHome({ profile, onStartSession, onOpenSettings }: R
             Learn the {currentLesson.newGraphemes[0]?.phoneme} sound
           </p>
 
-          {/* New grapheme preview */}
+          {/* New grapheme preview with visual cue */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-20 rounded-xl bg-primary text-primary-foreground flex flex-col items-center justify-center">
+            <div className="w-20 h-24 rounded-xl bg-primary text-primary-foreground flex flex-col items-center justify-center">
+              {currentLesson.newGraphemes[0]?.keywordEmoji && (
+                <span className="text-2xl mb-0.5">{currentLesson.newGraphemes[0].keywordEmoji}</span>
+              )}
               <span className="text-3xl font-bold">{currentLesson.newGraphemes[0]?.grapheme}</span>
               <span className="text-xs font-mono opacity-80">{currentLesson.newGraphemes[0]?.phoneme}</span>
             </div>
             <div className="flex-1">
-              <span className="text-sm text-muted-foreground">You'll practice words like:</span>
-              <p className="font-medium">{currentLesson.wordList.slice(0, 3).map(w => w.word).join(', ')}</p>
+              <span className="text-sm text-muted-foreground">
+                {currentLesson.newGraphemes[0]?.keyword && (
+                  <>{currentLesson.newGraphemes[0].keywordEmoji} = "{currentLesson.newGraphemes[0].keyword}"</>
+                )}
+              </span>
+              <p className="font-medium mt-1">Words like: {currentLesson.wordList.slice(0, 3).map(w => w.word).join(', ')}</p>
             </div>
           </div>
 

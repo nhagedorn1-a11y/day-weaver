@@ -1,20 +1,26 @@
 import { ReadingLesson, GraphemeCard, ReadingWord, DecodableSentence } from '@/types/reading';
 
-// Core grapheme cards library
+// Core grapheme cards library with visual keyword cues
+// Every letter has a keyword + emoji for visual-phonetic association
 export const graphemeCards: Record<string, GraphemeCard> = {
-  'm': { id: 'm', grapheme: 'm', phoneme: '/m/', isDigraph: false },
-  's': { id: 's', grapheme: 's', phoneme: '/s/', isDigraph: false },
-  't': { id: 't', grapheme: 't', phoneme: '/t/', isDigraph: false },
-  'p': { id: 'p', grapheme: 'p', phoneme: '/p/', isDigraph: false },
-  'a': { id: 'a', grapheme: 'a', phoneme: '/ă/', keyword: 'apple', isDigraph: false },
-  'i': { id: 'i', grapheme: 'i', phoneme: '/ĭ/', keyword: 'itch', isDigraph: false },
-  'n': { id: 'n', grapheme: 'n', phoneme: '/n/', isDigraph: false },
-  'd': { id: 'd', grapheme: 'd', phoneme: '/d/', isDigraph: false },
-  'o': { id: 'o', grapheme: 'o', phoneme: '/ŏ/', keyword: 'octopus', isDigraph: false },
-  'c': { id: 'c', grapheme: 'c', phoneme: '/k/', isDigraph: false },
-  'h': { id: 'h', grapheme: 'h', phoneme: '/h/', isDigraph: false },
-  'sh': { id: 'sh', grapheme: 'sh', phoneme: '/sh/', isDigraph: true },
-  'ch': { id: 'ch', grapheme: 'ch', phoneme: '/ch/', isDigraph: true },
+  // Consonants
+  'm': { id: 'm', grapheme: 'm', phoneme: '/m/', keyword: 'mouse', keywordEmoji: '🐭', isDigraph: false },
+  's': { id: 's', grapheme: 's', phoneme: '/s/', keyword: 'snake', keywordEmoji: '🐍', isDigraph: false },
+  't': { id: 't', grapheme: 't', phoneme: '/t/', keyword: 'turtle', keywordEmoji: '🐢', isDigraph: false },
+  'p': { id: 'p', grapheme: 'p', phoneme: '/p/', keyword: 'pig', keywordEmoji: '🐷', isDigraph: false },
+  'n': { id: 'n', grapheme: 'n', phoneme: '/n/', keyword: 'nest', keywordEmoji: '🪺', isDigraph: false },
+  'd': { id: 'd', grapheme: 'd', phoneme: '/d/', keyword: 'dog', keywordEmoji: '🐕', isDigraph: false },
+  'c': { id: 'c', grapheme: 'c', phoneme: '/k/', keyword: 'cat', keywordEmoji: '🐱', isDigraph: false },
+  'h': { id: 'h', grapheme: 'h', phoneme: '/h/', keyword: 'hat', keywordEmoji: '🎩', isDigraph: false },
+  
+  // Short vowels - critical for decoding
+  'a': { id: 'a', grapheme: 'a', phoneme: '/ă/', keyword: 'apple', keywordEmoji: '🍎', isDigraph: false },
+  'i': { id: 'i', grapheme: 'i', phoneme: '/ĭ/', keyword: 'itch', keywordEmoji: '🦟', isDigraph: false },
+  'o': { id: 'o', grapheme: 'o', phoneme: '/ŏ/', keyword: 'octopus', keywordEmoji: '🐙', isDigraph: false },
+  
+  // Digraphs - two letters, one sound
+  'sh': { id: 'sh', grapheme: 'sh', phoneme: '/sh/', keyword: 'ship', keywordEmoji: '🚢', isDigraph: true },
+  'ch': { id: 'ch', grapheme: 'ch', phoneme: '/ch/', keyword: 'cheese', keywordEmoji: '🧀', isDigraph: true },
 };
 
 // Lesson 1: CVC Short A
