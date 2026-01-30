@@ -105,7 +105,7 @@ export function VisualTimer({
   if (isComplete) {
     return (
       <div 
-        className="flex flex-col items-center justify-center p-8 rounded-3xl text-center transition-all"
+        className="flex flex-col items-center justify-center p-8 rounded text-center transition-all"
         style={{ backgroundColor: phaseBgColors.green }}
       >
         <div className="text-5xl mb-4">✨</div>
@@ -127,7 +127,7 @@ export function VisualTimer({
   if (isEditing) {
     return (
       <div 
-        className="flex flex-col items-center p-6 rounded-3xl transition-colors"
+        className="flex flex-col items-center p-6 rounded transition-colors"
         style={{ backgroundColor: phaseBgColors[phase] }}
       >
         <span 
@@ -149,13 +149,13 @@ export function VisualTimer({
         <div className="flex gap-3 w-full">
           <button
             onClick={() => setIsEditing(false)}
-            className="flex-1 py-3 px-4 rounded-xl bg-muted text-muted-foreground font-medium hover:bg-muted/80 transition-colors"
+            className="flex-1 py-3 px-4 rounded bg-muted text-muted-foreground font-medium hover:bg-muted/80 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleApplyTime}
-            className="flex-1 py-3 px-4 rounded-xl font-semibold transition-colors"
+            className="flex-1 py-3 px-4 rounded font-semibold transition-colors"
             style={{ 
               backgroundColor: phaseColors[phase],
               color: 'white'
@@ -170,7 +170,7 @@ export function VisualTimer({
 
   return (
     <div 
-      className="flex flex-col items-center p-6 rounded-3xl transition-colors"
+      className="flex flex-col items-center p-6 rounded transition-colors"
       style={{ backgroundColor: phaseBgColors[phase] }}
     >
       {label && (
@@ -188,7 +188,7 @@ export function VisualTimer({
           {/* Edit hint overlay */}
           {!isRunning && (
             <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="bg-foreground/10 rounded-full p-3">
+              <div className="bg-foreground/10 rounded p-3">
                 <Settings2 className="w-6 h-6 text-foreground/60" />
               </div>
             </div>
@@ -238,9 +238,9 @@ export function VisualTimer({
           className="w-full mb-6 cursor-pointer group"
           onClick={() => !isRunning && setIsEditing(true)}
         >
-          <div className="h-8 rounded-full bg-background/50 overflow-hidden">
+          <div className="h-8 rounded bg-background/50 overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-1000 ease-linear"
+              className="h-full rounded transition-all duration-1000 ease-linear"
               style={{ 
                 width: `${progress * 100}%`,
                 backgroundColor: phaseColors[phase]
@@ -268,21 +268,21 @@ export function VisualTimer({
         >
           {/* Sand timer visualization */}
           <div 
-            className="absolute inset-x-0 top-0 rounded-t-full overflow-hidden transition-all duration-1000"
+            className="absolute inset-x-0 top-0 rounded overflow-hidden transition-all duration-1000"
             style={{ 
               height: `${(1 - progress) * 45}%`,
               backgroundColor: phaseBgColors[phase]
             }}
           />
           <div 
-            className="absolute inset-x-4 bottom-0 rounded-b-2xl overflow-hidden transition-all duration-1000"
+            className="absolute inset-x-4 bottom-0 rounded overflow-hidden transition-all duration-1000"
             style={{ 
               height: `${progress * 45}%`,
               backgroundColor: phaseColors[phase]
             }}
           />
           <div 
-            className="absolute inset-0 border-4 rounded-3xl"
+            className="absolute inset-0 border-4 rounded"
             style={{ borderColor: phaseColors[phase] }}
           />
           <div className="absolute -bottom-12 inset-x-0 text-center">
@@ -306,7 +306,7 @@ export function VisualTimer({
           <button
             onClick={() => setIsEditing(true)}
             disabled={isRunning}
-            className="w-12 h-12 rounded-xl bg-background/50 flex items-center justify-center disabled:opacity-30 hover:bg-background/70 transition-colors"
+            className="w-12 h-12 rounded bg-background/50 flex items-center justify-center disabled:opacity-30 hover:bg-background/70 transition-colors"
           >
             <Settings2 className="w-5 h-5" />
           </button>
@@ -314,7 +314,7 @@ export function VisualTimer({
           {/* Play/Pause */}
           <button
             onClick={() => setIsRunning(!isRunning)}
-            className="flex-1 h-14 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
+            className="flex-1 h-14 rounded font-semibold flex items-center justify-center gap-2 transition-colors"
             style={{ 
               backgroundColor: phaseColors[phase],
               color: 'white'
@@ -336,7 +336,7 @@ export function VisualTimer({
           {/* Mute */}
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="w-12 h-12 rounded-xl bg-background/50 flex items-center justify-center hover:bg-background/70 transition-colors"
+            className="w-12 h-12 rounded bg-background/50 flex items-center justify-center hover:bg-background/70 transition-colors"
           >
             {isMuted ? (
               <VolumeX className="w-5 h-5 opacity-50" />

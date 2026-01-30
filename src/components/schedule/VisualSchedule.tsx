@@ -1,6 +1,6 @@
 import { Task, TASK_ICONS } from '@/types/jackos';
 import { 
-  Clock, Star, Check, ChevronRight, Sparkles, Calendar, 
+  Clock, Star, Check, ChevronRight, Calendar, 
   Pencil, Trash2, GripVertical, X, Save
 } from 'lucide-react';
 import {
@@ -117,7 +117,7 @@ export function VisualSchedule({
             <div
               key={task.id}
               onClick={() => onTaskClick(task)}
-              className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl transition-all cursor-pointer ${
+              className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded transition-all cursor-pointer ${
                 isCurrent
                   ? 'bg-primary text-primary-foreground shadow-md'
                   : isCompleted
@@ -140,8 +140,8 @@ export function VisualSchedule({
   // Empty state
   if (sortedTasks.length === 0) {
     return (
-      <div className="text-center py-12 px-6 bg-card/50 rounded-2xl border-2 border-dashed border-border">
-        <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+      <div className="text-center py-12 px-6 bg-card/50 rounded border-2 border-dashed border-border">
+        <div className="w-16 h-16 rounded bg-muted/50 flex items-center justify-center mx-auto mb-4">
           <Calendar className="w-8 h-8 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-semibold mb-1">No Schedule Yet</h3>
@@ -163,9 +163,9 @@ export function VisualSchedule({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+          <div className="w-16 h-1.5 rounded bg-muted overflow-hidden">
             <div 
-              className="h-full rounded-full bg-calm transition-all duration-500"
+              className="h-full rounded bg-calm transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -204,7 +204,7 @@ export function VisualSchedule({
 
         <DragOverlay>
           {activeTask && (
-            <div className="bg-primary text-primary-foreground shadow-2xl scale-105 p-3 rounded-xl flex items-center gap-3">
+            <div className="bg-primary text-primary-foreground shadow-2xl scale-105 p-3 rounded flex items-center gap-3">
               <GripVertical className="w-4 h-4" />
               <span className="font-mono text-sm">{activeTask.scheduledTime}</span>
               <span className="text-xl">{getIconEmoji(activeTask.icon)}</span>
@@ -216,7 +216,7 @@ export function VisualSchedule({
 
       {/* All done celebration */}
       {completedCount === sortedTasks.length && sortedTasks.length > 0 && (
-        <div className="text-center py-6 px-4 bg-gradient-to-r from-calm/20 to-token/20 rounded-2xl border border-calm/30">
+        <div className="text-center py-6 px-4 bg-calm/10 rounded border border-calm/30">
           <div className="text-4xl mb-2">🎉</div>
           <h3 className="text-lg font-bold text-calm">All Done!</h3>
           <p className="text-sm text-muted-foreground">Amazing work today!</p>
@@ -294,7 +294,7 @@ function SortableTaskItem({
   if (isEditing) {
     return (
       <div ref={setNodeRef} style={style} className="touch-none">
-        <div className="p-4 rounded-xl bg-card border-2 border-primary shadow-lg space-y-3">
+        <div className="p-4 rounded bg-card border-2 border-primary shadow-lg space-y-3">
           {/* Title input */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground block mb-1">Task Name</label>
@@ -302,7 +302,7 @@ function SortableTaskItem({
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 rounded bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               autoFocus
             />
           </div>
@@ -315,7 +315,7 @@ function SortableTaskItem({
                 type="time"
                 value={editTime}
                 onChange={(e) => setEditTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 rounded bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="w-24">
@@ -327,7 +327,7 @@ function SortableTaskItem({
                   onChange={(e) => setEditDuration(e.target.value)}
                   min="1"
                   max="120"
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 rounded bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm text-muted-foreground">min</span>
               </div>
@@ -343,7 +343,7 @@ function SortableTaskItem({
                   key={icon.id}
                   type="button"
                   onClick={() => setSelectedIcon(icon.id)}
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all ${
+                  className={`w-10 h-10 rounded flex items-center justify-center text-xl transition-all ${
                     selectedIcon === icon.id 
                       ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2' 
                       : 'bg-muted hover:bg-muted/80'
@@ -359,21 +359,21 @@ function SortableTaskItem({
           <div className="flex gap-2 pt-2">
             <button
               onClick={handleSave}
-              className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-primary text-primary-foreground font-semibold"
+              className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded bg-primary text-primary-foreground font-semibold"
             >
               <Save className="w-4 h-4" />
               Save
             </button>
             <button
               onClick={onCancelEdit}
-              className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-secondary text-secondary-foreground font-semibold"
+              className="flex items-center justify-center gap-2 py-2 px-4 rounded bg-secondary text-secondary-foreground font-semibold"
             >
               <X className="w-4 h-4" />
               Cancel
             </button>
             <button
               onClick={() => onDelete(task.id)}
-              className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-destructive/10 text-destructive font-semibold"
+              className="flex items-center justify-center gap-2 py-2 px-4 rounded bg-destructive/10 text-destructive font-semibold"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -386,11 +386,11 @@ function SortableTaskItem({
   return (
     <div ref={setNodeRef} style={style} className="touch-none">
       <div
-        className={`group flex items-center gap-3 p-3 rounded-xl transition-all ${
+        className={`group flex items-center gap-3 p-3 rounded transition-all ${
           isCurrent
-            ? 'bg-gradient-to-r from-now to-primary text-now-foreground shadow-lg scale-[1.02]'
+            ? 'bg-now text-now-foreground shadow-lg scale-[1.02]'
             : isNext
-              ? 'bg-gradient-to-r from-next/20 to-next/10 border border-next/30'
+              ? 'bg-next/10 border border-next/30'
               : isCompleted
                 ? 'bg-muted/30 opacity-60'
                 : 'bg-card/50 border border-border hover:border-primary/30'
@@ -411,7 +411,7 @@ function SortableTaskItem({
         </div>
 
         {/* Icon */}
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+        <div className={`w-10 h-10 rounded flex items-center justify-center flex-shrink-0 ${
           isCompleted ? 'bg-calm text-calm-foreground' : isCurrent ? 'bg-white/20' : 'bg-muted'
         }`}>
           {isCompleted ? <Check className="w-5 h-5" /> : <span className="text-xl">{getIconEmoji(task.icon)}</span>}
@@ -438,7 +438,7 @@ function SortableTaskItem({
         {/* Edit button */}
         <button
           onClick={(e) => { e.stopPropagation(); onStartEdit(task.id); }}
-          className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+          className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <Pencil className="w-4 h-4" />
         </button>
@@ -446,15 +446,14 @@ function SortableTaskItem({
         {/* Delete button */}
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-          className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+          className="w-8 h-8 rounded bg-destructive/10 flex items-center justify-center text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <Trash2 className="w-4 h-4" />
         </button>
 
         {/* Status indicators */}
         {isCurrent && (
-          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/20">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1 px-2 py-1 rounded bg-white/20">
             <span className="text-xs font-semibold">Now</span>
           </div>
         )}
