@@ -196,6 +196,27 @@ export function MotorModule({ onBack, onTokensEarned }: MotorModuleProps) {
     const currentStepData = selectedADL.steps[adlStep];
     const progress = ((adlStep + 1) / selectedADL.steps.length) * 100;
 
+    // Safety check - if step data is undefined, return to home
+    if (!currentStepData) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center p-6">
+            <p className="text-muted-foreground mb-4">Step data not available</p>
+            <button 
+              onClick={() => {
+                setView('home');
+                setSelectedADL(null);
+                setAdlStep(0);
+              }}
+              className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <header className="flex items-center gap-4 p-4 border-b border-border safe-top">

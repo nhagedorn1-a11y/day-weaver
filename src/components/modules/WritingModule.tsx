@@ -30,7 +30,33 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
   const [view, setView] = useState<WritingView>('home');
   const [selectedLetter, setSelectedLetter] = useState<LetterCardType | null>(null);
   const [currentStage, setCurrentStage] = useState<'trace' | 'dotToDot' | 'copy' | 'independent'>('trace');
-  const { playTap, playComplete, playTokenEarned } = useSound();
+  const [stageCompleted, setStageCompleted] = useState(false);
+  const { playTap, playComplete, playTokenEarned, playCorrect } = useSound();
+
+  const STAGES: ('trace' | 'dotToDot' | 'copy' | 'independent')[] = ['trace', 'dotToDot', 'copy', 'independent'];
+
+  const handleStageComplete = () => {
+    playCorrect();
+    setStageCompleted(true);
+    
+    // Auto-advance after a brief celebration pause
+    setTimeout(() => {
+      const currentIndex = STAGES.indexOf(currentStage);
+      if (currentIndex < STAGES.length - 1) {
+        // Move to next stage
+        setCurrentStage(STAGES[currentIndex + 1]);
+        setStageCompleted(false);
+      } else {
+        // All stages complete - award tokens and return home
+        playComplete();
+        playTokenEarned();
+        onTokensEarned(2);
+        setView('home');
+        setCurrentStage('trace');
+        setStageCompleted(false);
+      }
+    }, 800);
+  };
 
   const [profile] = useState<WritingProfile>({
     childId: 'child-1',
@@ -102,37 +128,57 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
           </div>
 
           {/* Practice area - actual components */}
-          <div className="w-full max-w-sm flex justify-center">
+          <div className="w-full max-w-sm flex flex-col items-center">
+            {stageCompleted && (
+              <div className="mb-4 text-center animate-scale-in">
+                <span className="text-4xl">✨</span>
+                <p className="text-calm font-medium">Great job!</p>
+              </div>
+            )}
             {currentStage === 'trace' && (
               <TracePad 
                 letter={selectedLetter.letter} 
                 size={220}
-                onComplete={() => {
-                  // Auto-advance to next stage after completion
-                }}
+                onComplete={handleStageComplete}
               />
             )}
             {currentStage === 'dotToDot' && (
               <DotToDotPad 
                 letter={selectedLetter.letter} 
                 size={220}
-                onComplete={() => {}}
+                onComplete={handleStageComplete}
               />
             )}
             {currentStage === 'copy' && (
               <CopyPad 
                 letter={selectedLetter.letter} 
                 size={220}
-                onComplete={() => {}}
+                onComplete={handleStageComplete}
               />
             )}
             {currentStage === 'independent' && (
               <IndependentPad 
                 letter={selectedLetter.letter} 
                 size={220}
-                onComplete={() => {}}
+                onComplete={handleStageComplete}
               />
             )}
+          </div>
+
+          {/* Progress indicator */}
+          <div className="flex gap-2 mt-4">
+            {STAGES.map((stage, idx) => (
+              <div
+                key={stage}
+                className={`w-3 h-3 rounded-full transition-all ${
+                  idx < STAGES.indexOf(currentStage) 
+                    ? 'bg-calm' 
+                    : idx === STAGES.indexOf(currentStage) 
+                      ? 'bg-primary scale-125' 
+                      : 'bg-muted'
+                }`}
+              />
+            ))}
           </div>
 
           <button

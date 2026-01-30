@@ -66,7 +66,13 @@ export function MathSessionRunner({ profile, lessonId, onComplete, onExit }: Mat
       } else {
         // Move to next step
         if (step === 'warmup') {
-          setStep('teach');
+          // Skip teach step for review lessons (no new concepts)
+          if (lesson.newConcepts.length === 0) {
+            setStep('practice');
+            setProblemIndex(0);
+          } else {
+            setStep('teach');
+          }
         } else if (step === 'teach') {
           setStep('practice');
           setProblemIndex(0);
