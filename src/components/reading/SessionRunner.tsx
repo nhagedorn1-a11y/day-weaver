@@ -41,12 +41,31 @@ export function SessionRunner({
   // Sound effects
   const { playComplete, playTokenEarned, playTap, playCorrect } = useSound();
 
+  // Digraph-aware phoneme splitting for fallback words
+  const splitIntoPhonemes = (word: string): string[] => {
+    const digraphs = ['sh', 'ch', 'th', 'wh', 'ck', 'ng', 'qu'];
+    const phonemes: string[] = [];
+    let i = 0;
+    while (i < word.length) {
+      const twoChars = word.slice(i, i + 2).toLowerCase();
+      if (digraphs.includes(twoChars) && i + 1 < word.length) {
+        phonemes.push(word.slice(i, i + 2));
+        i += 2;
+      } else {
+        phonemes.push(word[i]);
+        i += 1;
+      }
+    }
+    return phonemes;
+  };
+
   // Calculate items for each step - ensure warmup words have their phoneme data
   const stepItems = useMemo(() => {
     // Map warmup word strings back to their full word data from wordList
     const warmupWithPhonemes = lesson.warmUpWords.slice(0, 3).map(warmupWord => {
       const wordData = lesson.wordList.find(w => w.word === warmupWord);
-      return wordData || { id: warmupWord, word: warmupWord, phonemes: warmupWord.split(''), isSightWord: false };
+      // Use digraph-aware splitting for fallback instead of simple split('')
+      return wordData || { id: warmupWord, word: warmupWord, phonemes: splitIntoPhonemes(warmupWord), isSightWord: false };
     });
     
     return {

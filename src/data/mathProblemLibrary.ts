@@ -122,6 +122,26 @@ export const mathProblems: Record<string, MathProblem[]> = {
     { id: 'nb-4', type: 'addition', prompt: 'What + 5 = 5?', visualCue: '? + ✋ = ✋', answer: 0, options: [0, 1, 5, 10], difficulty: 2 },
   ],
 
+  // === NUMBER ORDER (before/after) ===
+  'number-order': [
+    { id: 'no-1', type: 'counting', prompt: 'What comes after 3?', visualCue: '1 ➡️ 2 ➡️ 3 ➡️ ?', answer: 4, options: [2, 3, 4, 5], difficulty: 1 },
+    { id: 'no-2', type: 'counting', prompt: 'What comes before 5?', visualCue: '? ➡️ 5', answer: 4, options: [3, 4, 5, 6], difficulty: 1 },
+    { id: 'no-3', type: 'counting', prompt: 'What comes after 7?', visualCue: '6 ➡️ 7 ➡️ ?', answer: 8, options: [6, 7, 8, 9], difficulty: 1 },
+    { id: 'no-4', type: 'counting', prompt: 'What comes before 10?', visualCue: '? ➡️ 10', answer: 9, options: [8, 9, 10, 11], difficulty: 1 },
+    { id: 'no-5', type: 'counting', prompt: 'What number is between 4 and 6?', visualCue: '4 ➡️ ? ➡️ 6', answer: 5, options: [3, 4, 5, 6], difficulty: 2 },
+    { id: 'no-6', type: 'counting', prompt: 'Put in order: 3, 1, 2', visualCue: '🔢', answer: '1, 2, 3', options: ['1, 2, 3', '2, 1, 3', '3, 2, 1'], difficulty: 2 },
+  ],
+
+  // === BEFORE/AFTER (separate concept) ===
+  'before-after': [
+    { id: 'ba-1', type: 'counting', prompt: 'What comes just before 2?', visualCue: '? ⬅️ 2', answer: 1, options: [0, 1, 2, 3], difficulty: 1 },
+    { id: 'ba-2', type: 'counting', prompt: 'What comes just after 6?', visualCue: '6 ➡️ ?', answer: 7, options: [5, 6, 7, 8], difficulty: 1 },
+    { id: 'ba-3', type: 'counting', prompt: 'What comes just before 8?', visualCue: '? ⬅️ 8', answer: 7, options: [6, 7, 8, 9], difficulty: 1 },
+    { id: 'ba-4', type: 'counting', prompt: 'What comes just after 9?', visualCue: '9 ➡️ ?', answer: 10, options: [8, 9, 10, 11], difficulty: 1 },
+    { id: 'ba-5', type: 'counting', prompt: 'What comes between 7 and 9?', visualCue: '7 ➡️ ? ➡️ 9', answer: 8, options: [6, 7, 8, 9], difficulty: 2 },
+    { id: 'ba-6', type: 'counting', prompt: 'What comes just before 1?', visualCue: '? ⬅️ 1', answer: 0, options: [0, 1, 2, 3], difficulty: 2 },
+  ],
+
   // === DOUBLES ===
   'add-doubles': [
     { id: 'd-1', type: 'addition', prompt: '1 + 1 = ?', visualCue: '🖐️ + 🖐️ (1 finger each)', answer: 2, options: [1, 2, 3, 4], difficulty: 1 },

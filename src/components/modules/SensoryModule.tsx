@@ -254,8 +254,12 @@ export function SensoryModule({ onBack, onTokensEarned }: SensoryModuleProps) {
         {/* Movement Break */}
         <button
           onClick={() => {
-            setSelectedActivity(heavyWorkActivities[1]); // Bear walk
-            setView('timer');
+            // Safely get Bear walk or fallback to first activity
+            const bearWalk = heavyWorkActivities.find(a => a.id === 'bear-walk') || heavyWorkActivities[0];
+            if (bearWalk) {
+              setSelectedActivity(bearWalk);
+              setView('timer');
+            }
           }}
           className="flex flex-col items-center justify-center gap-3 p-6 rounded-3xl bg-card border-2 border-border hover:border-primary/50 transition-colors"
         >
