@@ -1,6 +1,7 @@
 import { UserMode } from '@/types/jackos';
 import { Settings, User } from 'lucide-react';
 import { SoundSettings } from './SoundSettings';
+import { SyncStatusPill } from './SyncStatusPill';
 
 interface HeaderProps {
   mode: UserMode;
@@ -26,6 +27,9 @@ export function Header({ mode, onModeSwitch, childName = 'Jack' }: HeaderProps) 
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Sync Status */}
+        <SyncStatusPill />
+        
         {/* Sound Settings */}
         <SoundSettings />
         

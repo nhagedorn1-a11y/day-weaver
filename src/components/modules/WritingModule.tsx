@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { WritingProfile, LetterCard as LetterCardType } from '@/types/academics';
-import { letterCards, getUppercaseLetters, getLowercaseLetters, basicStrokes } from '@/data/writingLibrary';
+import { letterCards, getUppercaseLetters, getLowercaseLetters, basicStrokes, numberCards, NumberCard } from '@/data/writingLibrary';
 import { 
   Pencil, Clock, Star, ChevronRight, Settings, Flame, Check, 
-  ArrowLeft, Eye, Hand 
+  ArrowLeft, Eye, Hand, Hash
 } from 'lucide-react';
 import { useSound } from '@/contexts/SoundContext';
 import { TracePad } from '@/components/writing/TracePad';
@@ -16,24 +16,35 @@ interface WritingModuleProps {
   onTokensEarned: (tokens: number) => void;
 }
 
-type WritingView = 'home' | 'uppercase' | 'lowercase' | 'practice';
+type WritingView = 'home' | 'uppercase' | 'lowercase' | 'numbers' | 'practice';
+type PracticeItem = LetterCardType | NumberCard;
 
 const LETTER_GROUPS = [
-  { id: 'line', name: 'Line Letters', letters: ['L', 'l', 'I', 'i', 'T', 't', 'F', 'E'] },
-  { id: 'circle', name: 'Circle Letters', letters: ['O', 'o', 'C', 'c', 'Q', 'G'] },
-  { id: 'hump', name: 'Hump Letters', letters: ['M', 'm', 'N', 'n', 'H', 'h', 'R', 'r'] },
-  { id: 'slant', name: 'Slant Letters', letters: ['A', 'V', 'v', 'W', 'w', 'X', 'x', 'K', 'k'] },
-  { id: 'tail', name: 'Tail Letters', letters: ['g', 'j', 'p', 'q', 'y'] },
+  { id: 'numbers', name: 'Numbers 0-10', items: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], isNumbers: true },
+  { id: 'line', name: 'Line Letters', items: ['L', 'l', 'I', 'i', 'T', 't', 'F', 'E'], isNumbers: false },
+  { id: 'circle', name: 'Circle Letters', items: ['O', 'o', 'C', 'c', 'Q', 'G'], isNumbers: false },
+  { id: 'hump', name: 'Hump Letters', items: ['M', 'm', 'N', 'n', 'H', 'h', 'R', 'r'], isNumbers: false },
+  { id: 'slant', name: 'Slant Letters', items: ['A', 'V', 'v', 'W', 'w', 'X', 'x', 'K', 'k'], isNumbers: false },
+  { id: 'tail', name: 'Tail Letters', items: ['g', 'j', 'p', 'q', 'y'], isNumbers: false },
 ];
 
 export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
   const [view, setView] = useState<WritingView>('home');
-  const [selectedLetter, setSelectedLetter] = useState<LetterCardType | null>(null);
+  const [selectedItem, setSelectedItem] = useState<PracticeItem | null>(null);
   const [currentStage, setCurrentStage] = useState<'trace' | 'dotToDot' | 'copy' | 'independent'>('trace');
   const [stageCompleted, setStageCompleted] = useState(false);
   const { playTap, playComplete, playTokenEarned, playCorrect } = useSound();
 
   const STAGES: ('trace' | 'dotToDot' | 'copy' | 'independent')[] = ['trace', 'dotToDot', 'copy', 'independent'];
+
+  // Helper to check if item is a letter or number
+  const isLetterCard = (item: PracticeItem): item is LetterCardType => {
+    return 'letter' in item;
+  };
+
+  const getCharacter = (item: PracticeItem): string => {
+    return isLetterCard(item) ? item.letter : item.character;
+  };
 
   const handleStageComplete = () => {
     playCorrect();
@@ -63,20 +74,22 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
     currentLessonId: 'writing-1',
     currentStage: 'trace',
     streak: 2,
-    masteredLetters: ['A', 'B', 'C', 'a', 'b', 'c'],
+    masteredLetters: ['A', 'B', 'C', 'a', 'b', 'c', '1', '2', '3'],
     lastSessionDate: null,
   });
 
   const uppercaseLetters = useMemo(() => getUppercaseLetters(), []);
   const lowercaseLetters = useMemo(() => getLowercaseLetters(), []);
 
-  const handleLetterSelect = (letter: LetterCardType) => {
-    playTap(); // Play tap sound on letter selection
-    setSelectedLetter(letter);
+  const handleItemSelect = (item: PracticeItem) => {
+    playTap();
+    setSelectedItem(item);
     setView('practice');
   };
 
-  if (view === 'practice' && selectedLetter) {
+  if (view === 'practice' && selectedItem) {
+    const character = getCharacter(selectedItem);
+    
     return (
       <div className="min-h-screen bg-background">
         <header className="flex items-center gap-4 p-4 border-b border-border safe-top">
@@ -84,16 +97,16 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex-1">
-            <h1 className="font-semibold text-lg">Practice: {selectedLetter.letter}</h1>
-            <span className="hw-label">{selectedLetter.keywordEmoji} {selectedLetter.keyword}</span>
+            <h1 className="font-semibold text-lg">Practice: {character}</h1>
+            <span className="hw-label">{selectedItem.keywordEmoji} {selectedItem.keyword}</span>
           </div>
         </header>
 
         <div className="p-6 flex flex-col items-center">
-          {/* Letter card */}
+          {/* Letter/Number card */}
           <div className="w-48 h-64 rounded-3xl bg-card border-4 border-primary flex flex-col items-center justify-center mb-6">
-            <span className="text-4xl mb-2">{selectedLetter.keywordEmoji}</span>
-            <span className="text-8xl font-serif">{selectedLetter.letter}</span>
+            <span className="text-4xl mb-2">{selectedItem.keywordEmoji}</span>
+            <span className="text-8xl font-serif">{character}</span>
           </div>
 
           {/* Formation tip */}
@@ -102,7 +115,7 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
               <Hand className="w-5 h-5 text-primary" />
               <span className="font-semibold">How to write it:</span>
             </div>
-            <p className="text-sm text-muted-foreground">{selectedLetter.formationTip}</p>
+            <p className="text-sm text-muted-foreground">{selectedItem.formationTip}</p>
           </div>
 
           {/* Stage selector */}
@@ -137,28 +150,28 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
             )}
             {currentStage === 'trace' && (
               <TracePad 
-                letter={selectedLetter.letter} 
+                letter={character} 
                 size={220}
                 onComplete={handleStageComplete}
               />
             )}
             {currentStage === 'dotToDot' && (
               <DotToDotPad 
-                letter={selectedLetter.letter} 
+                letter={character} 
                 size={220}
                 onComplete={handleStageComplete}
               />
             )}
             {currentStage === 'copy' && (
               <CopyPad 
-                letter={selectedLetter.letter} 
+                letter={character} 
                 size={220}
                 onComplete={handleStageComplete}
               />
             )}
             {currentStage === 'independent' && (
               <IndependentPad 
-                letter={selectedLetter.letter} 
+                letter={character} 
                 size={220}
                 onComplete={handleStageComplete}
               />
@@ -229,29 +242,36 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
           </div>
         </div>
 
-        {/* Letter groups */}
+        {/* Letter and Number groups */}
         {LETTER_GROUPS.map((group) => (
           <div key={group.id}>
-            <span className="hw-label block mb-3">{group.name}</span>
+            <div className="flex items-center gap-2 mb-3">
+              {group.isNumbers && <Hash className="w-4 h-4 text-token" />}
+              <span className="hw-label">{group.name}</span>
+            </div>
             <div className="flex flex-wrap gap-2">
-              {group.letters.map((letter) => {
-                const card = letterCards[letter];
+              {group.items.map((itemId) => {
+                // Get the card from the appropriate source
+                const card = group.isNumbers ? numberCards[itemId] : letterCards[itemId];
                 if (!card) return null;
                 
-                const isMastered = profile.masteredLetters.includes(letter);
+                const displayChar = group.isNumbers ? (card as NumberCard).character : (card as LetterCardType).letter;
+                const isMastered = profile.masteredLetters.includes(itemId);
                 
                 return (
                   <button
-                    key={letter}
-                    onClick={() => handleLetterSelect(card)}
+                    key={itemId}
+                    onClick={() => handleItemSelect(card as PracticeItem)}
                     className={`w-14 h-16 rounded-xl flex flex-col items-center justify-center transition-all ${
                       isMastered 
                         ? 'bg-calm/20 border-2 border-calm' 
-                        : 'bg-card border-2 border-border hover:border-primary'
+                        : group.isNumbers 
+                          ? 'bg-token/5 border-2 border-token/30 hover:border-token'
+                          : 'bg-card border-2 border-border hover:border-primary'
                     }`}
                   >
                     <span className="text-xs">{card.keywordEmoji}</span>
-                    <span className="text-xl font-serif">{letter}</span>
+                    <span className="text-xl font-serif">{displayChar}</span>
                     {isMastered && <Check className="w-3 h-3 text-calm" />}
                   </button>
                 );

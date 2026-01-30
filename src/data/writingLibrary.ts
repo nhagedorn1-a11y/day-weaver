@@ -2,6 +2,31 @@ import { LetterCard } from '@/types/academics';
 
 // Complete letter library with visual cues for handwriting
 // Every letter has a keyword + emoji for visual-motor association
+// Includes uppercase, lowercase, AND numbers 0-9
+
+// === NUMBER CARDS ===
+export interface NumberCard {
+  id: string;
+  character: string;
+  strokeOrder: string[];
+  keyword: string;
+  keywordEmoji: string;
+  formationTip: string;
+}
+
+export const numberCards: Record<string, NumberCard> = {
+  '0': { id: '0', character: '0', strokeOrder: ['circle'], keyword: 'Zero', keywordEmoji: '⭕', formationTip: 'Start at the top, curve all the way around like a ball' },
+  '1': { id: '1', character: '1', strokeOrder: ['down'], keyword: 'One', keywordEmoji: '☝️', formationTip: 'Start at the top, slide straight down' },
+  '2': { id: '2', character: '2', strokeOrder: ['curve', 'slant', 'across'], keyword: 'Two', keywordEmoji: '✌️', formationTip: 'Curve around at top, slant down, slide across the bottom' },
+  '3': { id: '3', character: '3', strokeOrder: ['curve', 'curve'], keyword: 'Three', keywordEmoji: '3️⃣', formationTip: 'Two bumps on the right side, like a sideways letter E' },
+  '4': { id: '4', character: '4', strokeOrder: ['down', 'across', 'down'], keyword: 'Four', keywordEmoji: '4️⃣', formationTip: 'Slide down, across, then a tall line down' },
+  '5': { id: '5', character: '5', strokeOrder: ['down', 'curve', 'across'], keyword: 'Five', keywordEmoji: '🖐️', formationTip: 'Slide down, big belly bump, hat on top' },
+  '6': { id: '6', character: '6', strokeOrder: ['curve-in'], keyword: 'Six', keywordEmoji: '6️⃣', formationTip: 'Curve down from the top, loop around to close' },
+  '7': { id: '7', character: '7', strokeOrder: ['across', 'slant'], keyword: 'Seven', keywordEmoji: '7️⃣', formationTip: 'Line across the top, then slant down' },
+  '8': { id: '8', character: '8', strokeOrder: ['s-curve', 'close'], keyword: 'Eight', keywordEmoji: '8️⃣', formationTip: 'Make an S shape, then close it to make two circles' },
+  '9': { id: '9', character: '9', strokeOrder: ['circle', 'down'], keyword: 'Nine', keywordEmoji: '9️⃣', formationTip: 'Circle at top, then slide straight down' },
+  '10': { id: '10', character: '10', strokeOrder: ['down', 'circle'], keyword: 'Ten', keywordEmoji: '🔟', formationTip: 'Write 1, then write 0 next to it' },
+};
 
 export const letterCards: Record<string, LetterCard> = {
   // === UPPERCASE LETTERS ===
@@ -84,6 +109,16 @@ export const getLetterPair = (letter: string): { upper: LetterCard; lower: Lette
     return { upper, lower };
   }
   return undefined;
+};
+
+// Get number card by ID
+export const getNumberCard = (id: string): NumberCard | undefined => {
+  return numberCards[id];
+};
+
+// Get all number cards
+export const getNumberCards = (): NumberCard[] => {
+  return Object.values(numberCards);
 };
 
 // Basic stroke patterns for warm-up
