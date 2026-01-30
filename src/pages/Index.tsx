@@ -38,6 +38,7 @@ import { Shield, Menu, Plus, List, LayoutGrid, LogIn, User, BookOpen, TrendingUp
 import { ProgressHub } from '@/components/dashboard/ProgressHub';
 import { useCloudSchedule } from '@/hooks/useCloudSchedule';
 import { useCloudProgress } from '@/hooks/useCloudProgress';
+import { doesModuleAwardTokens } from '@/config/modules';
 
 const allTasks: Task[] = [...morningRoutine, ...afterSchoolRoutine, ...bedtimeRoutine].map((t, i) => ({
   ...t,
@@ -243,14 +244,14 @@ const IndexContent = () => {
     setCompanionCalm();
   }, [setCompanionCalm]);
 
-  // Only Reading, Math, and Writing award tokens
-  const handleTokensEarned = useCallback((tokens: number) => {
-    setTokensEarned((prev) => prev + tokens);
-  }, []);
-
-  // No-op for modules that don't award tokens
-  const handleNoTokens = useCallback((_tokens: number) => {
-    // These modules don't award tokens anymore
+  // Token handler that uses module registry to determine if tokens should be awarded
+  const handleModuleTokens = useCallback((moduleId: AppModule) => {
+    return (tokens: number) => {
+      if (doesModuleAwardTokens(moduleId)) {
+        setTokensEarned((prev) => prev + tokens);
+      }
+      // No-op for non-token modules
+    };
   }, []);
 
   const handleSpendTokens = useCallback((amount: number) => {
@@ -260,25 +261,25 @@ const IndexContent = () => {
   const completedTasks = tasks.filter(t => t.completed).length;
   const hardestTask = tasks.find(t => t.duration && t.duration >= 15)?.title;
 
-  // Render module content
+  // Render module content - uses module registry for token logic
   const renderModuleContent = () => {
     switch (currentModule) {
       case 'timers':
-        return <TimerModule onBack={() => setCurrentModule('today')} onTokensEarned={handleNoTokens} />;
+        return <TimerModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('timers')} />;
       case 'reading':
-        return <ReadingStudio onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
+        return <ReadingStudio onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('reading')} />;
       case 'sensory':
-        return <SensoryModule onBack={() => setCurrentModule('today')} onTokensEarned={handleNoTokens} />;
+        return <SensoryModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('sensory')} />;
       case 'math':
-        return <MathModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
+        return <MathModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('math')} />;
       case 'writing':
-        return <WritingModule onBack={() => setCurrentModule('today')} onTokensEarned={handleTokensEarned} />;
+        return <WritingModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('writing')} />;
       case 'science':
-        return <ScienceModule onBack={() => setCurrentModule('today')} onTokensEarned={handleNoTokens} />;
+        return <ScienceModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('science')} />;
       case 'motor':
-        return <MotorModule onBack={() => setCurrentModule('today')} onTokensEarned={handleNoTokens} />;
+        return <MotorModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('motor')} />;
       case 'social':
-        return <SocialModule onBack={() => setCurrentModule('today')} onTokensEarned={handleNoTokens} />;
+        return <SocialModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('social')} />;
       case 'bravery':
         return (
           <div className="min-h-screen bg-background p-6">
