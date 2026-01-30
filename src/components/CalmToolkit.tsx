@@ -56,11 +56,11 @@ export function CalmToolkit({ onClose, parentScripts = defaultScripts }: CalmToo
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-b from-calm via-calm to-calm/90 flex flex-col safe-top safe-bottom overflow-y-auto animate-fade-in">
+    <div className="fixed inset-0 z-50 bg-calm flex flex-col safe-top safe-bottom overflow-y-auto animate-fade-in">
       {/* Header with "We're safe" anchor */}
       <div className="flex items-center justify-between p-5 sticky top-0 bg-calm/95 backdrop-blur-md z-10 border-b border-calm-foreground/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-calm-foreground/15 flex items-center justify-center">
+          <div className="w-10 h-10 rounded bg-calm-foreground/15 flex items-center justify-center">
             <Shield className="w-5 h-5 text-calm-foreground" />
           </div>
           <div>
@@ -70,7 +70,7 @@ export function CalmToolkit({ onClose, parentScripts = defaultScripts }: CalmToo
         </div>
         <button
           onClick={onClose}
-          className="w-11 h-11 rounded-xl bg-calm-foreground/10 flex items-center justify-center hover:bg-calm-foreground/20 transition-colors touch-bounce"
+          className="w-11 h-11 rounded bg-calm-foreground/10 flex items-center justify-center hover:bg-calm-foreground/20 transition-colors touch-bounce"
         >
           <X className="w-5 h-5 text-calm-foreground" />
         </button>
@@ -83,19 +83,19 @@ export function CalmToolkit({ onClose, parentScripts = defaultScripts }: CalmToo
             onClick={() => setActiveBreathing(!activeBreathing)}
             className="relative group"
           >
-            {/* Outer ring */}
-            <div className={`absolute inset-0 rounded-full border-4 border-calm-foreground/20 transition-all duration-[4000ms] ${
+            {/* Outer ring - functional scaling for guided breathing */}
+            <div className={`absolute inset-0 rounded border-4 border-calm-foreground/20 transition-all duration-[4000ms] ${
               activeBreathing && breathPhase === 'in' ? 'scale-[1.3] border-calm-foreground/40' : 
               activeBreathing && breathPhase === 'out' ? 'scale-100 border-calm-foreground/20' : ''
             }`} />
             
             <div
-              className={`w-52 h-52 rounded-full bg-calm-foreground/15 flex items-center justify-center transition-transform duration-[4000ms] ease-in-out ${
+              className={`w-52 h-52 rounded bg-calm-foreground/15 flex items-center justify-center transition-transform duration-[4000ms] ease-in-out ${
                 activeBreathing ? (breathPhase === 'in' ? 'scale-125' : breathPhase === 'out' ? 'scale-100' : 'scale-125') : 'group-hover:scale-105'
               }`}
             >
-              <div className="w-32 h-32 rounded-full bg-calm-foreground/25 flex items-center justify-center shadow-inner">
-                <Wind className={`w-12 h-12 text-calm-foreground transition-transform duration-1000 ${activeBreathing ? 'animate-pulse' : ''}`} />
+              <div className="w-32 h-32 rounded bg-calm-foreground/25 flex items-center justify-center shadow-inner">
+                <Wind className="w-12 h-12 text-calm-foreground" />
               </div>
             </div>
             
@@ -121,7 +121,7 @@ export function CalmToolkit({ onClose, parentScripts = defaultScripts }: CalmToo
               <button
                 key={item.label}
                 onClick={() => setSelectedBodyPart(selectedBodyPart === item.label ? null : item.label)}
-                className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all touch-bounce min-w-[100px] ${
+                className={`flex flex-col items-center gap-2 p-4 rounded transition-all touch-bounce min-w-[100px] ${
                   selectedBodyPart === item.label 
                     ? 'bg-calm-foreground/30 scale-105 shadow-lg' 
                     : 'bg-calm-foreground/10 hover:bg-calm-foreground/20'
@@ -135,7 +135,7 @@ export function CalmToolkit({ onClose, parentScripts = defaultScripts }: CalmToo
           
           {/* Show question for selected body part */}
           {selectedBodyPart && (
-            <div className="mt-4 p-4 rounded-2xl bg-calm-foreground/15 text-center animate-scale-in">
+            <div className="mt-4 p-4 rounded bg-calm-foreground/15 text-center animate-scale-in">
               <p className="text-calm-foreground text-lg font-medium">
                 {bodyParts.find(b => b.label === selectedBodyPart)?.question}
               </p>
@@ -153,9 +153,9 @@ export function CalmToolkit({ onClose, parentScripts = defaultScripts }: CalmToo
             {sensoryTools.map((tool) => (
               <button
                 key={tool.id}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-calm-foreground/10 hover:bg-calm-foreground/20 transition-all touch-bounce"
+                className="flex flex-col items-center gap-2 p-3 rounded bg-calm-foreground/10 hover:bg-calm-foreground/20 transition-all touch-bounce"
               >
-                <div className="w-10 h-10 rounded-lg bg-calm-foreground/15 flex items-center justify-center">
+                <div className="w-10 h-10 rounded bg-calm-foreground/15 flex items-center justify-center">
                   <tool.icon className="w-5 h-5 text-calm-foreground" />
                 </div>
                 <span className="text-calm-foreground text-[10px] font-semibold text-center leading-tight">
@@ -167,7 +167,7 @@ export function CalmToolkit({ onClose, parentScripts = defaultScripts }: CalmToo
         </div>
 
         {/* Parent scripts - expandable */}
-        <div className="rounded-2xl bg-calm-foreground/10 overflow-hidden">
+        <div className="rounded bg-calm-foreground/10 overflow-hidden">
           <button
             onClick={() => setShowScripts(!showScripts)}
             className="w-full flex items-center justify-between p-4 hover:bg-calm-foreground/5 transition-colors"
@@ -184,7 +184,7 @@ export function CalmToolkit({ onClose, parentScripts = defaultScripts }: CalmToo
               {parentScripts.map((script, index) => (
                 <div
                   key={index}
-                  className="p-3 rounded-xl bg-calm-foreground/10 text-calm-foreground text-sm"
+                  className="p-3 rounded bg-calm-foreground/10 text-calm-foreground text-sm"
                 >
                   "{script}"
                 </div>

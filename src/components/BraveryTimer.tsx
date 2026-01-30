@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Star, Heart, X, Sparkles } from 'lucide-react';
+import { Shield, Star, Heart, X } from 'lucide-react';
 
 interface BraveryTimerProps {
   duration?: number; // seconds, default 30
@@ -51,40 +51,20 @@ export function BraveryTimer({
 
   if (isComplete) {
     return (
-      <div className="fixed inset-0 z-50 bg-gradient-to-b from-token via-token to-token/90 flex flex-col items-center justify-center p-8 safe-top safe-bottom animate-fade-in">
-        {/* Confetti-like particles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(6)].map((_, i) => (
-            <Sparkles 
-              key={i} 
-              className="absolute text-white/30 animate-float" 
-              style={{ 
-                left: `${10 + i * 15}%`, 
-                top: `${20 + (i % 3) * 20}%`,
-                animationDelay: `${i * 0.3}s`,
-                width: 24,
-                height: 24,
-              }} 
-            />
-          ))}
-        </div>
-
+      <div className="fixed inset-0 z-50 bg-token flex flex-col items-center justify-center p-8 safe-top safe-bottom animate-fade-in">
         <div className="relative">
-          <div className="text-8xl mb-6 animate-bounce-gentle">🦁</div>
-          <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
-            <Star className="w-5 h-5 text-white" fill="currentColor" />
-          </div>
+          <div className="text-8xl mb-6">🦁</div>
         </div>
         
-        <h2 className="text-4xl font-bold text-token-foreground mb-3 animate-success-pop">
+        <h2 className="text-4xl font-bold text-token-foreground mb-3">
           SO BRAVE!
         </h2>
         <p className="text-token-foreground/80 text-lg mb-8 text-center max-w-xs">
           You waited the whole time! That took real courage.
         </p>
 
-        <div className="flex items-center gap-3 mb-10 px-6 py-4 rounded-2xl bg-white/15 backdrop-blur-sm">
-          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+        <div className="flex items-center gap-3 mb-10 px-6 py-4 rounded bg-white/15 backdrop-blur-sm">
+          <div className="w-12 h-12 rounded bg-white/20 flex items-center justify-center">
             <Star className="w-6 h-6 text-white" fill="currentColor" />
           </div>
           <div>
@@ -95,7 +75,7 @@ export function BraveryTimer({
 
         <button
           onClick={onComplete}
-          className="w-full max-w-xs py-4 px-8 rounded-2xl bg-white/20 text-token-foreground font-bold text-lg hover:bg-white/30 active:scale-[0.98] transition-all shadow-lg border border-white/10"
+          className="w-full max-w-xs py-4 px-8 rounded bg-white/20 text-token-foreground font-bold text-lg hover:bg-white/30 active:scale-[0.98] transition-all shadow-lg border border-white/10"
         >
           Done!
         </button>
@@ -104,11 +84,11 @@ export function BraveryTimer({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-b from-calm via-calm to-calm/90 flex flex-col safe-top safe-bottom animate-fade-in">
+    <div className="fixed inset-0 z-50 bg-calm flex flex-col safe-top safe-bottom animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between p-5 border-b border-calm-foreground/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-calm-foreground/15 flex items-center justify-center">
+          <div className="w-10 h-10 rounded bg-calm-foreground/15 flex items-center justify-center">
             <Shield className="w-5 h-5 text-calm-foreground" />
           </div>
           <div>
@@ -118,7 +98,7 @@ export function BraveryTimer({
         </div>
         <button
           onClick={onCancel}
-          className="px-4 py-2.5 rounded-xl bg-calm-foreground/10 text-calm-foreground text-sm font-semibold hover:bg-calm-foreground/20 transition-colors touch-bounce flex items-center gap-2"
+          className="px-4 py-2.5 rounded bg-calm-foreground/10 text-calm-foreground text-sm font-semibold hover:bg-calm-foreground/20 transition-colors touch-bounce flex items-center gap-2"
         >
           <X className="w-4 h-4" />
           I need help
@@ -129,10 +109,6 @@ export function BraveryTimer({
       <div className="flex-1 flex flex-col items-center justify-center px-8">
         {/* Calming animation */}
         <div className="relative w-60 h-60 mb-10">
-          {/* Outer pulse rings */}
-          <div className="absolute inset-0 rounded-full bg-calm-foreground/5 animate-breathe" />
-          <div className="absolute inset-4 rounded-full bg-calm-foreground/5 animate-breathe" style={{ animationDelay: '1s' }} />
-          
           {/* Progress ring */}
           <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
             <circle
@@ -159,7 +135,7 @@ export function BraveryTimer({
 
           {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <Heart className="w-8 h-8 text-calm-foreground/70 mb-2 animate-calm-pulse" />
+            <Heart className="w-8 h-8 text-calm-foreground/70 mb-2" />
             <span className="font-mono text-6xl font-bold text-calm-foreground tracking-tight">
               {timeRemaining}
             </span>
@@ -168,7 +144,7 @@ export function BraveryTimer({
         </div>
 
         {/* Coping phrase - rotates */}
-        <div className="bg-calm-foreground/10 rounded-2xl p-6 max-w-sm text-center backdrop-blur-sm border border-calm-foreground/10">
+        <div className="bg-calm-foreground/10 rounded p-6 max-w-sm text-center backdrop-blur-sm border border-calm-foreground/10">
           <p className="text-calm-foreground text-xl font-medium leading-relaxed">
             "{copingPhrase || COPING_PHRASES[currentPhraseIndex]}"
           </p>
@@ -177,8 +153,8 @@ export function BraveryTimer({
 
       {/* Footer reassurance */}
       <div className="p-6 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-calm-foreground/10">
-          <div className="w-2 h-2 rounded-full bg-calm-foreground animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded bg-calm-foreground/10">
+          <div className="w-2 h-2 rounded bg-calm-foreground" />
           <p className="text-calm-foreground/70 text-sm font-medium">
             You're doing amazing. Just a little longer.
           </p>

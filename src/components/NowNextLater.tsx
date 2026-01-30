@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Task } from '@/types/jackos';
-import { ChevronRight, Lock, Check, Star, Clock, Sparkles } from 'lucide-react';
+import { ChevronRight, Lock, Check, Star, Clock } from 'lucide-react';
 
 interface NowNextLaterProps {
   now: Task | null;
@@ -56,17 +56,13 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
 
   return (
     <div className="space-y-4">
-      {/* NOW Card - Hero prominence with depth */}
+      {/* NOW Card - Hero prominence */}
       {now && (
         <div
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-now via-now to-primary shadow-xl"
+          className="relative overflow-hidden rounded bg-now shadow-xl"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-          
           {/* Swipe progress overlay */}
           <div
             className="absolute inset-0 bg-calm/40 transition-transform origin-left"
@@ -77,7 +73,7 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
             {/* Header with badge */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                <div className="px-3 py-1 rounded bg-white/20 backdrop-blur-sm">
                   <span className="text-xs font-bold uppercase tracking-wider text-now-foreground">
                     Now
                   </span>
@@ -88,7 +84,7 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white/20 backdrop-blur-sm">
                 <Star className="w-4 h-4 text-token" fill="currentColor" />
                 <span className="font-mono font-bold text-now-foreground">{now.tokens}</span>
               </div>
@@ -96,7 +92,7 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
 
             {/* Main content with large icon */}
             <div className="flex items-center gap-5">
-              <div className="w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-inner">
+              <div className="w-20 h-20 rounded bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-inner">
                 <span className="text-5xl" role="img" aria-label={now.title}>
                   {iconMap[now.icon] || '⭐'}
                 </span>
@@ -107,7 +103,7 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
                 </h2>
                 {now.duration && (
                   <div className="flex items-center gap-2 mt-2">
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-white/10">
                       <Clock className="w-3.5 h-3.5 text-now-foreground/80" />
                       <span className="font-mono text-sm text-now-foreground/90">{now.duration} min</span>
                     </div>
@@ -120,7 +116,7 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
             {!isLocked && (
               <button
                 onClick={handleSwipeComplete}
-                className="mt-6 w-full py-4 rounded-2xl bg-white/20 backdrop-blur-sm text-now-foreground font-bold flex items-center justify-center gap-3 hover:bg-white/30 active:scale-[0.98] transition-all shadow-lg border border-white/10"
+                className="mt-6 w-full py-4 rounded bg-white/20 backdrop-blur-sm text-now-foreground font-bold flex items-center justify-center gap-3 hover:bg-white/30 active:scale-[0.98] transition-all shadow-lg border border-white/10"
               >
                 <Check className="w-6 h-6" />
                 <span className="text-lg">All Done!</span>
@@ -132,9 +128,7 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
 
       {/* NEXT Card - Clean card with subtle accent */}
       {next && (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-next/90 to-next border border-next/30 shadow-lg">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          
+        <div className="relative overflow-hidden rounded bg-next border border-next/30 shadow-lg">
           <div className="relative p-5">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-next-foreground/70">
@@ -146,7 +140,7 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center">
+              <div className="w-14 h-14 rounded bg-white/10 flex items-center justify-center">
                 <span className="text-3xl">{iconMap[next.icon] || '⭐'}</span>
               </div>
               <div>
@@ -175,16 +169,16 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
             {later.slice(0, 4).map((task) => (
               <div
                 key={task.id}
-                className="flex-shrink-0 min-w-[130px] p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:shadow-md transition-shadow"
+                className="flex-shrink-0 min-w-[130px] p-4 rounded bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mb-2">
+                <div className="w-10 h-10 rounded bg-muted flex items-center justify-center mb-2">
                   <span className="text-xl">{iconMap[task.icon] || '⭐'}</span>
                 </div>
                 <span className="font-medium text-sm text-foreground/80 line-clamp-2">{task.title}</span>
               </div>
             ))}
             {later.length > 4 && (
-              <div className="flex-shrink-0 min-w-[80px] p-4 rounded-xl bg-muted/50 border border-dashed border-border flex items-center justify-center">
+              <div className="flex-shrink-0 min-w-[80px] p-4 rounded bg-muted/50 border border-dashed border-border flex items-center justify-center">
                 <span className="text-sm text-muted-foreground font-medium">
                   +{later.length - 4}
                 </span>
@@ -198,10 +192,9 @@ export function NowNextLater({ now, next, later, onComplete, isLocked = false }:
       {!now && !next && later.length === 0 && (
         <div className="text-center py-16 px-6">
           <div className="relative inline-block">
-            <div className="text-7xl mb-4 animate-float">🌟</div>
-            <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-token animate-pulse" />
+            <div className="text-7xl mb-4">🌟</div>
           </div>
-          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-token bg-clip-text text-transparent">
+          <h2 className="text-3xl font-bold mb-2 text-primary">
             All Done Today!
           </h2>
           <p className="text-muted-foreground text-lg">You did amazing!</p>
