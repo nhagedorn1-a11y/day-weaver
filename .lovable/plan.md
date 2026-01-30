@@ -1,69 +1,88 @@
-# Debugging Plan: Comprehensive Lesson Plan and Mini-App Functionality Audit
+# App Stability Infrastructure
 
-## Status: ✅ COMPLETED
+## Status: ✅ IMPLEMENTED
 
-All critical bugs and edge cases have been fixed. See implementation details below.
-
----
-
-## Fixes Implemented
-
-### ✅ 1. Reading Session Runner - Warmup Words Phoneme Data
-**File:** `src/components/reading/SessionRunner.tsx`
-
-Added `splitIntoPhonemes()` function that handles digraphs (sh, ch, th, wh, ck, ng, qu) properly instead of using `split('')`.
-
-### ✅ 2. Writing Module - Stage Completion Callbacks
-**File:** `src/components/modules/WritingModule.tsx`
-
-- Added `handleStageComplete()` function that auto-advances through stages
-- Added progress indicator dots showing current stage
-- Added celebration animation between stages
-- Awards 2 tokens upon completing all 4 stages
-
-### ✅ 3. Sensory Module - Fixed Hardcoded Array Index
-**File:** `src/components/modules/SensoryModule.tsx`
-
-Changed from `heavyWorkActivities[1]` to `heavyWorkActivities.find(a => a.id === 'bear-walk')` with fallback to first activity.
-
-### ✅ 4. Motor Module - ADL Step Data Null Check
-**File:** `src/components/modules/MotorModule.tsx`
-
-Added safety check for `currentStepData` - if undefined, shows error state with "Go Back" button.
-
-### ✅ 5. Math Problem Library - Missing Concepts
-**File:** `src/data/mathProblemLibrary.ts`
-
-Added problem sets for:
-- `number-order`: 6 problems about number sequencing
-- `before-after`: 6 problems about number relationships
-
-### ✅ 6. Math Session Runner - Review Lesson Flow
-**File:** `src/components/modules/MathSessionRunner.tsx`
-
-Review lessons now skip the teach step when `lesson.newConcepts.length === 0`.
+All stability infrastructure has been added to prevent crashes, handle offline states, and centralize module configuration.
 
 ---
 
-## Testing Checklist
+## New Infrastructure
 
-- [x] Reading: Warmup words with digraphs (ship, chat, that) now blend correctly
-- [x] Math: Review lessons skip teach step and go directly to practice
-- [x] Math: number-order and before-after problems available
-- [x] Writing: Completing trace advances to dot-to-dot automatically
-- [x] Sensory: Move Break button safely selects bear walk activity
-- [x] Motor: ADL missions handle missing step data gracefully
-- [x] Tokens: Only Reading, Math, and Writing award tokens
+### 1. ErrorBoundary (`src/components/ErrorBoundary.tsx`)
+- **Catches all React errors** and prevents white screens
+- Child-friendly error UI with "Try Again" and "Go Home" buttons
+- Shows technical details in development mode only
+- Wraps the entire app at the root level
+
+### 2. AppShell (`src/components/AppShell.tsx`)
+- **Orchestration layer** that handles:
+  - Auth state initialization (proper listener order)
+  - Loading states during hydration
+  - Offline detection with fallback UI
+  - Error states with recovery options
+- Exports `useAppState()` hook for components
+
+### 3. Module Registry (`src/config/modules.ts`)
+- **Centralized module configuration** with:
+  - `enabled` - Feature flag for each module
+  - `awardsTokens` - Only Reading, Math, Writing = true
+  - `requiresAuth` - For future auth-gated features
+  - `parentOnly` - For parent-only modules
+  - `order` - Navigation ordering
+- Helper functions: `getEnabledModules()`, `doesModuleAwardTokens()`, etc.
+
+### 4. Updated App.tsx
+- ErrorBoundary wraps everything
+- AppShell wraps routes
+- QueryClient configured with retry and staleTime
 
 ---
 
-## Files Modified
+## Architecture Improvements
 
-| File | Changes |
-|------|---------|
-| `src/components/reading/SessionRunner.tsx` | Digraph-aware phoneme splitting |
-| `src/components/modules/WritingModule.tsx` | Stage completion callbacks + progression |
-| `src/components/modules/SensoryModule.tsx` | Safe array access for Move Break |
-| `src/components/modules/MotorModule.tsx` | Null check for ADL step data |
-| `src/data/mathProblemLibrary.ts` | Added number-order and before-after problems |
-| `src/components/modules/MathSessionRunner.tsx` | Review lessons skip teach step |
+| Before | After |
+|--------|-------|
+| Crash = white screen | Crash = friendly error UI |
+| No loading state | Clear loading spinner |
+| Offline = broken | Offline = detected + fallback |
+| Token logic scattered | Token logic centralized in registry |
+| Module config duplicated | Single source of truth in registry |
+
+---
+
+## Files Created/Modified
+
+| File | Action |
+|------|--------|
+| `src/components/ErrorBoundary.tsx` | **Created** - React error boundary |
+| `src/components/AppShell.tsx` | **Created** - App orchestration layer |
+| `src/config/modules.ts` | **Created** - Module registry |
+| `src/App.tsx` | **Modified** - Wrapped with ErrorBoundary + AppShell |
+| `src/pages/Index.tsx` | **Modified** - Uses module registry for tokens |
+
+---
+
+## Usage
+
+### Check if module awards tokens:
+```typescript
+import { doesModuleAwardTokens } from '@/config/modules';
+
+if (doesModuleAwardTokens('reading')) {
+  // Award tokens
+}
+```
+
+### Access app state from any component:
+```typescript
+import { useAppState } from '@/components/AppShell';
+
+const { user, isAuthenticated, isLoading } = useAppState();
+```
+
+### Get all enabled modules:
+```typescript
+import { getEnabledModules } from '@/config/modules';
+
+const modules = getEnabledModules();
+```
