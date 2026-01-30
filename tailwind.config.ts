@@ -85,10 +85,9 @@ export default {
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-        "2xl": "1.5rem",
-        "3xl": "2rem",
+        md: "calc(var(--radius) - 1px)",
+        sm: "calc(var(--radius) - 2px)",
+        DEFAULT: "var(--radius)",
       },
       spacing: {
         'xs': '0.25rem',
@@ -107,30 +106,18 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "calm-pulse": {
-          "0%, 100%": { opacity: "1", transform: "scale(1)" },
-          "50%": { opacity: "0.8", transform: "scale(1.02)" },
-        },
-        "breathe": {
-          "0%, 100%": { transform: "scale(1)" },
-          "50%": { transform: "scale(1.15)" },
-        },
-        "float": {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-8px)" },
+        "indicator-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-        "calm-pulse": "calm-pulse 4s ease-in-out infinite",
-        "breathe": "breathe 6s ease-in-out infinite",
-        "float": "float 3s ease-in-out infinite",
+        "accordion-down": "accordion-down 0.15s ease-out",
+        "accordion-up": "accordion-up 0.15s ease-out",
+        "indicator": "indicator-pulse 2s ease-in-out infinite",
       },
       boxShadow: {
-        'card': '0 4px 24px -4px rgba(0, 0, 0, 0.08)',
-        'card-hover': '0 8px 32px -8px rgba(0, 0, 0, 0.12)',
-        'button': '0 2px 8px -2px rgba(0, 0, 0, 0.1)',
+        'inset': 'inset 0 1px 2px rgba(0, 0, 0, 0.1)',
       },
     },
   },
