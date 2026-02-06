@@ -8,9 +8,9 @@ interface Point {
   y: number;
 }
 
-const WAYPOINT_RADIUS = 0.13; // normalized distance tolerance
-const MIN_WAYPOINTS_PCT = 0.6; // 60% of waypoints must be hit
-const MIN_TRACE_POINTS = 15;
+const WAYPOINT_RADIUS = 0.22; // normalized distance tolerance — generous for kids
+const MIN_WAYPOINTS_PCT = 0.45; // 45% of waypoints must be hit
+const MIN_TRACE_POINTS = 10;
 
 // Waypoints for every letter — positions along the natural stroke path (normalized 0-1)
 const LETTER_WAYPOINTS: Record<string, Point[]> = {
