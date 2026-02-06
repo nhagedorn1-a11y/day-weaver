@@ -8,7 +8,7 @@ interface Point {
   y: number;
 }
 
-const WAYPOINT_RADIUS = 0.18; // normalized distance tolerance
+const WAYPOINT_RADIUS = 0.16; // normalized distance tolerance (tighter to prevent false positives)
 const MIN_TRACE_POINTS = 10;
 
 // Dynamic threshold based on waypoint count:
@@ -16,7 +16,8 @@ const MIN_TRACE_POINTS = 10;
 function getMinHitPct(waypointCount: number): number {
   if (waypointCount <= 3) return 1.0;    // ALL waypoints required (I, l, 1)
   if (waypointCount <= 5) return 0.6;    // 60% for medium complexity
-  return 0.5;                             // 50% for complex letters
+  if (waypointCount <= 7) return 0.55;   // 55% for 6-7 waypoints
+  return 0.5;                             // 50% for complex letters (8+)
 }
 
 // Waypoints for every letter — positions along the natural stroke path (normalized 0-1)
@@ -157,12 +158,15 @@ const LETTER_WAYPOINTS: Record<string, Point[]> = {
     { x: 0.8, y: 0.95 },
   ],
   'R': [
-    { x: 0.25, y: 0.15 },
-    { x: 0.25, y: 0.5 },
-    { x: 0.25, y: 0.85 },
-    { x: 0.6, y: 0.15 },
-    { x: 0.7, y: 0.3 },
-    { x: 0.65, y: 0.85 },
+    { x: 0.25, y: 0.15 },  // stem top
+    { x: 0.25, y: 0.5 },   // stem middle
+    { x: 0.25, y: 0.85 },  // stem bottom
+    { x: 0.55, y: 0.15 },  // bump top
+    { x: 0.7, y: 0.28 },   // bump right
+    { x: 0.6, y: 0.48 },   // bump bottom / junction
+    { x: 0.45, y: 0.5 },   // junction to leg
+    { x: 0.55, y: 0.65 },  // leg mid
+    { x: 0.7, y: 0.85 },   // leg bottom
   ],
   'S': [
     { x: 0.7, y: 0.25 },
@@ -565,7 +569,27 @@ export function validateLetterTrace(
 
   const minPct = getMinHitPct(waypoints.length);
   const hitRatio = hitCount / waypoints.length;
-  return hitRatio >= minPct;
+  if (hitRatio < minPct) return false;
+
+  // Spatial spread check: trace must cover enough of the letter's area
+  // Prevents a single random line from triggering multi-region letters
+  const xs = normalized.map(p => p.x);
+  const ys = normalized.map(p => p.y);
+  const spreadX = Math.max(...xs) - Math.min(...xs);
+  const spreadY = Math.max(...ys) - Math.min(...ys);
+
+  // Require the trace to span at least 20% of the canvas in BOTH dimensions
+  // (a single diagonal line typically only covers one dimension well)
+  const wpXs = waypoints.map(w => w.x);
+  const wpYs = waypoints.map(w => w.y);
+  const wpSpreadX = Math.max(...wpXs) - Math.min(...wpXs);
+  const wpSpreadY = Math.max(...wpYs) - Math.min(...wpYs);
+
+  // Trace must cover at least 35% of the letter's expected spread in each axis
+  if (wpSpreadX > 0.15 && spreadX < wpSpreadX * 0.35) return false;
+  if (wpSpreadY > 0.15 && spreadY < wpSpreadY * 0.35) return false;
+
+  return true;
 }
 
 /**
