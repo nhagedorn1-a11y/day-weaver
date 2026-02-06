@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Check, RefreshCw, Star } from 'lucide-react';
 import { useSound } from '@/contexts/SoundContext';
+import { validateLetterTrace } from '@/lib/letterValidation';
 
 interface IndependentPadProps {
   letter: string;
@@ -16,8 +17,12 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
   const [pointCount, setPointCount] = useState(0);
   const { playComplete, playTokenEarned, speakPhoneme } = useSound();
 
-  const COVERAGE_THRESHOLD = 0.06;
-  const MIN_POINTS = 12;
+  // Reset state when letter changes
+  useEffect(() => {
+    pointsRef.current = [];
+    setPointCount(0);
+    setIsComplete(false);
+  }, [letter]);
 
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -33,19 +38,16 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
 
-    // Top line
     ctx.beginPath();
     ctx.moveTo(0, size * 0.2);
     ctx.lineTo(size, size * 0.2);
     ctx.stroke();
 
-    // Middle line
     ctx.beginPath();
     ctx.moveTo(0, size * 0.5);
     ctx.lineTo(size, size * 0.5);
     ctx.stroke();
 
-    // Baseline
     ctx.beginPath();
     ctx.moveTo(0, size * 0.8);
     ctx.lineTo(size, size * 0.8);
@@ -53,7 +55,7 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
 
     ctx.setLineDash([]);
 
-    // Redraw all traced points
+    // Redraw all traced points (supporting multi-stroke with NaN sentinels)
     const points = pointsRef.current;
     if (points.length > 1) {
       ctx.beginPath();
@@ -63,6 +65,12 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
       ctx.lineJoin = 'round';
       ctx.moveTo(points[0].x, points[0].y);
       for (let i = 1; i < points.length; i++) {
+        if (isNaN(points[i].x)) {
+          if (i + 1 < points.length && !isNaN(points[i + 1].x)) {
+            ctx.moveTo(points[i + 1].x, points[i + 1].y);
+          }
+          continue;
+        }
         ctx.lineTo(points[i].x, points[i].y);
       }
       ctx.stroke();
@@ -87,21 +95,6 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
     };
   }, []);
 
-  const checkCompletion = useCallback(() => {
-    const points = pointsRef.current;
-    if (points.length < MIN_POINTS) return false;
-
-    const xs = points.map(p => p.x);
-    const ys = points.map(p => p.y);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-
-    const coverage = ((maxX - minX) * (maxY - minY)) / (size * size);
-    return coverage >= COVERAGE_THRESHOLD;
-  }, [size]);
-
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (isComplete) return;
     e.preventDefault();
@@ -109,8 +102,13 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
 
     isDrawingRef.current = true;
     const point = getPosition(e);
-    pointsRef.current = [point];
-    setPointCount(1);
+
+    // Accumulate across strokes
+    if (pointsRef.current.length > 0) {
+      pointsRef.current.push({ x: NaN, y: NaN }); // stroke break
+    }
+    pointsRef.current.push(point);
+    setPointCount(pointsRef.current.filter(p => !isNaN(p.x)).length);
 
     const canvas = canvasRef.current;
     if (canvas) {
@@ -131,7 +129,7 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
     const point = getPosition(e);
     const lastPoint = pointsRef.current[pointsRef.current.length - 1];
 
-    if (lastPoint) {
+    if (lastPoint && !isNaN(lastPoint.x)) {
       const distance = Math.sqrt(
         Math.pow(point.x - lastPoint.x, 2) + Math.pow(point.y - lastPoint.y, 2)
       );
@@ -151,7 +149,7 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
           }
         }
         pointsRef.current.push(point);
-        setPointCount(pointsRef.current.length);
+        setPointCount(pointsRef.current.filter(p => !isNaN(p.x)).length);
       }
     }
   }, [isComplete, getPosition]);
@@ -162,14 +160,15 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
 
     isDrawingRef.current = false;
 
-    if (checkCompletion()) {
+    const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
+    if (validateLetterTrace(realPoints, letter, size)) {
       setIsComplete(true);
       playComplete();
       playTokenEarned();
       speakPhoneme(letter);
       onComplete?.();
     }
-  }, [checkCompletion, playComplete, playTokenEarned, speakPhoneme, letter, onComplete]);
+  }, [playComplete, playTokenEarned, speakPhoneme, letter, size, onComplete]);
 
   const handleClear = useCallback(() => {
     pointsRef.current = [];
@@ -181,7 +180,7 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
   return (
     <div className="flex flex-col items-center gap-4">
       {/* Prompt - just the letter to write */}
-      <div className="flex items-center gap-2 p-3 rounded-xl bg-token/10 border border-token/20">
+      <div className="flex items-center gap-2 p-3 rounded bg-token/10 border border-token/20">
         <Star className="w-5 h-5 text-token" />
         <span className="text-sm font-medium">Write the letter</span>
         <span className="text-3xl font-serif text-token">{letter}</span>
@@ -195,7 +194,7 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
           height={size}
           style={{ touchAction: 'none' }}
           className={`
-            rounded-2xl border-4 bg-card cursor-crosshair
+            rounded border-4 bg-card cursor-crosshair
             transition-colors duration-300 select-none
             ${isComplete ? 'border-token shadow-lg shadow-token/20' : 'border-border hover:border-primary/50'}
           `}
@@ -208,7 +207,7 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
 
         {isComplete && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-16 h-16 rounded-full bg-token/90 flex items-center justify-center animate-scale-in">
+            <div className="w-16 h-16 rounded bg-token/90 flex items-center justify-center animate-scale-in">
               <Star className="w-8 h-8 text-token-foreground fill-current" />
             </div>
           </div>
@@ -224,7 +223,7 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
             {pointCount > 0 && (
               <button
                 onClick={handleClear}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80"
+                className="flex items-center gap-1 px-3 py-1.5 rounded bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Clear</span>
