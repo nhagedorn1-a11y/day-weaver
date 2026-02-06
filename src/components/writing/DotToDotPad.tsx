@@ -162,6 +162,13 @@ export function DotToDotPad({ letter, onComplete, size = 200 }: DotToDotPadProps
     setIsComplete(false);
   };
 
+  // Auto-skip if no dots defined for this letter
+  useEffect(() => {
+    if (!hasDots) {
+      onComplete?.();
+    }
+  }, [hasDots, onComplete]);
+
   if (!hasDots) {
     return (
       <div className="flex flex-col items-center gap-4">
@@ -170,7 +177,7 @@ export function DotToDotPad({ letter, onComplete, size = 200 }: DotToDotPadProps
           style={{ width: size, height: size }}
         >
           <span className="text-muted-foreground text-sm text-center px-4">
-            Dot-to-dot not available for "{letter}"
+            Skipping dot-to-dot for "{letter}"
           </span>
         </div>
       </div>
