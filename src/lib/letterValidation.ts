@@ -8,9 +8,16 @@ interface Point {
   y: number;
 }
 
-const WAYPOINT_RADIUS = 0.22; // normalized distance tolerance — generous for kids
-const MIN_WAYPOINTS_PCT = 0.45; // 45% of waypoints must be hit
+const WAYPOINT_RADIUS = 0.18; // normalized distance tolerance
 const MIN_TRACE_POINTS = 10;
+
+// Dynamic threshold based on waypoint count:
+// Fewer waypoints → higher hit requirement (prevents false positives on simple letters)
+function getMinHitPct(waypointCount: number): number {
+  if (waypointCount <= 3) return 1.0;    // ALL waypoints required (I, l, 1)
+  if (waypointCount <= 5) return 0.6;    // 60% for medium complexity
+  return 0.5;                             // 50% for complex letters
+}
 
 // Waypoints for every letter — positions along the natural stroke path (normalized 0-1)
 const LETTER_WAYPOINTS: Record<string, Point[]> = {
@@ -556,8 +563,9 @@ export function validateLetterTrace(
     if (isHit) hitCount++;
   }
 
+  const minPct = getMinHitPct(waypoints.length);
   const hitRatio = hitCount / waypoints.length;
-  return hitRatio >= MIN_WAYPOINTS_PCT;
+  return hitRatio >= minPct;
 }
 
 /**

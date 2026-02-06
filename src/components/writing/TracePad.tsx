@@ -52,8 +52,8 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     
     ctx.setLineDash([]);
 
-    // Draw guide letter (large, dashed)
-    const displayLetter = letter.length > 1 ? letter : letter.toUpperCase();
+    // Draw guide letter (large, dashed) — preserve original case
+    const displayLetter = letter;
     const fontSize = letter.length > 1 ? size * 0.5 : size * 0.65;
     
     ctx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
