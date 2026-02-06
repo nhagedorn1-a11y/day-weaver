@@ -1,230 +1,100 @@
 
-# Fix Aesthetic Violations: MoMA × TE Design Compliance
+# ML-Powered Letter Formation Validation
 
-## Summary
+## What This Does
 
-Purge all organic/decorative animations, flatten gradients to solid semantic colors, unify corner radius to 0.25rem, and remove non-functional decorative elements across 7 component files — while preserving all content and functionality.
+Instead of relying on hand-tuned waypoint coordinates (which require constant tweaking and still produce false positives/negatives), we'll use AI vision to look at what the child actually drew and decide "does this look like the target letter?"
 
-## Files to Modify
+This is like having a teacher look at the drawing rather than checking if dots were connected.
 
-| File | Violations |
-|------|------------|
-| `LittleGuy.tsx` | organic animations, gradients, blush, sparkle |
-| `NowNextLater.tsx` | organic animation, gradients, decorative circles |
-| `BraveryTimer.tsx` | organic animations, gradients, sparkles/confetti |
-| `TokenProgress.tsx` | gradients, shimmer animation, decorative circles |
-| `CalmToolkit.tsx` | breathing animation (keep functional, reduce flourish) |
-| `VisualTimer.tsx` | rounded-3xl corner radius |
-| `VisualSchedule.tsx` | gradients on current/celebration states |
+## How It Works
 
----
-
-## Changes by File
-
-### 1. LittleGuy.tsx
-
-**Motion — Remove Organic Animations:**
-- Remove `animate-bounce-gentle`, `animate-breathe`, `animate-wiggle`, `animate-float` from `bodyAnimation` logic
-- Return empty string for all moods (static by default)
-
-**Color — Flatten Gradients:**
-```
-Before: bg-gradient-to-br from-token to-token/80
-After:  bg-token
-```
-All mood-based gradients become solid semantic colors.
-
-**Decorative — Remove:**
-- Blush marks (lines 94-100)
-- Sparkle SVG (lines 109-116)
-
-Keep: Eye animations (functional state indication), zzz for sleeping.
-
----
-
-### 2. NowNextLater.tsx
-
-**Motion — Remove:**
-- `animate-float` on celebration emoji (line 201)
-
-**Decorative Circles — Remove:**
-- Lines 67-68: background decorative circles in NOW card
-- Line 136: decorative circle in NEXT card
-
-**Gradients — Flatten:**
-```
-NOW card:
-Before: bg-gradient-to-br from-now via-now to-primary
-After:  bg-now
-
-NEXT card:
-Before: bg-gradient-to-br from-next/90 to-next
-After:  bg-next
-
-Celebration text:
-Before: bg-gradient-to-r from-primary to-token bg-clip-text
-After:  text-primary
+```text
+Child draws on canvas
+        |
+        v
+Canvas captured as image
+        |
+        v
+Sent to backend AI (Gemini Flash)
+        |
+        v
+AI responds: "Yes, that's an R" or "Not quite"
+        |
+        v
+Frontend shows result
 ```
 
-**Corner Radius:**
-- `rounded-3xl` → `rounded`
-- `rounded-2xl` → `rounded`
-- `rounded-xl` → `rounded`
-- `rounded-full` (badge/pills) → `rounded` (if structural, keep if semantic like token dots)
+## Architecture
 
----
+**Hybrid approach** — keeps the app fast while being much more accurate:
 
-### 3. BraveryTimer.tsx
+1. **Local waypoint check runs first** (instant, no network needed) as a fast pre-filter
+2. **If waypoints say NO** — the answer is "keep trying" (no API call needed for obvious misses)
+3. **If waypoints say YES** — send the canvas image to AI for confirmation (prevents false positives like the R issue)
+4. **AI validation also serves as a fallback** — if the child draws a valid letter that waypoints reject, a "Check with AI" button lets them request verification
 
-**Motion — Remove:**
-- `animate-bounce-gentle` on lion emoji (line 73)
-- `animate-float` on Sparkles particles (line 60)
-- `animate-calm-pulse` on Heart icon (line 162)
-- `animate-breathe` on outer rings (lines 133-134)
-- `animate-pulse` on star badge (line 74), wind icon (line 98), footer dot (line 181)
+This means:
+- Random scribbles are rejected instantly (no API cost)
+- Only plausible attempts get sent to AI (~1-2 second round-trip)
+- False positives like the R problem get caught by the vision model
 
-**Decorative — Remove:**
-- Sparkles particle loop entirely (lines 56-70)
-- Star badge decorative circle (lines 74-76)
+## Technical Plan
 
-**Gradients — Flatten:**
-```
-Complete screen:
-Before: bg-gradient-to-b from-token via-token to-token/90
-After:  bg-token
+### 1. Create Edge Function: `validate-letter`
 
-Timer screen:
-Before: bg-gradient-to-b from-calm via-calm to-calm/90
-After:  bg-calm
-```
+A new backend function that:
+- Receives a base64 PNG image of the canvas + the target letter
+- Sends it to Lovable AI (Gemini Flash — fast, vision-capable, cheap)
+- System prompt instructs: "You are a handwriting teacher for young children. Is this a reasonable attempt at writing the letter [X]? Respond with JSON: {valid: true/false, feedback: string}"
+- Uses tool calling to extract structured output
+- Returns the result
 
-**Corner Radius:**
-- `rounded-2xl` → `rounded`
+### 2. Create `useLetterValidation` Hook
 
-Keep: Progress ring animation (functional timing display).
+A React hook that orchestrates the hybrid validation:
+- Exposes `validate(canvasRef, letter)` function
+- Runs waypoint check first (instant)
+- If waypoints pass, calls the edge function with the canvas image
+- Manages loading state for the ~1-2s AI round-trip
+- Returns `{ isValid, isChecking, feedback }`
 
----
+### 3. Update TracePad, CopyPad, IndependentPad
 
-### 4. TokenProgress.tsx
+- On pointer up, if waypoints pass, show a brief "Checking..." indicator
+- Call the AI validation
+- Only mark complete if AI confirms
+- If AI rejects, show the feedback ("Try making the bump rounder")
+- Add a "Check with AI" button that appears after 3+ failed attempts — lets the child bypass waypoints if they drew a genuinely good letter that waypoints missed
 
-**Shimmer Animation — Remove:**
-- Lines 46-48 and 112-114: shimmer overlay divs
+### 4. Update `supabase/config.toml`
 
-**Decorative Circles — Remove:**
-- Lines 66-67: top-right and bottom-left decorative circles
+Register the new edge function.
 
-**Gradients — Flatten:**
-```
-Compact container:
-Before: bg-gradient-to-r from-token/15 via-token/10 to-primary/5
-After:  bg-token/10
+## Files to Create/Modify
 
-Token icon box:
-Before: bg-gradient-to-br from-token to-token/80
-After:  bg-token
+| File | Action |
+|------|--------|
+| `supabase/functions/validate-letter/index.ts` | **Create** — Edge function calling Gemini Flash |
+| `supabase/config.toml` | **Modify** — Register new function |
+| `src/hooks/useLetterValidation.ts` | **Create** — Hybrid validation hook |
+| `src/components/writing/TracePad.tsx` | **Modify** — Use new hook |
+| `src/components/writing/CopyPad.tsx` | **Modify** — Use new hook |
+| `src/components/writing/IndependentPad.tsx` | **Modify** — Use new hook |
+| `src/components/reading/TracePad.tsx` | **Modify** — Use new hook |
 
-Progress bar fill:
-Before: bg-gradient-to-r from-token via-primary to-token
-After:  bg-token
+## Cost and Performance
 
-Full container:
-Before: bg-gradient-to-br from-card via-card to-muted/30
-After:  bg-card
+- **Model**: `google/gemini-3-flash-preview` (fast, cheap, vision-capable)
+- **Latency**: ~1-2 seconds per AI check
+- **Cost**: Only triggered when waypoints pass (filters out ~80% of attempts)
+- **Fallback**: If AI is unavailable (offline/rate-limited), waypoint result is used as-is
+- Uses the pre-configured `LOVABLE_API_KEY` — no additional setup needed
 
-Token dots earned:
-Before: bg-gradient-to-br from-token to-primary
-After:  bg-token
+## User Experience
 
-Celebration banner:
-Before: bg-gradient-to-r from-token/20 to-primary/20
-After:  bg-token/10
-```
-
-**Corner Radius:**
-- `rounded-3xl` → `rounded`
-- `rounded-2xl` → `rounded`
-
----
-
-### 5. CalmToolkit.tsx
-
-**Breathing Circle — Keep Functional, Remove Flourish:**
-- Keep the 4s breathing scale animation (it's functional for guided breathing)
-- Remove `animate-pulse` from Wind icon (line 98)
-
-**Gradients — Flatten:**
-```
-Container:
-Before: bg-gradient-to-b from-calm via-calm to-calm/90
-After:  bg-calm
-```
-
-**Corner Radius:**
-- `rounded-3xl` → `rounded`
-- `rounded-2xl` → `rounded`
-
----
-
-### 6. VisualTimer.tsx
-
-**Corner Radius only:**
-- Line 107-108: `rounded-3xl` → `rounded`
-- Line 130: `rounded-3xl` → `rounded`
-- Line 173: `rounded-3xl` → `rounded`
-
-No gradient or motion changes (already clean).
-
----
-
-### 7. VisualSchedule.tsx
-
-**Gradients — Flatten:**
-```
-Current task row:
-Before: bg-gradient-to-r from-now to-primary
-After:  bg-now
-
-Next task row:
-Before: bg-gradient-to-r from-next/20 to-next/10
-After:  bg-next/10
-
-Celebration banner:
-Before: bg-gradient-to-r from-calm/20 to-token/20
-After:  bg-calm/10
-```
-
-**Corner Radius:**
-- `rounded-2xl` → `rounded`
-
----
-
-## Summary of Removals
-
-| Type | Count |
-|------|-------|
-| Organic animations | ~12 instances |
-| Decorative circles | 5 elements |
-| Sparkle/confetti | 2 elements |
-| Blush marks | 1 element |
-| Shimmer overlays | 2 instances |
-| Multi-stop gradients | ~18 flattened |
-| Radius overrides | ~25 normalized |
-
-## Preserved Functionality
-
-- All content and copy unchanged
-- Breathing circle timing (functional for guided breathing)
-- Timer progress animation (functional state)
-- Eye state changes in LittleGuy (functional indication)
-- Sleep "zzz" indicator (functional)
-- All interaction handlers unchanged
-- Token economy logic unchanged
-
-## Result
-
-Components will match the MoMA × TE aesthetic:
-- Flat, material-like colors
-- Machined 0.25rem corners everywhere
-- No decorative motion — only mechanical state confirmation
-- Visible structure without organic softness
-
+- Random scribbles: rejected instantly (no delay, no API call)
+- Bad attempts: rejected instantly by waypoints
+- Plausible attempts: brief "Checking..." spinner (~1-2s), then confirmed or given feedback
+- After 3 failed waypoint attempts: "Ask teacher to check?" button appears for AI-only validation
+- AI feedback shown as a gentle hint: "Try making the top rounder" or "Make the line straighter"
