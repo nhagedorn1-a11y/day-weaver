@@ -1,7 +1,8 @@
 import { useRef, useState, useEffect, useCallback, TouchEvent, MouseEvent } from 'react';
 import { RefreshCw, Check, Pencil } from 'lucide-react';
 import { useSound } from '@/contexts/SoundContext';
-import { validateLetterTrace } from '@/lib/letterValidation';
+import { useLetterValidation } from '@/hooks/useLetterValidation';
+import { ValidationOverlay } from '@/components/writing/ValidationOverlay';
 
 interface TracePoint {
   x: number;
@@ -15,6 +16,7 @@ interface TracePadProps {
 }
 
 const MIN_POINTS_PER_STROKE = 5;
+const AI_FALLBACK_ATTEMPTS = 3;
 
 export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,6 +26,7 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
   const [attempts, setAttempts] = useState(0);
   const [pointCount, setPointCount] = useState(0);
   const { playTrace, speakPhoneme } = useSound();
+  const { validate, validateWithAI, isChecking, feedback, clearFeedback } = useLetterValidation();
 
   // Draw guide letter
   const drawGuide = useCallback(() => {
@@ -35,7 +38,6 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
 
     ctx.clearRect(0, 0, size, size);
     
-    // Draw subtle grid for guidance
     ctx.strokeStyle = 'rgba(128, 128, 128, 0.2)';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
@@ -52,7 +54,6 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     
     ctx.setLineDash([]);
 
-    // Draw guide letter (large, dashed) — preserve original case
     const displayLetter = letter;
     const fontSize = letter.length > 1 ? size * 0.5 : size * 0.65;
     
@@ -68,7 +69,6 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
     ctx.fillText(displayLetter, size / 2, size / 2);
 
-    // Redraw existing trace lines if any (for multi-stroke)
     const points = pointsRef.current;
     if (points.length > 1) {
       ctx.beginPath();
@@ -90,16 +90,15 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     }
   }, [letter, size]);
 
-  // Reset state when letter changes
   useEffect(() => {
     pointsRef.current = [];
     setPointCount(0);
     setIsComplete(false);
     setAttempts(0);
+    clearFeedback();
     drawGuide();
   }, [letter, size]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Initialize canvas
   useEffect(() => {
     drawGuide();
   }, [drawGuide]);
@@ -107,10 +106,8 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
   const drawLine = useCallback((from: TracePoint, to: TracePoint) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     ctx.beginPath();
     ctx.strokeStyle = '#6366f1';
     ctx.lineWidth = 10;
@@ -124,48 +121,36 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
   const getPosition = useCallback((e: TouchEvent | MouseEvent | React.PointerEvent): TracePoint => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
-
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    
     if ('touches' in e && e.touches.length > 0) {
       return {
         x: (e.touches[0].clientX - rect.left) * scaleX,
         y: (e.touches[0].clientY - rect.top) * scaleY,
       };
     }
-    
     if ('clientX' in e) {
       return {
         x: (e.clientX - rect.left) * scaleX,
         y: (e.clientY - rect.top) * scaleY,
       };
     }
-    
     return { x: 0, y: 0 };
   }, []);
 
-  const checkCompletion = useCallback(() => {
-    const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
-    return validateLetterTrace(realPoints, letter, size);
-  }, [letter, size]);
-
   const handleStart = useCallback((e: TouchEvent | MouseEvent | React.PointerEvent) => {
-    if (isComplete) return;
+    if (isComplete || isChecking) return;
     e.preventDefault();
     e.stopPropagation();
-    
     isDrawingRef.current = true;
     const point = getPosition(e);
-
-    // Accumulate across strokes — add a sentinel to mark stroke break
     if (pointsRef.current.length > 0) {
       pointsRef.current.push({ x: NaN, y: NaN });
     }
     pointsRef.current.push(point);
     setPointCount(pointsRef.current.filter(p => !isNaN(p.x)).length);
-    
+    clearFeedback();
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
@@ -176,59 +161,66 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
         ctx.fill();
       }
     }
-  }, [isComplete, getPosition]);
+  }, [isComplete, isChecking, getPosition, clearFeedback]);
 
   const handleMove = useCallback((e: TouchEvent | MouseEvent | React.PointerEvent) => {
-    if (!isDrawingRef.current || isComplete) return;
+    if (!isDrawingRef.current || isComplete || isChecking) return;
     e.preventDefault();
     e.stopPropagation();
-    
     const point = getPosition(e);
     const allPoints = pointsRef.current;
     const lastPoint = allPoints[allPoints.length - 1];
-    
     if (lastPoint && !isNaN(lastPoint.x)) {
       const distance = Math.sqrt(
         Math.pow(point.x - lastPoint.x, 2) + Math.pow(point.y - lastPoint.y, 2)
       );
-      
       if (distance > 2) {
         drawLine(lastPoint, point);
         pointsRef.current.push(point);
         setPointCount(pointsRef.current.filter(p => !isNaN(p.x)).length);
       }
     }
-  }, [isComplete, getPosition, drawLine]);
+  }, [isComplete, isChecking, getPosition, drawLine]);
 
-  const handleEnd = useCallback((e?: TouchEvent | MouseEvent | React.PointerEvent) => {
+  const handleEnd = useCallback(async (e?: TouchEvent | MouseEvent | React.PointerEvent) => {
     if (!isDrawingRef.current) return;
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    
     isDrawingRef.current = false;
-    
-    if (checkCompletion()) {
+    const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
+    const result = await validate(canvasRef, realPoints, letter, size);
+    if (result.isValid) {
       setIsComplete(true);
       playTrace();
       speakPhoneme(letter);
       onComplete?.();
     } else {
-      const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
       if (realPoints.length > MIN_POINTS_PER_STROKE) {
         setAttempts(prev => prev + 1);
       }
     }
-  }, [checkCompletion, onComplete, playTrace, speakPhoneme, letter]);
+  }, [validate, onComplete, playTrace, speakPhoneme, letter, size]);
+
+  const handleAskTeacher = useCallback(async () => {
+    const result = await validateWithAI(canvasRef, letter);
+    if (result.isValid) {
+      setIsComplete(true);
+      playTrace();
+      speakPhoneme(letter);
+      onComplete?.();
+    }
+  }, [validateWithAI, letter, playTrace, speakPhoneme, onComplete]);
 
   const handleClear = useCallback(() => {
     pointsRef.current = [];
     setPointCount(0);
     setIsComplete(false);
     setAttempts(0);
+    clearFeedback();
     drawGuide();
-  }, [drawGuide]);
+  }, [drawGuide, clearFeedback]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -273,7 +265,7 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
           onTouchEnd={() => handleEnd()}
         />
         
-        {!isComplete && pointCount === 0 && (
+        {!isComplete && pointCount === 0 && !isChecking && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="flex items-center gap-2 text-muted-foreground/50">
               <Pencil className="w-6 h-6" />
@@ -288,40 +280,64 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
             </div>
           </div>
         )}
+
+        <ValidationOverlay
+          isChecking={isChecking}
+          feedback={null}
+          showAskTeacher={false}
+          onAskTeacher={handleAskTeacher}
+        />
       </div>
 
-      <div className="flex items-center gap-4">
-        {!isComplete ? (
-          <>
-            <span className="text-sm text-muted-foreground">
-              {attempts > 1
-                ? "Trace the whole letter shape carefully!"
-                : attempts === 1
-                  ? "Try again — follow the guide closely"
-                  : pointCount > 0 
-                    ? `Tracing... (${realPointCount} points)`
-                    : "Use finger or mouse to trace"
-              }
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex items-center gap-4">
+          {!isComplete ? (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {isChecking
+                  ? "Checking your letter..."
+                  : attempts > 1
+                    ? "Trace the whole letter shape carefully!"
+                    : attempts === 1
+                      ? "Try again — follow the guide closely"
+                      : pointCount > 0 
+                        ? `Tracing... (${realPointCount} points)`
+                        : "Use finger or mouse to trace"
+                }
+              </span>
+              {pointCount > 0 && !isChecking && (
+                <button
+                  onClick={handleClear}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Clear</span>
+                </button>
+              )}
+            </>
+          ) : (
+            <span className="text-sm font-medium text-calm flex items-center gap-1">
+              <Check className="w-4 h-4" />
+              Great tracing!
             </span>
-            {pointCount > 0 && (
-              <button
-                onClick={handleClear}
-                className="flex items-center gap-1 px-3 py-1.5 rounded bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Clear</span>
-              </button>
-            )}
-          </>
-        ) : (
-          <span className="text-sm font-medium text-calm flex items-center gap-1">
-            <Check className="w-4 h-4" />
-            Great tracing!
-          </span>
+          )}
+        </div>
+
+        {feedback && !isComplete && !isChecking && (
+          <span className="text-sm text-muted-foreground italic">{feedback}</span>
+        )}
+
+        {!isComplete && attempts >= AI_FALLBACK_ATTEMPTS && pointCount > 0 && (
+          <ValidationOverlay
+            isChecking={false}
+            feedback={null}
+            showAskTeacher={true}
+            onAskTeacher={handleAskTeacher}
+          />
         )}
       </div>
 
-      {!isComplete && (
+      {!isComplete && !isChecking && (
         <p className="text-xs text-muted-foreground text-center max-w-[200px]">
           Say "{letter.length > 1 ? `/${letter}/` : `the ${letter.toUpperCase()} sound`}" out loud while you trace
         </p>

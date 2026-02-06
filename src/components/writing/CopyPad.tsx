@@ -1,13 +1,16 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Check, RefreshCw, Eye } from 'lucide-react';
 import { useSound } from '@/contexts/SoundContext';
-import { validateLetterTrace } from '@/lib/letterValidation';
+import { useLetterValidation } from '@/hooks/useLetterValidation';
+import { ValidationOverlay } from '@/components/writing/ValidationOverlay';
 
 interface CopyPadProps {
   letter: string;
   onComplete?: () => void;
   size?: number;
 }
+
+const AI_FALLBACK_ATTEMPTS = 3;
 
 export function CopyPad({ letter, onComplete, size = 200 }: CopyPadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -16,20 +19,22 @@ export function CopyPad({ letter, onComplete, size = 200 }: CopyPadProps) {
   const [isComplete, setIsComplete] = useState(false);
   const [pointCount, setPointCount] = useState(0);
   const [showGuide, setShowGuide] = useState(true);
+  const [attempts, setAttempts] = useState(0);
   const { playTrace, playComplete, speakPhoneme } = useSound();
+  const { validate, validateWithAI, isChecking, feedback, clearFeedback } = useLetterValidation();
 
-  // Reset state when letter changes
   useEffect(() => {
     pointsRef.current = [];
     setPointCount(0);
     setIsComplete(false);
     setShowGuide(true);
-  }, [letter]);
+    setAttempts(0);
+    clearFeedback();
+  }, [letter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -39,25 +44,14 @@ export function CopyPad({ letter, onComplete, size = 200 }: CopyPadProps) {
     ctx.strokeStyle = 'rgba(128, 128, 128, 0.15)';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
-
-    ctx.beginPath();
-    ctx.moveTo(0, size * 0.2);
-    ctx.lineTo(size, size * 0.2);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(0, size * 0.5);
-    ctx.lineTo(size, size * 0.5);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(0, size * 0.8);
-    ctx.lineTo(size, size * 0.8);
-    ctx.stroke();
-
+    [0.2, 0.5, 0.8].forEach(y => {
+      ctx.beginPath();
+      ctx.moveTo(0, size * y);
+      ctx.lineTo(size, size * y);
+      ctx.stroke();
+    });
     ctx.setLineDash([]);
 
-    // Draw the model letter on the left side if guide is shown
     if (showGuide) {
       const fontSize = size * 0.4;
       ctx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
@@ -66,7 +60,6 @@ export function CopyPad({ letter, onComplete, size = 200 }: CopyPadProps) {
       ctx.fillStyle = 'rgba(99, 102, 241, 0.25)';
       ctx.fillText(letter, size * 0.25, size * 0.5);
 
-      // Arrow pointing to writing area
       ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
       ctx.beginPath();
       ctx.moveTo(size * 0.45, size * 0.5);
@@ -76,7 +69,7 @@ export function CopyPad({ letter, onComplete, size = 200 }: CopyPadProps) {
       ctx.fill();
     }
 
-    // Redraw all traced points (supporting multi-stroke with NaN sentinels)
+    // Redraw strokes
     const points = pointsRef.current;
     if (points.length > 1) {
       ctx.beginPath();
@@ -105,11 +98,9 @@ export function CopyPad({ letter, onComplete, size = 200 }: CopyPadProps) {
   const getPosition = useCallback((e: React.PointerEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
-
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-
     return {
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY,
@@ -117,19 +108,17 @@ export function CopyPad({ letter, onComplete, size = 200 }: CopyPadProps) {
   }, []);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if (isComplete) return;
+    if (isComplete || isChecking) return;
     e.preventDefault();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-
     isDrawingRef.current = true;
     const point = getPosition(e);
-
-    // Accumulate across strokes
     if (pointsRef.current.length > 0) {
-      pointsRef.current.push({ x: NaN, y: NaN }); // stroke break
+      pointsRef.current.push({ x: NaN, y: NaN });
     }
     pointsRef.current.push(point);
     setPointCount(pointsRef.current.filter(p => !isNaN(p.x)).length);
+    clearFeedback();
 
     const canvas = canvasRef.current;
     if (canvas) {
@@ -141,20 +130,17 @@ export function CopyPad({ letter, onComplete, size = 200 }: CopyPadProps) {
         ctx.fill();
       }
     }
-  }, [isComplete, getPosition]);
+  }, [isComplete, isChecking, getPosition, clearFeedback]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDrawingRef.current || isComplete) return;
+    if (!isDrawingRef.current || isComplete || isChecking) return;
     e.preventDefault();
-
     const point = getPosition(e);
     const lastPoint = pointsRef.current[pointsRef.current.length - 1];
-
     if (lastPoint && !isNaN(lastPoint.x)) {
       const distance = Math.sqrt(
         Math.pow(point.x - lastPoint.x, 2) + Math.pow(point.y - lastPoint.y, 2)
       );
-
       if (distance > 2) {
         const canvas = canvasRef.current;
         if (canvas) {
@@ -173,33 +159,49 @@ export function CopyPad({ letter, onComplete, size = 200 }: CopyPadProps) {
         setPointCount(pointsRef.current.filter(p => !isNaN(p.x)).length);
       }
     }
-  }, [isComplete, getPosition]);
+  }, [isComplete, isChecking, getPosition]);
 
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+  const handlePointerUp = useCallback(async (e: React.PointerEvent) => {
     if (!isDrawingRef.current) return;
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-
     isDrawingRef.current = false;
 
     const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
-    if (validateLetterTrace(realPoints, letter, size)) {
+    const result = await validate(canvasRef, realPoints, letter, size);
+
+    if (result.isValid) {
+      setIsComplete(true);
+      playComplete();
+      speakPhoneme(letter);
+      onComplete?.();
+    } else {
+      if (realPoints.length > 5) {
+        setAttempts(prev => prev + 1);
+      }
+    }
+  }, [validate, playComplete, speakPhoneme, letter, size, onComplete]);
+
+  const handleAskTeacher = useCallback(async () => {
+    const result = await validateWithAI(canvasRef, letter);
+    if (result.isValid) {
       setIsComplete(true);
       playComplete();
       speakPhoneme(letter);
       onComplete?.();
     }
-  }, [playComplete, speakPhoneme, letter, size, onComplete]);
+  }, [validateWithAI, letter, playComplete, speakPhoneme, onComplete]);
 
   const handleClear = useCallback(() => {
     pointsRef.current = [];
     setPointCount(0);
     setIsComplete(false);
+    setAttempts(0);
+    clearFeedback();
     drawCanvas();
-  }, [drawCanvas]);
+  }, [drawCanvas, clearFeedback]);
 
   return (
     <div className="flex flex-col items-center gap-4">
-      {/* Model letter display */}
       <div className="flex items-center gap-3 p-3 rounded bg-muted/50">
         <span className="text-4xl font-serif">{letter}</span>
         <span className="text-muted-foreground">→</span>
@@ -231,35 +233,61 @@ export function CopyPad({ letter, onComplete, size = 200 }: CopyPadProps) {
             </div>
           </div>
         )}
+
+        <ValidationOverlay
+          isChecking={isChecking}
+          feedback={null}
+          showAskTeacher={false}
+          onAskTeacher={handleAskTeacher}
+        />
       </div>
 
-      <div className="flex items-center gap-4">
-        {!isComplete ? (
-          <>
-            <button
-              onClick={() => setShowGuide(!showGuide)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                showGuide ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
-              }`}
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Guide</span>
-            </button>
-            {pointCount > 0 && (
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex items-center gap-4">
+          {!isComplete ? (
+            <>
               <button
-                onClick={handleClear}
-                className="flex items-center gap-1 px-3 py-1.5 rounded bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80"
+                onClick={() => setShowGuide(!showGuide)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                  showGuide ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
+                }`}
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Clear</span>
+                <Eye className="w-3.5 h-3.5" />
+                <span>Guide</span>
               </button>
-            )}
-          </>
-        ) : (
-          <span className="text-sm font-medium text-calm flex items-center gap-1">
-            <Check className="w-4 h-4" />
-            Great copy!
-          </span>
+              {pointCount > 0 && !isChecking && (
+                <button
+                  onClick={handleClear}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Clear</span>
+                </button>
+              )}
+            </>
+          ) : (
+            <span className="text-sm font-medium text-calm flex items-center gap-1">
+              <Check className="w-4 h-4" />
+              Great copy!
+            </span>
+          )}
+        </div>
+
+        {isChecking && (
+          <span className="text-sm text-muted-foreground">Checking your letter...</span>
+        )}
+
+        {feedback && !isComplete && !isChecking && (
+          <span className="text-sm text-muted-foreground italic">{feedback}</span>
+        )}
+
+        {!isComplete && attempts >= AI_FALLBACK_ATTEMPTS && pointCount > 0 && (
+          <ValidationOverlay
+            isChecking={false}
+            feedback={null}
+            showAskTeacher={true}
+            onAskTeacher={handleAskTeacher}
+          />
         )}
       </div>
     </div>
