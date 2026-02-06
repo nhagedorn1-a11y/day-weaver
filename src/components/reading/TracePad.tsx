@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback, TouchEvent, MouseEvent } from 'react';
 import { RefreshCw, Check, Pencil } from 'lucide-react';
 import { useSound } from '@/contexts/SoundContext';
+import { validateLetterTrace } from '@/lib/letterValidation';
 
 interface TracePoint {
   x: number;
@@ -13,9 +14,7 @@ interface TracePadProps {
   size?: number;
 }
 
-// Minimum coverage threshold to consider tracing complete
-const COVERAGE_THRESHOLD = 0.12; // 12% of letter area
-const MIN_POINTS = 20;
+const MIN_POINTS_PER_STROKE = 5;
 
 export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -26,7 +25,7 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
   const [pointCount, setPointCount] = useState(0);
   const { playTrace, speakPhoneme } = useSound();
 
-  // Draw guide letter (only on mount or letter change)
+  // Draw guide letter
   const drawGuide = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -34,7 +33,6 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
     ctx.clearRect(0, 0, size, size);
     
     // Draw subtle grid for guidance
@@ -42,13 +40,11 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
     
-    // Horizontal center line
     ctx.beginPath();
     ctx.moveTo(0, size / 2);
     ctx.lineTo(size, size / 2);
     ctx.stroke();
     
-    // Vertical center line
     ctx.beginPath();
     ctx.moveTo(size / 2, 0);
     ctx.lineTo(size / 2, size);
@@ -69,18 +65,46 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     ctx.strokeText(displayLetter, size / 2, size / 2);
     ctx.setLineDash([]);
     
-    // Fill with very light color
     ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
     ctx.fillText(displayLetter, size / 2, size / 2);
+
+    // Redraw existing trace lines if any (for multi-stroke)
+    const points = pointsRef.current;
+    if (points.length > 1) {
+      ctx.beginPath();
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 10;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        if (isNaN(points[i].x)) {
+          if (i + 1 < points.length && !isNaN(points[i + 1].x)) {
+            ctx.moveTo(points[i + 1].x, points[i + 1].y);
+          }
+          continue;
+        }
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.stroke();
+    }
   }, [letter, size]);
+
+  // Reset state when letter changes
+  useEffect(() => {
+    pointsRef.current = [];
+    setPointCount(0);
+    setIsComplete(false);
+    setAttempts(0);
+    drawGuide();
+  }, [letter, size]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initialize canvas
   useEffect(() => {
     drawGuide();
   }, [drawGuide]);
 
-  // Draw a line segment
-  const drawLine = useCallback((from: TracePoint, to: TracePoint, color: string = '#6366f1') => {
+  const drawLine = useCallback((from: TracePoint, to: TracePoint) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -88,7 +112,7 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     if (!ctx) return;
 
     ctx.beginPath();
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = '#6366f1';
     ctx.lineWidth = 10;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -105,7 +129,6 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     
-    // Handle touch events
     if ('touches' in e && e.touches.length > 0) {
       return {
         x: (e.touches[0].clientX - rect.left) * scaleX,
@@ -113,7 +136,6 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
       };
     }
     
-    // Handle mouse/pointer events
     if ('clientX' in e) {
       return {
         x: (e.clientX - rect.left) * scaleX,
@@ -125,21 +147,9 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
   }, []);
 
   const checkCompletion = useCallback(() => {
-    const points = pointsRef.current;
-    if (points.length < MIN_POINTS) return false;
-    
-    // Calculate bounding box coverage
-    const xs = points.map(p => p.x);
-    const ys = points.map(p => p.y);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-    
-    const coverage = ((maxX - minX) * (maxY - minY)) / (size * size);
-    
-    return coverage >= COVERAGE_THRESHOLD;
-  }, [size]);
+    const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
+    return validateLetterTrace(realPoints, letter, size);
+  }, [letter, size]);
 
   const handleStart = useCallback((e: TouchEvent | MouseEvent | React.PointerEvent) => {
     if (isComplete) return;
@@ -148,10 +158,14 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     
     isDrawingRef.current = true;
     const point = getPosition(e);
-    pointsRef.current = [point];
-    setPointCount(1);
+
+    // Accumulate across strokes — add a sentinel to mark stroke break
+    if (pointsRef.current.length > 0) {
+      pointsRef.current.push({ x: NaN, y: NaN });
+    }
+    pointsRef.current.push(point);
+    setPointCount(pointsRef.current.filter(p => !isNaN(p.x)).length);
     
-    // Draw starting dot
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
@@ -170,10 +184,10 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     e.stopPropagation();
     
     const point = getPosition(e);
-    const lastPoint = pointsRef.current[pointsRef.current.length - 1];
+    const allPoints = pointsRef.current;
+    const lastPoint = allPoints[allPoints.length - 1];
     
-    if (lastPoint) {
-      // Only add point if it's far enough from the last one
+    if (lastPoint && !isNaN(lastPoint.x)) {
       const distance = Math.sqrt(
         Math.pow(point.x - lastPoint.x, 2) + Math.pow(point.y - lastPoint.y, 2)
       );
@@ -181,7 +195,7 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
       if (distance > 2) {
         drawLine(lastPoint, point);
         pointsRef.current.push(point);
-        setPointCount(pointsRef.current.length);
+        setPointCount(pointsRef.current.filter(p => !isNaN(p.x)).length);
       }
     }
   }, [isComplete, getPosition, drawLine]);
@@ -200,8 +214,11 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
       playTrace();
       speakPhoneme(letter);
       onComplete?.();
-    } else if (pointsRef.current.length > 10) {
-      setAttempts(prev => prev + 1);
+    } else {
+      const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
+      if (realPoints.length > MIN_POINTS_PER_STROKE) {
+        setAttempts(prev => prev + 1);
+      }
     }
   }, [checkCompletion, onComplete, playTrace, speakPhoneme, letter]);
 
@@ -213,9 +230,7 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     drawGuide();
   }, [drawGuide]);
 
-  // Handle pointer events for better cross-device support
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    // Capture pointer for better tracking
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     handleStart(e);
   }, [handleStart]);
@@ -229,6 +244,8 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     handleEnd(e);
   }, [handleEnd]);
 
+  const realPointCount = pointsRef.current.filter(p => !isNaN(p.x)).length;
+
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative">
@@ -238,7 +255,7 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
           height={size}
           style={{ touchAction: 'none' }}
           className={`
-            rounded-2xl border-4 bg-card cursor-crosshair
+            rounded border-4 bg-card cursor-crosshair
             transition-colors duration-300 select-none
             ${isComplete ? 'border-calm shadow-lg shadow-calm/20' : 'border-border hover:border-primary/50'}
           `}
@@ -247,7 +264,6 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          // Fallback for older browsers
           onMouseDown={handleStart}
           onMouseMove={handleMove}
           onMouseUp={() => handleEnd()}
@@ -257,7 +273,6 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
           onTouchEnd={() => handleEnd()}
         />
         
-        {/* Drawing indicator */}
         {!isComplete && pointCount === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="flex items-center gap-2 text-muted-foreground/50">
@@ -266,32 +281,32 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
           </div>
         )}
         
-        {/* Completion overlay */}
         {isComplete && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-16 h-16 rounded-full bg-calm/90 flex items-center justify-center animate-scale-in">
+            <div className="w-16 h-16 rounded bg-calm/90 flex items-center justify-center animate-scale-in">
               <Check className="w-8 h-8 text-calm-foreground" />
             </div>
           </div>
         )}
       </div>
 
-      {/* Instructions and controls */}
       <div className="flex items-center gap-4">
         {!isComplete ? (
           <>
             <span className="text-sm text-muted-foreground">
-              {attempts > 0 && pointCount < MIN_POINTS 
-                ? "Keep tracing the whole letter!" 
-                : pointCount > 0 
-                  ? `Tracing... (${Math.min(100, Math.round(pointCount / MIN_POINTS * 100))}%)`
-                  : "Use finger or mouse to trace"
+              {attempts > 1
+                ? "Trace the whole letter shape carefully!"
+                : attempts === 1
+                  ? "Try again — follow the guide closely"
+                  : pointCount > 0 
+                    ? `Tracing... (${realPointCount} points)`
+                    : "Use finger or mouse to trace"
               }
             </span>
             {pointCount > 0 && (
               <button
                 onClick={handleClear}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80"
+                className="flex items-center gap-1 px-3 py-1.5 rounded bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Clear</span>
@@ -306,7 +321,6 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
         )}
       </div>
 
-      {/* Multisensory reminder */}
       {!isComplete && (
         <p className="text-xs text-muted-foreground text-center max-w-[200px]">
           Say "{letter.length > 1 ? `/${letter}/` : `the ${letter.toUpperCase()} sound`}" out loud while you trace
