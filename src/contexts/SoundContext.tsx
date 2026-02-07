@@ -392,8 +392,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     }
   }, [soundscape.isEnabled, settings.phonemesEnabled, settings.ttsEngine, speakPhonemeWithElevenLabs, speakPhonemeWithWebSpeech]);
 
-  const speakWord = useCallback((word: string) => {
-    if (!soundscape.isEnabled) return;
+  const speakWordWithWebSpeech = useCallback((word: string) => {
     if (!('speechSynthesis' in window)) {
       playComplete();
       return;
@@ -418,7 +417,67 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     utterance.onerror = () => setIsSpeaking(false);
     
     window.speechSynthesis.speak(utterance);
-  }, [soundscape.isEnabled, soundscape.volume, settings, availableVoices, playComplete]);
+  }, [soundscape.volume, settings.speechRate, settings.speechPitch, settings.voiceURI, availableVoices, playComplete]);
+
+  const speakWordWithElevenLabs = useCallback(async (word: string) => {
+    try {
+      setIsSpeaking(true);
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ 
+            text: word, 
+            voiceId: settings.elevenLabsVoiceId,
+            isWord: true,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        console.error('ElevenLabs TTS (word) failed:', response.status);
+        speakWordWithWebSpeech(word);
+        return;
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.volume = soundscape.volume;
+      
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        speakWordWithWebSpeech(word);
+      };
+      
+      await audio.play();
+    } catch (error) {
+      console.error('ElevenLabs TTS (word) error:', error);
+      setIsSpeaking(false);
+      speakWordWithWebSpeech(word);
+    }
+  }, [settings.elevenLabsVoiceId, soundscape.volume, speakWordWithWebSpeech]);
+
+  const speakWord = useCallback((word: string) => {
+    if (!soundscape.isEnabled) return;
+    
+    if (settings.ttsEngine === 'elevenlabs') {
+      speakWordWithElevenLabs(word);
+    } else {
+      speakWordWithWebSpeech(word);
+    }
+  }, [soundscape.isEnabled, settings.ttsEngine, speakWordWithElevenLabs, speakWordWithWebSpeech]);
 
   return (
     <SoundContext.Provider
