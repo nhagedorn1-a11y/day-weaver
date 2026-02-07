@@ -8,16 +8,17 @@ interface Point {
   y: number;
 }
 
-const WAYPOINT_RADIUS = 0.16; // normalized distance tolerance (tighter to prevent false positives)
-const MIN_TRACE_POINTS = 10;
+const WAYPOINT_RADIUS = 0.22; // normalized distance tolerance — generous for young children
+const MIN_TRACE_POINTS = 8;
 
 // Dynamic threshold based on waypoint count:
 // Fewer waypoints → higher hit requirement (prevents false positives on simple letters)
+// Thresholds are intentionally lenient — the AI second-pass catches true errors
 function getMinHitPct(waypointCount: number): number {
-  if (waypointCount <= 3) return 1.0;    // ALL waypoints required (I, l, 1)
-  if (waypointCount <= 5) return 0.6;    // 60% for medium complexity
-  if (waypointCount <= 7) return 0.55;   // 55% for 6-7 waypoints
-  return 0.5;                             // 50% for complex letters (8+)
+  if (waypointCount <= 3) return 0.9;    // Nearly all waypoints for very simple letters (I, l, 1)
+  if (waypointCount <= 5) return 0.5;    // 50% for medium complexity
+  if (waypointCount <= 7) return 0.4;    // 40% for 6-7 waypoints
+  return 0.35;                            // 35% for complex letters (8+)
 }
 
 // Waypoints for every letter — positions along the natural stroke path (normalized 0-1)
