@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Check, Volume2 } from 'lucide-react';
+import { Check, Volume2, RotateCcw } from 'lucide-react';
 import { useSound } from '@/contexts/SoundContext';
 import { Slider } from '@/components/ui/slider';
 
@@ -75,7 +75,12 @@ export function PhonemeSlider({
         clearInterval(interval);
         setIsComplete(true);
         playComplete();
-        speakWord(word);
+        
+        // Delay word pronunciation so it's clearly separate from the blend animation
+        setTimeout(() => {
+          speakWord(word);
+        }, 400);
+        
         onComplete?.();
       }
     }, 50);
@@ -195,10 +200,18 @@ export function PhonemeSlider({
       {/* Blended word result */}
       {(isComplete || showWord) && (
         <div className="flex flex-col items-center gap-3 animate-scale-in">
-          <div className="px-10 py-5 rounded-3xl bg-calm/20 border-3 border-calm">
+          <button
+            onClick={() => speakWord(word)}
+            className="px-10 py-5 rounded-3xl bg-calm/20 border-3 border-calm hover:bg-calm/30 transition-colors"
+            aria-label={`Hear the word ${word}`}
+          >
             <span className="font-display text-5xl font-bold text-calm">
               {word}
             </span>
+          </button>
+          <div className="flex items-center gap-2 text-calm">
+            <Volume2 className="w-4 h-4" />
+            <span className="text-sm">Tap to hear again</span>
           </div>
           <div className="flex items-center gap-2 text-calm">
             <Check className="w-5 h-5" />
@@ -211,8 +224,9 @@ export function PhonemeSlider({
       {isComplete && (
         <button
           onClick={handleReset}
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
+          <RotateCcw className="w-3.5 h-3.5" />
           Try again
         </button>
       )}

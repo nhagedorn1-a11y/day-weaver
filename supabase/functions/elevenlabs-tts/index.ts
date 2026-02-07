@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voiceId = 'EXAVITQu4vr4xnSDxMaL' } = await req.json();
+    const { text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isWord = false } = await req.json();
     
     if (!text) {
       return new Response(
@@ -31,10 +31,32 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Generating TTS for text: "${text}" with voice: ${voiceId}`);
+    console.log(`Generating TTS for ${isWord ? 'word' : 'phoneme'}: "${text}" with voice: ${voiceId}`);
+
+    // Use different voice settings for words vs phonemes
+    // Words: natural speech with clear enunciation
+    // Phonemes: slower, more deliberate pronunciation of individual sounds
+    const voiceSettings = isWord
+      ? {
+          stability: 0.7,
+          similarity_boost: 0.8,
+          style: 0.4,
+          use_speaker_boost: true,
+          speed: 0.9, // Natural pace for whole words
+        }
+      : {
+          stability: 0.8,
+          similarity_boost: 0.75,
+          style: 0.3,
+          use_speaker_boost: true,
+          speed: 0.85, // Slightly slower for phoneme clarity
+        };
+
+    // For whole words, use higher quality output format
+    const outputFormat = isWord ? 'mp3_44100_128' : 'mp3_22050_32';
 
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_22050_32`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=${outputFormat}`,
       {
         method: "POST",
         headers: {
@@ -43,14 +65,8 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           text,
-          model_id: "eleven_turbo_v2_5", // Fast model for quick phoneme sounds
-          voice_settings: {
-            stability: 0.8,
-            similarity_boost: 0.75,
-            style: 0.3,
-            use_speaker_boost: true,
-            speed: 0.85, // Slightly slower for clarity
-          },
+          model_id: "eleven_turbo_v2_5",
+          voice_settings: voiceSettings,
         }),
       }
     );
