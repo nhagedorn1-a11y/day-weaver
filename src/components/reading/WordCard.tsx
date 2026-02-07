@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Check, Eye, Ear, Hand } from 'lucide-react';
 import { useSound } from '@/contexts/SoundContext';
+import { Slider } from '@/components/ui/slider';
 
 interface WordCardProps {
   word: string;
@@ -20,33 +21,60 @@ export function WordCard({
   onCorrection,
 }: WordCardProps) {
   const [phase, setPhase] = useState<'hidden' | 'revealed' | 'tapping' | 'done'>('hidden');
-  const [tappedPhonemes, setTappedPhonemes] = useState<Set<number>>(new Set());
+  const [sliderValue, setSliderValue] = useState(0);
+  const [visitedPhonemes, setVisitedPhonemes] = useState<Set<number>>(new Set());
   const [showingCorrection, setShowingCorrection] = useState(false);
   const [correctionStep, setCorrectionStep] = useState<CorrectionStep>('myTurn');
   const { speakPhoneme, speakWord, playReveal, playCorrect, playComplete, playTap } = useSound();
+  const lastSpokenRef = useRef<number>(-1);
+
+  // Reset when word changes
+  useEffect(() => {
+    setPhase('hidden');
+    setSliderValue(0);
+    setVisitedPhonemes(new Set());
+    setShowingCorrection(false);
+    setCorrectionStep('myTurn');
+    lastSpokenRef.current = -1;
+  }, [word]);
+
+  // Speak phoneme when slider changes
+  useEffect(() => {
+    if (phase !== 'tapping') return;
+    
+    const phonemeIndex = sliderValue;
+    if (phonemeIndex !== lastSpokenRef.current && phonemeIndex < phonemes.length) {
+      speakPhoneme(phonemes[phonemeIndex]);
+      lastSpokenRef.current = phonemeIndex;
+    }
+  }, [sliderValue, phonemes, speakPhoneme, phase]);
+
+  const allVisited = visitedPhonemes.size === phonemes.length;
 
   const handleReveal = () => {
-    playReveal(); // Play reveal sound
+    playReveal();
     setPhase('revealed');
   };
 
   const handleStartTapping = () => {
     setPhase('tapping');
+    setSliderValue(0);
+    setVisitedPhonemes(new Set([0]));
+    lastSpokenRef.current = -1;
   };
 
-  const handlePhonemeTap = (index: number) => {
-    if (!tappedPhonemes.has(index)) {
-      speakPhoneme(phonemes[index]); // Speak the phoneme sound
-      const newTapped = new Set(tappedPhonemes);
-      newTapped.add(index);
-      setTappedPhonemes(newTapped);
-    }
-  };
-
-  const allPhonemesTapped = tappedPhonemes.size === phonemes.length;
+  const handleSliderChange = useCallback((value: number[]) => {
+    const idx = value[0];
+    setSliderValue(idx);
+    setVisitedPhonemes(prev => {
+      const next = new Set(prev);
+      next.add(idx);
+      return next;
+    });
+  }, []);
 
   const handleCorrect = () => {
-    playCorrect(); // Play success sound
+    playCorrect();
     setPhase('done');
     onComplete?.();
   };
@@ -57,14 +85,13 @@ export function WordCard({
   };
 
   const handleCorrectionNext = () => {
-    playTap(); // Play tap sound for progression
+    playTap();
     if (correctionStep === 'myTurn') {
       setCorrectionStep('together');
     } else if (correctionStep === 'together') {
       setCorrectionStep('yourTurn');
     } else {
-      // Finished correction - mark as complete
-      playComplete(); // Play completion sound
+      playComplete();
       setShowingCorrection(false);
       setCorrectionStep('myTurn');
       setPhase('done');
@@ -171,7 +198,6 @@ export function WordCard({
       {/* Revealed state - see word, can start tapping */}
       {phase === 'revealed' && (
         <div className="animate-fade-in">
-          {/* Tap on word to hear it spoken */}
           <button 
             onClick={() => speakWord(word)}
             className="font-display text-5xl font-bold mb-4 hover:text-primary transition-colors"
@@ -181,44 +207,75 @@ export function WordCard({
           </button>
           
           <p className="text-sm text-muted-foreground mb-4">
-            Tap the word to hear it, then tap sounds to practice
+            Tap the word to hear it, then slide through the sounds
           </p>
 
           <button
             onClick={handleStartTapping}
             className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold"
           >
-            Tap the Sounds
+            Slide the Sounds
           </button>
         </div>
       )}
 
-      {/* Tapping state - interactive phoneme boxes */}
+      {/* Tapping/Sliding state - interactive phoneme slider */}
       {phase === 'tapping' && (
         <div className="animate-fade-in space-y-4">
-          {/* Phoneme boxes */}
+          {/* Phoneme boxes - highlighted by slider */}
           <div className="flex justify-center gap-2">
             {phonemes.map((phoneme, idx) => {
-              const isTapped = tappedPhonemes.has(idx);
+              const isActive = sliderValue === idx;
+              const isVisited = visitedPhonemes.has(idx);
               return (
                 <button
                   key={idx}
-                  onClick={() => handlePhonemeTap(idx)}
-                  disabled={isTapped}
+                  onClick={() => handleSliderChange([idx])}
                   className={`
-                    w-16 h-20 rounded-xl border-3 font-display text-2xl font-bold
+                    relative w-16 h-20 rounded-xl border-3 font-display text-2xl font-bold
                     transition-all duration-150
-                    ${isTapped 
-                      ? 'bg-primary text-primary-foreground border-primary' 
-                      : 'bg-card border-border hover:border-primary/50 hover:scale-105'
+                    ${isActive 
+                      ? 'bg-primary text-primary-foreground border-primary scale-110 shadow-lg z-10' 
+                      : isVisited
+                        ? 'bg-primary/20 text-primary border-primary/40'
+                        : 'bg-card border-border'
                     }
                   `}
                 >
                   {phoneme}
+                  {isVisited && !isActive && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-calm flex items-center justify-center">
+                      <Check className="w-2.5 h-2.5 text-calm-foreground" />
+                    </div>
+                  )}
                 </button>
               );
             })}
           </div>
+
+          {/* Slider control */}
+          {phonemes.length > 1 && (
+            <div className="w-full max-w-xs mx-auto px-4">
+              <Slider
+                value={[sliderValue]}
+                onValueChange={handleSliderChange}
+                min={0}
+                max={phonemes.length - 1}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between mt-1 px-1">
+                {phonemes.map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      visitedPhonemes.has(idx) ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Word display - tap to hear the whole word */}
           <button 
@@ -229,8 +286,8 @@ export function WordCard({
             {word}
           </button>
 
-          {/* Action buttons - only show when all tapped */}
-          {allPhonemesTapped && (
+          {/* Action buttons - show when all visited */}
+          {allVisited && (
             <div className="flex gap-3 justify-center animate-fade-in pt-2">
               {showCorrection && (
                 <button
@@ -250,9 +307,9 @@ export function WordCard({
             </div>
           )}
 
-          {!allPhonemesTapped && (
+          {!allVisited && (
             <p className="text-sm text-muted-foreground">
-              Tap each sound box while saying it
+              Slide to hear each sound, then blend
             </p>
           )}
         </div>
