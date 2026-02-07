@@ -17,11 +17,13 @@ interface TracePadProps {
 
 const MIN_POINTS_PER_STROKE = 5;
 const AI_FALLBACK_ATTEMPTS = 3;
+const VALIDATION_DELAY_MS = 1200; // wait 1.2s after last stroke before checking
 
 export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointsRef = useRef<TracePoint[]>([]);
   const isDrawingRef = useRef(false);
+  const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [pointCount, setPointCount] = useState(0);
@@ -100,6 +102,10 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     setIsComplete(false);
     setAttempts(0);
     clearFeedback();
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+      validationTimerRef.current = null;
+    }
     drawGuide();
   }, [letter, size]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -155,6 +161,12 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Cancel any pending validation — the child is still drawing
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+      validationTimerRef.current = null;
+    }
+
     isDrawingRef.current = true;
     const point = getPosition(e);
 
@@ -199,7 +211,34 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     }
   }, [isComplete, isChecking, getPosition, drawLine]);
 
-  const handleEnd = useCallback(async (e?: TouchEvent | MouseEvent | React.PointerEvent) => {
+  // Debounced validation — waits VALIDATION_DELAY_MS after the last stroke
+  // so the child can lift & reposition for multi-stroke letters
+  const scheduleValidation = useCallback(() => {
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+    }
+
+    validationTimerRef.current = setTimeout(async () => {
+      validationTimerRef.current = null;
+      const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
+
+      // Hybrid validation: waypoints → AI
+      const result = await validate(canvasRef, realPoints, letter, size);
+
+      if (result.isValid) {
+        setIsComplete(true);
+        playTrace();
+        speakPhoneme(letter);
+        onComplete?.();
+      } else {
+        if (realPoints.length > MIN_POINTS_PER_STROKE) {
+          setAttempts(prev => prev + 1);
+        }
+      }
+    }, VALIDATION_DELAY_MS);
+  }, [validate, onComplete, playTrace, speakPhoneme, letter, size]);
+
+  const handleEnd = useCallback((e?: TouchEvent | MouseEvent | React.PointerEvent) => {
     if (!isDrawingRef.current) return;
     if (e) {
       e.preventDefault();
@@ -208,22 +247,9 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
     
     isDrawingRef.current = false;
     
-    const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
-    
-    // Hybrid validation: waypoints → AI
-    const result = await validate(canvasRef, realPoints, letter, size);
-    
-    if (result.isValid) {
-      setIsComplete(true);
-      playTrace();
-      speakPhoneme(letter);
-      onComplete?.();
-    } else {
-      if (realPoints.length > MIN_POINTS_PER_STROKE) {
-        setAttempts(prev => prev + 1);
-      }
-    }
-  }, [validate, onComplete, playTrace, speakPhoneme, letter, size]);
+    // Don't validate immediately — schedule with delay
+    scheduleValidation();
+  }, [scheduleValidation]);
 
   const handleAskTeacher = useCallback(async () => {
     const result = await validateWithAI(canvasRef, letter);
@@ -236,6 +262,10 @@ export function TracePad({ letter, onComplete, size = 200 }: TracePadProps) {
   }, [validateWithAI, letter, playTrace, speakPhoneme, onComplete]);
 
   const handleClear = useCallback(() => {
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+      validationTimerRef.current = null;
+    }
     pointsRef.current = [];
     setPointCount(0);
     setIsComplete(false);
