@@ -2,18 +2,17 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
     const { text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isWord = false } = await req.json();
-    
+
     if (!text) {
       return new Response(
         JSON.stringify({ error: 'Text is required' }),
@@ -22,7 +21,6 @@ serve(async (req) => {
     }
 
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    
     if (!ELEVENLABS_API_KEY) {
       console.error("ELEVENLABS_API_KEY not configured");
       return new Response(
@@ -31,28 +29,29 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Generating TTS for ${isWord ? 'word' : 'phoneme'}: "${text}" with voice: ${voiceId}`);
+    const mode = isWord ? 'WORD' : 'PHONEME';
+    console.log(`[TTS:${mode}] text="${text}" voice=${voiceId}`);
 
-    // Use different voice settings for words vs phonemes
-    // Words: natural speech with clear enunciation
-    // Phonemes: slower, more deliberate pronunciation of individual sounds
+    // ----- Voice settings tuned per mode -----
+    // Phonemes: maximum stability + slow speed for crisp, isolated sounds
+    // Words:    natural speech with clear enunciation
     const voiceSettings = isWord
       ? {
           stability: 0.7,
           similarity_boost: 0.8,
           style: 0.4,
           use_speaker_boost: true,
-          speed: 0.9, // Natural pace for whole words
+          speed: 0.9,
         }
       : {
-          stability: 0.8,
-          similarity_boost: 0.75,
-          style: 0.3,
+          stability: 0.95,        // very consistent — same sound every time
+          similarity_boost: 0.6,  // lower = less naturalness, more clarity
+          style: 0.1,             // minimal stylisation
           use_speaker_boost: true,
-          speed: 0.85, // Slightly slower for phoneme clarity
+          speed: 0.75,            // slow for a child to hear the sound clearly
         };
 
-    // For whole words, use higher quality output format
+    // Higher quality for words; smaller/faster for phonemes
     const outputFormat = isWord ? 'mp3_44100_128' : 'mp3_22050_32';
 
     const response = await fetch(
@@ -73,7 +72,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`ElevenLabs API error [${response.status}]: ${errorText}`);
+      console.error(`[TTS:${mode}] ElevenLabs API error [${response.status}]: ${errorText}`);
       return new Response(
         JSON.stringify({ error: `ElevenLabs API error: ${response.status}` }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -81,7 +80,7 @@ serve(async (req) => {
     }
 
     const audioBuffer = await response.arrayBuffer();
-    console.log(`Generated audio: ${audioBuffer.byteLength} bytes`);
+    console.log(`[TTS:${mode}] Generated ${audioBuffer.byteLength} bytes`);
 
     return new Response(audioBuffer, {
       headers: {
@@ -90,7 +89,7 @@ serve(async (req) => {
       },
     });
   } catch (error: unknown) {
-    console.error("Error generating TTS:", error);
+    console.error("[TTS] Error:", error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to generate audio';
     return new Response(
       JSON.stringify({ error: errorMessage }),
