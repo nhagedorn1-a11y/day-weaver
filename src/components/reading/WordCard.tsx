@@ -28,7 +28,7 @@ export function WordCard({
   const { speakPhoneme, speakWord, playReveal, playCorrect, playComplete, playTap } = useSound();
   const lastSpokenRef = useRef<number>(-1);
 
-  // Reset when word changes
+  // Reset all state when word changes to prevent stale state
   useEffect(() => {
     setPhase('hidden');
     setSliderValue(0);
@@ -36,7 +36,7 @@ export function WordCard({
     setShowingCorrection(false);
     setCorrectionStep('myTurn');
     lastSpokenRef.current = -1;
-  }, [word]);
+  }, [word, phonemes]);
 
   // Speak phoneme when slider changes
   useEffect(() => {

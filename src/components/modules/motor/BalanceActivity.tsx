@@ -180,10 +180,7 @@ export function BalanceActivity({ activity, onBack, onComplete }: BalanceActivit
           
           <button
             onClick={handleStepComplete}
-            className={`flex-1 py-4 rounded font-semibold text-lg flex items-center justify-center gap-3 ${
-              isActive ? 'bg-calm text-calm-foreground' : 'bg-muted text-muted-foreground'
-            }`}
-            disabled={!isActive}
+            className="flex-1 py-4 rounded bg-calm text-calm-foreground font-semibold text-lg flex items-center justify-center gap-3"
           >
             <Check className="w-6 h-6" />
             <span>{currentStep === totalSteps - 1 ? 'Done!' : 'Next'}</span>
