@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { ReadingLesson, SessionStep } from '@/types/reading';
 import { ProgressRail } from './ProgressRail';
 import { GraphemeCard } from './GraphemeCard';
@@ -142,6 +142,7 @@ export function SessionRunner({
     switch (currentStep) {
       case 'warmup':
         return <WarmupStep 
+          key={`warmup-${itemIndex}`}
           words={stepItems.warmup}
           currentIndex={itemIndex}
           onItemComplete={handleItemComplete}
@@ -170,6 +171,7 @@ export function SessionRunner({
 
       case 'practice':
         return <PracticeStep
+          key={`practice-${itemIndex}`}
           words={stepItems.practice}
           currentIndex={itemIndex}
           onItemComplete={handleItemComplete}
@@ -178,6 +180,7 @@ export function SessionRunner({
 
       case 'sentence':
         return <SentenceStep
+          key={`sentence-${itemIndex}`}
           sentences={stepItems.sentence}
           currentIndex={itemIndex}
           onItemComplete={() => handleItemComplete(true)}
@@ -521,6 +524,11 @@ interface SentenceStepProps {
 function SentenceStep({ sentences, currentIndex, onItemComplete, isComplete }: SentenceStepProps) {
   const currentSentence = sentences[currentIndex];
   const [hasRead, setHasRead] = useState(false);
+
+  // Reset hasRead when moving to next sentence
+  useEffect(() => {
+    setHasRead(false);
+  }, [currentIndex]);
 
   const handleRead = () => {
     setHasRead(true);
