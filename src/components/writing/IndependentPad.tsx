@@ -11,11 +11,14 @@ interface IndependentPadProps {
 }
 
 const AI_FALLBACK_ATTEMPTS = 3;
+const MIN_POINTS_PER_STROKE = 5;
+const VALIDATION_DELAY_MS = 1200;
 
 export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointsRef = useRef<{ x: number; y: number }[]>([]);
   const isDrawingRef = useRef(false);
+  const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [pointCount, setPointCount] = useState(0);
   const [attempts, setAttempts] = useState(0);
@@ -28,6 +31,10 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
     setIsComplete(false);
     setAttempts(0);
     clearFeedback();
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+      validationTimerRef.current = null;
+    }
   }, [letter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const drawCanvas = useCallback(() => {
@@ -90,6 +97,13 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
     if (isComplete || isChecking) return;
     e.preventDefault();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+    // Cancel any pending validation — the child is still drawing
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+      validationTimerRef.current = null;
+    }
+
     isDrawingRef.current = true;
     const point = getPosition(e);
     if (pointsRef.current.length > 0) {
@@ -140,26 +154,37 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
     }
   }, [isComplete, isChecking, getPosition]);
 
-  const handlePointerUp = useCallback(async (e: React.PointerEvent) => {
+  // Debounced validation — waits VALIDATION_DELAY_MS after the last stroke
+  const scheduleValidation = useCallback(() => {
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+    }
+
+    validationTimerRef.current = setTimeout(async () => {
+      validationTimerRef.current = null;
+      const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
+      const result = await validate(canvasRef, realPoints, letter, size);
+
+      if (result.isValid) {
+        setIsComplete(true);
+        playComplete();
+        playTokenEarned();
+        speakPhoneme(letter);
+        onComplete?.();
+      } else {
+        if (realPoints.length > MIN_POINTS_PER_STROKE) {
+          setAttempts(prev => prev + 1);
+        }
+      }
+    }, VALIDATION_DELAY_MS);
+  }, [validate, onComplete, playComplete, playTokenEarned, speakPhoneme, letter, size]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (!isDrawingRef.current) return;
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
     isDrawingRef.current = false;
-
-    const realPoints = pointsRef.current.filter(p => !isNaN(p.x));
-    const result = await validate(canvasRef, realPoints, letter, size);
-
-    if (result.isValid) {
-      setIsComplete(true);
-      playComplete();
-      playTokenEarned();
-      speakPhoneme(letter);
-      onComplete?.();
-    } else {
-      if (realPoints.length > 5) {
-        setAttempts(prev => prev + 1);
-      }
-    }
-  }, [validate, playComplete, playTokenEarned, speakPhoneme, letter, size, onComplete]);
+    scheduleValidation();
+  }, [scheduleValidation]);
 
   const handleAskTeacher = useCallback(async () => {
     const result = await validateWithAI(canvasRef, letter);
@@ -173,6 +198,10 @@ export function IndependentPad({ letter, onComplete, size = 200 }: IndependentPa
   }, [validateWithAI, letter, playComplete, playTokenEarned, speakPhoneme, onComplete]);
 
   const handleClear = useCallback(() => {
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+      validationTimerRef.current = null;
+    }
     pointsRef.current = [];
     setPointCount(0);
     setIsComplete(false);
