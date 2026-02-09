@@ -22,6 +22,7 @@ import { MotorModule } from '@/components/modules/MotorModule';
 import { SocialModule } from '@/components/modules/SocialModule';
 import { RewardsModule } from '@/components/modules/RewardsModule';
 import { TimerModule } from '@/components/modules/TimerModule';
+import { TypingModule } from '@/components/modules/TypingModule';
 import { ScheduleBuilder } from '@/components/schedule/ScheduleBuilder';
 import { VisualSchedule } from '@/components/schedule/VisualSchedule';
 import { GoogleCalendarSync } from '@/components/GoogleCalendarSync';
@@ -274,6 +275,8 @@ const IndexContent = () => {
         return <MathModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('math')} />;
       case 'writing':
         return <WritingModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('writing')} />;
+      case 'typing':
+        return <TypingModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('typing')} />;
       case 'science':
         return <ScienceModule onBack={() => setCurrentModule('today')} onTokensEarned={handleModuleTokens('science')} />;
       case 'motor':

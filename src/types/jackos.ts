@@ -163,6 +163,7 @@ export type AppModule =
   | 'reading'
   | 'math'
   | 'writing'
+  | 'typing'
   | 'science'
   | 'motor'
   | 'sensory'

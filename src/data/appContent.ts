@@ -6,6 +6,7 @@ export const appModules: ModuleInfo[] = [
   { id: 'reading', title: 'Reading', icon: '📖', description: 'OG Reading Studio', color: 'calm' },
   { id: 'math', title: 'Math', icon: '🧮', description: 'CPA math lessons', color: 'next' },
   { id: 'writing', title: 'Writing', icon: '✏️', description: 'Letter formation', color: 'token' },
+  { id: 'typing', title: 'Keyboard', icon: '⌨️', description: 'Keyboard Pilot', color: 'next' },
   { id: 'science', title: 'Science', icon: '🔬', description: 'Explore & discover', color: 'calm' },
   { id: 'motor', title: 'Motor', icon: '🤸', description: 'ADLs & fine motor', color: 'token' },
   { id: 'sensory', title: 'Body', icon: '🧘', description: 'Regulation & breaks', color: 'calm' },

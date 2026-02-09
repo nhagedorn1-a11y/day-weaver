@@ -87,6 +87,19 @@ export const MODULE_REGISTRY: Record<AppModule, ModuleConfig> = {
     parentOnly: false,
     order: 4,
   },
+  typing: {
+    id: 'typing',
+    title: 'Keyboard Pilot',
+    icon: 'Keyboard',
+    emoji: '⌨️',
+    description: 'Learn the keyboard',
+    color: 'secondary',
+    enabled: true,
+    awardsTokens: true,
+    requiresAuth: false,
+    parentOnly: false,
+    order: 5,
+  },
   science: {
     id: 'science',
     title: 'Science Lab',
@@ -98,7 +111,7 @@ export const MODULE_REGISTRY: Record<AppModule, ModuleConfig> = {
     awardsTokens: false,
     requiresAuth: false,
     parentOnly: false,
-    order: 5,
+    order: 6,
   },
   motor: {
     id: 'motor',
@@ -111,7 +124,7 @@ export const MODULE_REGISTRY: Record<AppModule, ModuleConfig> = {
     awardsTokens: false,
     requiresAuth: false,
     parentOnly: false,
-    order: 6,
+    order: 7,
   },
   sensory: {
     id: 'sensory',
@@ -124,7 +137,7 @@ export const MODULE_REGISTRY: Record<AppModule, ModuleConfig> = {
     awardsTokens: false,
     requiresAuth: false,
     parentOnly: false,
-    order: 7,
+    order: 8,
   },
   social: {
     id: 'social',
@@ -137,7 +150,7 @@ export const MODULE_REGISTRY: Record<AppModule, ModuleConfig> = {
     awardsTokens: false,
     requiresAuth: false,
     parentOnly: false,
-    order: 8,
+    order: 9,
   },
   bravery: {
     id: 'bravery',
@@ -150,7 +163,7 @@ export const MODULE_REGISTRY: Record<AppModule, ModuleConfig> = {
     awardsTokens: false,
     requiresAuth: false,
     parentOnly: false,
-    order: 9,
+    order: 10,
   },
   calm: {
     id: 'calm',
@@ -163,7 +176,7 @@ export const MODULE_REGISTRY: Record<AppModule, ModuleConfig> = {
     awardsTokens: false,
     requiresAuth: false,
     parentOnly: false,
-    order: 10,
+    order: 11,
   },
   rewards: {
     id: 'rewards',
@@ -176,7 +189,7 @@ export const MODULE_REGISTRY: Record<AppModule, ModuleConfig> = {
     awardsTokens: false,
     requiresAuth: false,
     parentOnly: false,
-    order: 11,
+    order: 12,
   },
 };
 
