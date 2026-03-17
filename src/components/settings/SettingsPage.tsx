@@ -2,7 +2,7 @@ import { X, Volume2, User, Palette, Bell, Cloud, ChevronRight, LogOut, LogIn, Za
 import { useState } from 'react';
 import { SoundSettingsPanel } from './SoundSettingsPanel';
 import { DisplaySettingsPanel } from './DisplaySettingsPanel';
-import { VibeControlsPanel } from '@/engagement-engine';
+import { EngagementControls } from '@/engagement-engine';
 
 interface SettingsPageProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ export function SettingsPage({ isOpen, onClose, user, onLogin, onLogout }: Setti
       case 'display':
         return <DisplaySettingsPanel onBack={() => setActiveSection('main')} />;
       case 'vibe':
-        return <VibeControlsPanel onBack={() => setActiveSection('main')} />;
+        return <EngagementControls onBack={() => setActiveSection('main')} />;
       case 'notifications':
         return (
           <div className="p-4">

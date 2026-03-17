@@ -1,18 +1,13 @@
 import { useEngagement } from './EngagementProvider';
 import { Shield } from 'lucide-react';
 
-/**
- * StreakFlame — Gentle daily streak display.
- * Streaks PAUSE, never die. No anxiety, no loss aversion.
- * Shields protect streaks when missed days occur.
- */
 export function StreakFlame({ compact = false }: { compact?: boolean }) {
-  const { streakDays, streakShields } = useEngagement();
+  const { engineState, sensory } = useEngagement();
+  const { streakDays, streakShields } = engineState;
 
-  if (streakDays === 0) return null;
+  if (!sensory.showStreak || streakDays === 0) return null;
 
-  // Flame grows with streak
-  const flameSize = Math.min(streakDays, 7); // Cap visual growth at 7
+  const flameSize = Math.min(streakDays, 7);
   const flameEmoji = flameSize <= 2 ? '🕯️' : flameSize <= 4 ? '🔥' : '🌋';
 
   if (compact) {
@@ -20,9 +15,7 @@ export function StreakFlame({ compact = false }: { compact?: boolean }) {
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-token/10 border border-token/20">
         <span className="text-sm">{flameEmoji}</span>
         <span className="text-sm font-bold text-token font-mono">{streakDays}</span>
-        {streakShields > 0 && (
-          <Shield className="w-3 h-3 text-calm" />
-        )}
+        {streakShields > 0 && <Shield className="w-3 h-3 text-calm" />}
       </div>
     );
   }
@@ -31,16 +24,12 @@ export function StreakFlame({ compact = false }: { compact?: boolean }) {
     <div className="bg-card rounded-2xl p-4 border-2 border-border">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-3xl" role="img" aria-label="streak flame">
-            {flameEmoji}
-          </span>
+          <span className="text-3xl">{flameEmoji}</span>
           <div>
             <p className="font-bold text-lg text-foreground">
               {streakDays} day{streakDays !== 1 ? 's' : ''} streak!
             </p>
-            <p className="text-xs text-muted-foreground">
-              Keep practicing to grow your flame
-            </p>
+            <p className="text-xs text-muted-foreground">Keep practicing to grow your flame</p>
           </div>
         </div>
         {streakShields > 0 && (
