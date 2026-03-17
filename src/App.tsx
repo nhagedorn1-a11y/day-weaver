@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SoundProvider } from "@/contexts/SoundContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppShell } from "@/components/AppShell";
+import { EngagementProvider, CelebrationOverlay, BreakReminder } from "@/engagement-engine";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
