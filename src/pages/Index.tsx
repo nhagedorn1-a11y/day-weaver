@@ -37,6 +37,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Shield, Menu, Plus, List, LayoutGrid, LogIn, User, BookOpen, TrendingUp, Cloud, CloudOff } from 'lucide-react';
 import { ProgressHub } from '@/components/dashboard/ProgressHub';
+import { StructuredChoice } from '@/components/StructuredChoice';
 import { useCloudSchedule } from '@/hooks/useCloudSchedule';
 import { useCloudProgress } from '@/hooks/useCloudProgress';
 import { useEngagement, StreakFlame, EffortBadges } from '@/engagement-engine';
@@ -411,7 +412,13 @@ const IndexContent = () => {
 
         {/* Main Content based on view mode */}
         {viewMode === 'progress' ? (
-          <div className="px-5">
+          <div className="px-5 space-y-6">
+            {/* Structured Choice — two clear visual options to reduce anxiety */}
+            <StructuredChoice
+              options={['reading', 'math']}
+              onChoose={(moduleId) => setCurrentModule(moduleId as AppModule)}
+              onSkip={() => {}}
+            />
             <ProgressHub 
               onNavigateToModule={(moduleId) => setCurrentModule(moduleId as AppModule)}
               tokensEarned={tokensEarned}
