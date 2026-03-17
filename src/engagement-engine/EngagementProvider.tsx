@@ -195,8 +195,6 @@ export function EngagementProvider({ children }: { children: ReactNode }) {
 
   const isPinRequired = useCallback((sliderKey: keyof EngagementSliders, newValue: number): boolean => {
     if (!config.parentLock.pinSet) return false;
-    const meta = (await import('./EngagementConfig')).SLIDER_META;
-    // Dynamic import won't work here — check inline
     return newValue > config.parentLock.pinThreshold;
   }, [config.parentLock]);
 
