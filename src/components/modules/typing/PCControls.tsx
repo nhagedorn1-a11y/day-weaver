@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { KeyboardDisplay } from './KeyboardDisplay';
+import { TypingProgressBar } from './TypingProgressBar';
+import { TransitionCountdown } from './TransitionCountdown';
 import { useSound } from '@/contexts/SoundContext';
 import { PC_CONTROL_LESSONS } from '@/data/typingLessons';
 import { ArrowLeft, CheckCircle, ChevronRight } from 'lucide-react';
@@ -15,6 +17,7 @@ export function PCControls({ onBack, onTokensEarned }: PCControlsProps) {
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [triedKeys, setTriedKeys] = useState<Set<string>>(new Set());
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const [showTransition, setShowTransition] = useState(false);
 
   const lesson = PC_CONTROL_LESSONS[lessonIndex];
   const isLessonTried = triedKeys.has(lesson?.key || '');
@@ -37,6 +40,9 @@ export function PCControls({ onBack, onTokensEarned }: PCControlsProps) {
     setTriedKeys(new Set());
     if (lessonIndex + 1 < PC_CONTROL_LESSONS.length) {
       setLessonIndex(prev => prev + 1);
+    } else {
+      // All done — transition
+      setTimeout(() => setShowTransition(true), 500);
     }
   }, [lesson, lessonIndex, playComplete, onTokensEarned]);
 
@@ -57,14 +63,24 @@ export function PCControls({ onBack, onTokensEarned }: PCControlsProps) {
   }, [handleKeyPress]);
 
   const allDone = completedLessons.length === PC_CONTROL_LESSONS.length;
+  const handleBack = () => setShowTransition(true);
+
+  if (showTransition) {
+    return <TransitionCountdown onComplete={onBack} message={allDone ? 'You know your controls!' : 'Great learning!'} />;
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 flex flex-col">
-      <button onClick={onBack} className="self-start mb-4 px-4 py-2 rounded-xl bg-secondary flex items-center gap-2">
+      <button onClick={handleBack} className="self-start mb-4 px-4 py-2 rounded-xl bg-secondary flex items-center gap-2">
         <ArrowLeft className="w-4 h-4" /> Back
       </button>
 
-      <h2 className="text-2xl font-bold text-center mb-4">PC Controls 🖥️</h2>
+      <h2 className="text-2xl font-bold text-center mb-2">PC Controls 🖥️</h2>
+
+      {/* Rev 6: Overall progress */}
+      <div className="mb-4">
+        <TypingProgressBar current={completedLessons.length} total={PC_CONTROL_LESSONS.length} label="Lessons" />
+      </div>
 
       {allDone ? (
         <div className="flex-1 flex flex-col items-center justify-center">
@@ -74,8 +90,13 @@ export function PCControls({ onBack, onTokensEarned }: PCControlsProps) {
         </div>
       ) : lesson ? (
         <>
+          {/* Rev 8: "Last one!" */}
+          {lessonIndex === PC_CONTROL_LESSONS.length - 1 && !allDone && (
+            <p className="text-center text-sm font-semibold text-primary mb-2">⭐ Last lesson!</p>
+          )}
+
           {/* Lesson card */}
-          <div className="bg-card rounded-2xl border-2 border-border p-6 mb-6">
+          <div className="bg-card rounded-2xl border-2 border-border p-6 mb-4">
             <div className="text-center">
               <span className="text-5xl">{lesson.emoji}</span>
               <h3 className="text-xl font-bold mt-3">{lesson.title}</h3>
@@ -84,18 +105,6 @@ export function PCControls({ onBack, onTokensEarned }: PCControlsProps) {
                 <p className="font-semibold text-primary">{lesson.tryItPrompt}</p>
               </div>
             </div>
-          </div>
-
-          {/* Progress */}
-          <div className="flex justify-center gap-2 mb-4">
-            {PC_CONTROL_LESSONS.map((l, i) => (
-              <div
-                key={l.id}
-                className={`w-3 h-3 rounded-full ${
-                  completedLessons.includes(l.id) ? 'bg-primary' : i === lessonIndex ? 'bg-primary/50 animate-pulse' : 'bg-muted'
-                }`}
-              />
-            ))}
           </div>
 
           {isLessonTried && (
