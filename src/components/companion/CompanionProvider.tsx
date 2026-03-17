@@ -98,6 +98,44 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, isVisible: true }));
   }, []);
 
+  // Parallel talk — simplified language scaffolding
+  const parallelTalk = useCallback((context: TalkContext, options?: ParallelTalkOptions) => {
+    const msg = getParallelTalk(context, options);
+    const moodMap: Partial<Record<TalkContext, Mood>> = {
+      task_correct: 'celebrating',
+      task_incorrect: 'encouraging',
+      struggling: 'encouraging',
+      waiting: 'calm',
+      break_time: 'calm',
+      choosing: 'curious',
+      returning: 'celebrating',
+    };
+    const mood = moodMap[context] ?? 'neutral';
+    setState(prev => ({ ...prev, mood, message: msg }));
+    setTimeout(() => {
+      setState(prev => ({ ...prev, mood: 'neutral', message: null }));
+    }, 5000);
+  }, []);
+
+  const playTalkSequence = useCallback((subject: string, wasCorrect: boolean) => {
+    const [start, working, resolution] = getTalkSequence(subject, wasCorrect);
+    // Drip-feed messages: start → 3s → working → 6s → resolution
+    setState(prev => ({ ...prev, mood: 'curious', message: start }));
+    setTimeout(() => {
+      setState(prev => ({ ...prev, mood: 'neutral', message: working }));
+    }, 3000);
+    setTimeout(() => {
+      setState(prev => ({
+        ...prev,
+        mood: wasCorrect ? 'celebrating' : 'encouraging',
+        message: resolution,
+      }));
+    }, 6000);
+    setTimeout(() => {
+      setState(prev => ({ ...prev, mood: 'neutral', message: null }));
+    }, 9000);
+  }, []);
+
   return (
     <CompanionContext.Provider value={{ state, setMood, say, celebrate, encourage, calm, hide, show }}>
       {children}
