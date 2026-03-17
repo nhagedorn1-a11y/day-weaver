@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { MathProfile } from '@/types/academics';
 import { MathStudioHome } from './MathStudioHome';
 import { MathSessionRunner } from './MathSessionRunner';
+import { getNextMathLesson, TOTAL_MATH_LESSONS } from '@/data/mathLessonGenerator';
+import { useLessonProgress } from '@/hooks/useLessonProgress';
 import { toast } from 'sonner';
 
 interface MathModuleProps {
@@ -13,32 +15,43 @@ type MathView = 'home' | 'session' | 'settings';
 
 export function MathModule({ onBack, onTokensEarned }: MathModuleProps) {
   const [view, setView] = useState<MathView>('home');
-  const [currentLessonId, setCurrentLessonId] = useState<string>('math-1');
+  const [currentSessionLessonId, setCurrentSessionLessonId] = useState<string>('math-1');
 
-  // Profile state (would come from database in production)
-  const [profile, setProfile] = useState<MathProfile>({
-    childId: 'child-1',
-    currentLessonId: 'math-1',
-    sessionMinutes: 7,
-    level: 'concrete',
-    streak: 3,
-    totalProblems: 42,
-    lastSessionDate: null,
+  // Persistent progress
+  const progress = useLessonProgress({
+    subject: 'math',
+    defaultLessonId: 'math-1',
+    defaultSessionMinutes: 7,
+    defaultLevel: 'concrete',
+    totalLessons: TOTAL_MATH_LESSONS,
+    getNextLessonId: (currentId) => {
+      const next = getNextMathLesson(currentId);
+      return next?.id ?? null;
+    },
   });
 
+  // Build MathProfile from persisted progress
+  const profile: MathProfile = {
+    childId: 'child-1',
+    currentLessonId: progress.currentLessonId,
+    sessionMinutes: (progress.sessionMinutes === 5 || progress.sessionMinutes === 7 || progress.sessionMinutes === 10 ? progress.sessionMinutes : 7) as 5 | 7 | 10,
+    level: progress.level as 'concrete' | 'pictorial' | 'abstract',
+    streak: progress.streak,
+    totalProblems: progress.totalProblems,
+    lastSessionDate: progress.lastSessionDate,
+  };
+
   const handleStartSession = (lessonId: string) => {
-    setCurrentLessonId(lessonId);
+    setCurrentSessionLessonId(lessonId);
     setView('session');
   };
 
   const handleSessionComplete = (tokensEarned: number, problemsCompleted: number) => {
-    // Update profile
-    setProfile(prev => ({
-      ...prev,
-      totalProblems: prev.totalProblems + problemsCompleted,
-      streak: prev.streak + 1,
-      lastSessionDate: new Date().toISOString(),
-    }));
+    // Persist & auto-advance
+    progress.completeSession({
+      durationSeconds: progress.sessionMinutes * 60,
+      problemsCompleted,
+    });
 
     onTokensEarned(tokensEarned);
     toast.success(`+${tokensEarned} tokens for math practice! 🧮`);
@@ -46,7 +59,6 @@ export function MathModule({ onBack, onTokensEarned }: MathModuleProps) {
   };
 
   const handleOpenSettings = () => {
-    // For now, just show a toast - settings modal would go here
     toast('Settings coming soon!', { icon: '⚙️' });
   };
 
@@ -54,7 +66,7 @@ export function MathModule({ onBack, onTokensEarned }: MathModuleProps) {
     return (
       <MathSessionRunner
         profile={profile}
-        lessonId={currentLessonId}
+        lessonId={currentSessionLessonId}
         onComplete={handleSessionComplete}
         onExit={() => setView('home')}
       />
