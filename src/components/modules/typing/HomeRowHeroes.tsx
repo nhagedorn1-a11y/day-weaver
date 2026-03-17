@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { KeyboardDisplay } from './KeyboardDisplay';
+import { TypingProgressBar } from './TypingProgressBar';
+import { TransitionCountdown } from './TransitionCountdown';
 import { useSound } from '@/contexts/SoundContext';
 import { HOME_ROW_LESSONS } from '@/data/typingLessons';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
@@ -15,6 +17,8 @@ export function HomeRowHeroes({ onBack, onTokensEarned }: HomeRowHeroesProps) {
   const [targetKeyIndex, setTargetKeyIndex] = useState(0);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const [nudgeKey, setNudgeKey] = useState<string | null>(null); // Rev 3
+  const [showTransition, setShowTransition] = useState(false);
 
   const lesson = HOME_ROW_LESSONS[lessonIndex];
   const targetKey = lesson?.keys[targetKeyIndex];
@@ -28,10 +32,13 @@ export function HomeRowHeroes({ onBack, onTokensEarned }: HomeRowHeroesProps) {
     if (key === targetKey) {
       speakPhoneme(key);
       playCorrect();
+      setNudgeKey(null);
+
+      // Rev 4: Token per correct key press
+      onTokensEarned(1);
+
       if (targetKeyIndex + 1 >= lesson.keys.length) {
-        // Lesson complete
         playComplete();
-        onTokensEarned(1);
         setCompletedLessons(prev => [...prev, lesson.id]);
         setTargetKeyIndex(0);
         if (lessonIndex + 1 < HOME_ROW_LESSONS.length) {
@@ -42,6 +49,9 @@ export function HomeRowHeroes({ onBack, onTokensEarned }: HomeRowHeroesProps) {
       }
     } else {
       playTap();
+      // Rev 3: Supportive feedback
+      setNudgeKey(targetKey);
+      setTimeout(() => setNudgeKey(null), 1500);
     }
   }, [targetKey, targetKeyIndex, lesson, lessonIndex, isAllDone, speakPhoneme, playCorrect, playComplete, playTap, onTokensEarned]);
 
@@ -55,20 +65,31 @@ export function HomeRowHeroes({ onBack, onTokensEarned }: HomeRowHeroesProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [handleKeyPress]);
 
+  const handleBack = () => setShowTransition(true);
+
+  if (showTransition) {
+    return <TransitionCountdown onComplete={onBack} message={isAllDone ? 'You\'re a Home Row Hero!' : 'Nice practice!'} />;
+  }
+
   return (
     <div className="min-h-screen bg-background p-4 flex flex-col">
-      <button onClick={onBack} className="self-start mb-4 px-4 py-2 rounded-xl bg-secondary flex items-center gap-2">
+      <button onClick={handleBack} className="self-start mb-4 px-4 py-2 rounded-xl bg-secondary flex items-center gap-2">
         <ArrowLeft className="w-4 h-4" /> Back
       </button>
 
       <h2 className="text-2xl font-bold text-center mb-2">Home Row Heroes 🏠</h2>
+
+      {/* Rev 6: Overall lesson progress */}
+      <div className="mb-3">
+        <TypingProgressBar current={completedLessons.length} total={HOME_ROW_LESSONS.length} label="Drills" />
+      </div>
 
       {/* Lesson selector */}
       <div className="flex justify-center gap-2 mb-4">
         {HOME_ROW_LESSONS.map((l, i) => (
           <button
             key={l.id}
-            onClick={() => { setLessonIndex(i); setTargetKeyIndex(0); }}
+            onClick={() => { setLessonIndex(i); setTargetKeyIndex(0); setNudgeKey(null); }}
             className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
               lessonIndex === i ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
             }`}
@@ -88,7 +109,7 @@ export function HomeRowHeroes({ onBack, onTokensEarned }: HomeRowHeroesProps) {
       ) : (
         <>
           {/* Current target */}
-          <div className="text-center my-6">
+          <div className="text-center my-4">
             <p className="text-muted-foreground text-sm mb-1">
               {lesson.hand === 'both' ? 'Both Hands' : `${lesson.hand === 'left' ? 'Left' : 'Right'} Hand`}
             </p>
@@ -100,7 +121,15 @@ export function HomeRowHeroes({ onBack, onTokensEarned }: HomeRowHeroesProps) {
                 Use your {lesson.fingerMap[targetKey || '']} finger
               </p>
             )}
-            {/* Progress dots */}
+
+            {/* Rev 3: Supportive error nudge */}
+            {nudgeKey && (
+              <p className="text-sm font-semibold text-amber-600 dark:text-amber-400 mt-2">
+                Almost! Look for the glowing key 👉
+              </p>
+            )}
+
+            {/* Key progress within lesson */}
             <div className="flex justify-center gap-1.5 mt-3">
               {lesson.keys.map((k, i) => (
                 <div
@@ -116,7 +145,7 @@ export function HomeRowHeroes({ onBack, onTokensEarned }: HomeRowHeroesProps) {
           <div className="mt-auto pb-4">
             <KeyboardDisplay
               onKeyPress={handleKeyPress}
-              highlightedKeys={targetKey ? [targetKey] : []}
+              highlightedKeys={targetKey ? [targetKey, ...(nudgeKey ? [nudgeKey] : [])] : []}
               colorZone="home"
               showFingerGuides
               pressedKey={pressedKey}
