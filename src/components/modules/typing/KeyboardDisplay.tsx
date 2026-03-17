@@ -85,12 +85,12 @@ export function KeyboardDisplay({
     : 'transition-all duration-150';
 
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-1.5 sm:space-y-2 overflow-hidden">
       {KEYBOARD_ROWS.map((row, rowIndex) => (
         <div
           key={rowIndex}
-          className="flex justify-center gap-1.5"
-          style={{ paddingLeft: rowIndex === 1 ? '16px' : rowIndex === 2 ? '40px' : '0' }}
+          className="flex justify-center gap-1 sm:gap-1.5"
+          style={{ paddingLeft: rowIndex === 1 ? '12px' : rowIndex === 2 ? '28px' : '0' }}
         >
           {row.map((key) => (
             <button
