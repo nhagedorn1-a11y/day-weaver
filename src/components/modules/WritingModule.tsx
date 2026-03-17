@@ -10,6 +10,7 @@ import { TracePad } from '@/components/writing/TracePad';
 import { DotToDotPad } from '@/components/writing/DotToDotPad';
 import { CopyPad } from '@/components/writing/CopyPad';
 import { IndependentPad } from '@/components/writing/IndependentPad';
+import { useLessonProgress } from '@/hooks/useLessonProgress';
 
 interface WritingModuleProps {
   onBack: () => void;
@@ -18,6 +19,16 @@ interface WritingModuleProps {
 
 type WritingView = 'home' | 'uppercase' | 'lowercase' | 'numbers' | 'practice';
 type PracticeItem = LetterCardType | NumberCard;
+
+// All letters/numbers in teaching order
+const ALL_ITEMS_ORDER = [
+  'L','l','I','i','T','t','F','E',
+  'O','o','C','c','Q','G',
+  'M','m','N','n','H','h','R','r',
+  'A','V','v','W','w','X','x','K','k',
+  'g','j','p','q','y',
+  '0','1','2','3','4','5','6','7','8','9','10',
+];
 
 const LETTER_GROUPS = [
   { id: 'numbers', name: 'Numbers 0-10', items: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], isNumbers: true },
@@ -35,32 +46,42 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
   const [stageCompleted, setStageCompleted] = useState(false);
   const { playTap, playComplete, playTokenEarned, playCorrect } = useSound();
 
+  // Persistent progress
+  const progress = useLessonProgress({
+    subject: 'writing',
+    defaultLessonId: 'writing-L',
+    totalLessons: ALL_ITEMS_ORDER.length,
+    getNextLessonId: (currentId) => {
+      const char = currentId.replace('writing-', '');
+      const idx = ALL_ITEMS_ORDER.indexOf(char);
+      if (idx < 0 || idx >= ALL_ITEMS_ORDER.length - 1) return null;
+      return `writing-${ALL_ITEMS_ORDER[idx + 1]}`;
+    },
+  });
+
   const STAGES: ('trace' | 'dotToDot' | 'copy' | 'independent')[] = ['trace', 'dotToDot', 'copy', 'independent'];
 
-  // Helper to check if item is a letter or number
-  const isLetterCard = (item: PracticeItem): item is LetterCardType => {
-    return 'letter' in item;
-  };
-
-  const getCharacter = (item: PracticeItem): string => {
-    return isLetterCard(item) ? item.letter : item.character;
-  };
+  const isLetterCard = (item: PracticeItem): item is LetterCardType => 'letter' in item;
+  const getCharacter = (item: PracticeItem): string => isLetterCard(item) ? item.letter : item.character;
 
   const handleStageComplete = () => {
     playCorrect();
     setStageCompleted(true);
     
-    // Auto-advance after a brief celebration pause
     setTimeout(() => {
       const currentIndex = STAGES.indexOf(currentStage);
       if (currentIndex < STAGES.length - 1) {
-        // Move to next stage
         setCurrentStage(STAGES[currentIndex + 1]);
         setStageCompleted(false);
       } else {
-        // All stages complete - award tokens and return home
+        // All stages complete — persist mastery & auto-advance
         playComplete();
         playTokenEarned();
+        const char = selectedItem ? getCharacter(selectedItem) : undefined;
+        progress.completeSession({
+          durationSeconds: 120,
+          masteredItem: char,
+        });
         onTokensEarned(2);
         setView('home');
         setCurrentStage('trace');
@@ -69,14 +90,15 @@ export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
     }, 800);
   };
 
-  const [profile] = useState<WritingProfile>({
+  // Build profile from persisted progress for display
+  const profile: WritingProfile = {
     childId: 'child-1',
-    currentLessonId: 'writing-1',
+    currentLessonId: progress.currentLessonId,
     currentStage: 'trace',
-    streak: 2,
-    masteredLetters: ['A', 'B', 'C', 'a', 'b', 'c', '1', '2', '3'],
-    lastSessionDate: null,
-  });
+    streak: progress.streak,
+    masteredLetters: progress.masteredItems,
+    lastSessionDate: progress.lastSessionDate,
+  };
 
   const uppercaseLetters = useMemo(() => getUppercaseLetters(), []);
   const lowercaseLetters = useMemo(() => getLowercaseLetters(), []);
