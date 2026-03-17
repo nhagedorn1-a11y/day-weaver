@@ -12,7 +12,7 @@ interface SettingsPageProps {
   onLogout: () => void;
 }
 
-type SettingsSection = 'main' | 'sound' | 'display' | 'notifications' | 'account';
+type SettingsSection = 'main' | 'sound' | 'display' | 'notifications' | 'account' | 'vibe';
 
 export function SettingsPage({ isOpen, onClose, user, onLogin, onLogout }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>('main');
