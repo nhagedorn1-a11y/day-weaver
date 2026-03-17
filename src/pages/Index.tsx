@@ -412,7 +412,13 @@ const IndexContent = () => {
 
         {/* Main Content based on view mode */}
         {viewMode === 'progress' ? (
-          <div className="px-5">
+          <div className="px-5 space-y-6">
+            {/* Structured Choice — two clear visual options to reduce anxiety */}
+            <StructuredChoice
+              options={['reading', 'math']}
+              onChoose={(moduleId) => setCurrentModule(moduleId as AppModule)}
+              onSkip={() => {}}
+            />
             <ProgressHub 
               onNavigateToModule={(moduleId) => setCurrentModule(moduleId as AppModule)}
               tokensEarned={tokensEarned}
