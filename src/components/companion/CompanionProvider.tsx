@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { LittleGuy } from './LittleGuy';
 import { ThoughtBubble } from './ThoughtBubble';
+import { getParallelTalk, getTalkSequence, TalkContext, ParallelTalkOptions } from './ParallelTalk';
 
 type Mood = 'neutral' | 'encouraging' | 'celebrating' | 'calm' | 'curious' | 'sleeping';
 
