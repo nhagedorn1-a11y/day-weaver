@@ -39,6 +39,7 @@ import { Shield, Menu, Plus, List, LayoutGrid, LogIn, User, BookOpen, TrendingUp
 import { ProgressHub } from '@/components/dashboard/ProgressHub';
 import { useCloudSchedule } from '@/hooks/useCloudSchedule';
 import { useCloudProgress } from '@/hooks/useCloudProgress';
+import { useEngagement, StreakFlame, EffortBadges } from '@/engagement-engine';
 import { doesModuleAwardTokens } from '@/config/modules';
 
 const allTasks: Task[] = [...morningRoutine, ...afterSchoolRoutine, ...bedtimeRoutine].map((t, i) => ({
