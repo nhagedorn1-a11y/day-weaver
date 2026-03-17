@@ -1,7 +1,8 @@
-import { X, Volume2, User, Palette, Bell, Cloud, ChevronRight, LogOut, LogIn } from 'lucide-react';
+import { X, Volume2, User, Palette, Bell, Cloud, ChevronRight, LogOut, LogIn, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { SoundSettingsPanel } from './SoundSettingsPanel';
 import { DisplaySettingsPanel } from './DisplaySettingsPanel';
+import { VibeControlsPanel } from '@/engagement-engine';
 
 interface SettingsPageProps {
   isOpen: boolean;
