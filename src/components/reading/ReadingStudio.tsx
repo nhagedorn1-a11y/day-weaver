@@ -36,7 +36,7 @@ export function ReadingStudio({ onBack, onTokensEarned }: ReadingStudioProps) {
   const profile: ReadingProfile = {
     childId: 'jack',
     currentLessonId: progress.currentLessonId,
-    sessionMinutes: progress.sessionMinutes,
+    sessionMinutes: (progress.sessionMinutes === 5 || progress.sessionMinutes === 7 || progress.sessionMinutes === 10 ? progress.sessionMinutes : 7) as 5 | 7 | 10,
     tokenRewardEnabled: true,
     streak: progress.streak,
     totalMinutes: progress.totalMinutes,

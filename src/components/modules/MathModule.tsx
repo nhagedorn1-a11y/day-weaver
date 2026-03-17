@@ -34,7 +34,7 @@ export function MathModule({ onBack, onTokensEarned }: MathModuleProps) {
   const profile: MathProfile = {
     childId: 'child-1',
     currentLessonId: progress.currentLessonId,
-    sessionMinutes: progress.sessionMinutes,
+    sessionMinutes: (progress.sessionMinutes === 5 || progress.sessionMinutes === 7 || progress.sessionMinutes === 10 ? progress.sessionMinutes : 7) as 5 | 7 | 10,
     level: progress.level as 'concrete' | 'pictorial' | 'abstract',
     streak: progress.streak,
     totalProblems: progress.totalProblems,
