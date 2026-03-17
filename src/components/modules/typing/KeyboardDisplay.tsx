@@ -124,20 +124,20 @@ export function KeyboardDisplay({
             onClick={() => handleKeyClick('shift')}
             disabled={displayOnly}
             className={cn(
-              'rounded-xl border-2 font-bold px-4',
+              'rounded-xl border-2 font-bold px-2 sm:px-4',
               transitionClass,
               keySize,
               pressedKey === 'shift' ? PRESSED_COLORS : 'bg-card border-border hover:bg-accent',
               displayOnly && 'cursor-default',
             )}
           >
-            ⬆️ Shift
+            ⬆️
           </button>
           <button
             onClick={() => handleKeyClick('space')}
             disabled={displayOnly}
             className={cn(
-              'rounded-xl border-2 font-bold flex-1 max-w-[240px]',
+              'rounded-xl border-2 font-bold flex-1 max-w-[200px] sm:max-w-[240px]',
               transitionClass,
               keySize,
               pressedKey === 'space' ? PRESSED_COLORS : 'bg-card border-border hover:bg-accent',
@@ -150,7 +150,7 @@ export function KeyboardDisplay({
             onClick={() => handleKeyClick('backspace')}
             disabled={displayOnly}
             className={cn(
-              'rounded-xl border-2 font-bold px-4',
+              'rounded-xl border-2 font-bold px-2 sm:px-4',
               transitionClass,
               keySize,
               pressedKey === 'backspace' ? PRESSED_COLORS : 'bg-card border-border hover:bg-accent',
@@ -163,7 +163,7 @@ export function KeyboardDisplay({
             onClick={() => handleKeyClick('enter')}
             disabled={displayOnly}
             className={cn(
-              'rounded-xl border-2 font-bold px-4',
+              'rounded-xl border-2 font-bold px-2 sm:px-4',
               transitionClass,
               keySize,
               pressedKey === 'enter' ? PRESSED_COLORS : 'bg-card border-border hover:bg-accent',
