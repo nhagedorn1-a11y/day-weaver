@@ -1,7 +1,8 @@
-import { X, Volume2, User, Palette, Bell, Cloud, ChevronRight, LogOut, LogIn } from 'lucide-react';
+import { X, Volume2, User, Palette, Bell, Cloud, ChevronRight, LogOut, LogIn, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { SoundSettingsPanel } from './SoundSettingsPanel';
 import { DisplaySettingsPanel } from './DisplaySettingsPanel';
+import { VibeControlsPanel } from '@/engagement-engine';
 
 interface SettingsPageProps {
   isOpen: boolean;
@@ -11,7 +12,7 @@ interface SettingsPageProps {
   onLogout: () => void;
 }
 
-type SettingsSection = 'main' | 'sound' | 'display' | 'notifications' | 'account';
+type SettingsSection = 'main' | 'sound' | 'display' | 'notifications' | 'account' | 'vibe';
 
 export function SettingsPage({ isOpen, onClose, user, onLogin, onLogout }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>('main');
@@ -24,6 +25,8 @@ export function SettingsPage({ isOpen, onClose, user, onLogin, onLogout }: Setti
         return <SoundSettingsPanel onBack={() => setActiveSection('main')} />;
       case 'display':
         return <DisplaySettingsPanel onBack={() => setActiveSection('main')} />;
+      case 'vibe':
+        return <VibeControlsPanel onBack={() => setActiveSection('main')} />;
       case 'notifications':
         return (
           <div className="p-4">
@@ -100,6 +103,21 @@ export function SettingsPage({ isOpen, onClose, user, onLogin, onLogout }: Setti
               <div className="flex-1 text-left">
                 <p className="font-semibold">Display</p>
                 <p className="text-sm text-muted-foreground">Theme, animations, text size</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+
+            {/* Vibe Controls */}
+            <button
+              onClick={() => setActiveSection('vibe')}
+              className="w-full p-4 rounded-xl bg-card border border-border flex items-center gap-4 hover:border-primary/40 hover:shadow-md transition-all active:scale-[0.99]"
+            >
+              <div className="w-12 h-12 rounded-xl bg-token/10 flex items-center justify-center">
+                <Zap className="w-6 h-6 text-token" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold">Vibe Controls</p>
+                <p className="text-sm text-muted-foreground">Celebrations, interests, intensity</p>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>

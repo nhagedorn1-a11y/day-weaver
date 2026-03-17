@@ -39,6 +39,7 @@ import { Shield, Menu, Plus, List, LayoutGrid, LogIn, User, BookOpen, TrendingUp
 import { ProgressHub } from '@/components/dashboard/ProgressHub';
 import { useCloudSchedule } from '@/hooks/useCloudSchedule';
 import { useCloudProgress } from '@/hooks/useCloudProgress';
+import { useEngagement, StreakFlame, EffortBadges } from '@/engagement-engine';
 import { doesModuleAwardTokens } from '@/config/modules';
 
 const allTasks: Task[] = [...morningRoutine, ...afterSchoolRoutine, ...bedtimeRoutine].map((t, i) => ({
@@ -351,9 +352,13 @@ const IndexContent = () => {
 
     return (
       <div className="space-y-5">
-        {/* Token Progress - compact at top */}
-        <div className="px-5 pt-2">
-          <TokenProgress earned={tokensEarned} goal={TOKENS_GOAL} currentReward={currentReward} compact />
+        {/* Streak + Token Progress */}
+        <div className="px-5 pt-2 flex items-center gap-3">
+          <div className="flex-1">
+            <TokenProgress earned={tokensEarned} goal={TOKENS_GOAL} currentReward={currentReward} compact />
+          </div>
+          <StreakFlame compact />
+          <EffortBadges compact />
         </div>
 
         {/* View Toggle + Build Button */}
