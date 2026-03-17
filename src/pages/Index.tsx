@@ -352,9 +352,13 @@ const IndexContent = () => {
 
     return (
       <div className="space-y-5">
-        {/* Token Progress - compact at top */}
-        <div className="px-5 pt-2">
-          <TokenProgress earned={tokensEarned} goal={TOKENS_GOAL} currentReward={currentReward} compact />
+        {/* Streak + Token Progress */}
+        <div className="px-5 pt-2 flex items-center gap-3">
+          <div className="flex-1">
+            <TokenProgress earned={tokensEarned} goal={TOKENS_GOAL} currentReward={currentReward} compact />
+          </div>
+          <StreakFlame compact />
+          <EffortBadges compact />
         </div>
 
         {/* View Toggle + Build Button */}
