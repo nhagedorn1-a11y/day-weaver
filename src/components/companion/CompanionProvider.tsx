@@ -137,7 +137,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <CompanionContext.Provider value={{ state, setMood, say, celebrate, encourage, calm, hide, show }}>
+    <CompanionContext.Provider value={{ state, setMood, say, celebrate, encourage, calm, hide, show, parallelTalk, playTalkSequence }}>
       {children}
       
       {/* Floating companion */}
