@@ -2,7 +2,7 @@ import { X, Volume2, User, Palette, Bell, Cloud, ChevronRight, LogOut, LogIn, Za
 import { useState } from 'react';
 import { SoundSettingsPanel } from './SoundSettingsPanel';
 import { DisplaySettingsPanel } from './DisplaySettingsPanel';
-import { VibeControlsPanel } from '@/engagement-engine';
+import { EngagementControls } from '@/engagement-engine';
 
 interface SettingsPageProps {
   isOpen: boolean;
