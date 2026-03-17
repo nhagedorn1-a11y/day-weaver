@@ -20,6 +20,10 @@ interface CompanionContextType {
   calm: (message?: string) => void;
   hide: () => void;
   show: () => void;
+  /** Parallel talk: say a contextually appropriate simplified message */
+  parallelTalk: (context: TalkContext, options?: ParallelTalkOptions) => void;
+  /** Parallel talk sequence for a full micro-interaction (start → working → resolution) */
+  playTalkSequence: (subject: string, wasCorrect: boolean) => void;
 }
 
 const CompanionContext = createContext<CompanionContextType | null>(null);
