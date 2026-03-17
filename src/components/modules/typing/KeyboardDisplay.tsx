@@ -119,7 +119,7 @@ export function KeyboardDisplay({
       ))}
 
       {specialKeys && (
-        <div className="flex justify-center gap-1.5 mt-2">
+        <div className="flex justify-center gap-1 sm:gap-1.5 mt-2">
           <button
             onClick={() => handleKeyClick('shift')}
             disabled={displayOnly}
