@@ -72,12 +72,12 @@ export function KeyboardDisplay({
     return 'bg-card border-border hover:bg-accent';
   };
 
-  // Rev 2: Larger touch targets for DCD
+  // Rev 2: Larger touch targets for DCD — responsive for mobile
   const keySize = size === 'xl'
-    ? 'min-w-[64px] min-h-[64px] text-2xl'
+    ? 'min-w-[48px] sm:min-w-[64px] min-h-[48px] sm:min-h-[64px] text-xl sm:text-2xl'
     : size === 'large'
-    ? 'min-w-[56px] min-h-[56px] text-xl'  // Rev 2: bumped from 44px
-    : 'min-w-[36px] min-h-[40px] text-base';
+    ? 'min-w-[32px] sm:min-w-[56px] min-h-[40px] sm:min-h-[56px] text-base sm:text-xl'
+    : 'min-w-[28px] sm:min-w-[36px] min-h-[36px] sm:min-h-[40px] text-sm sm:text-base';
 
   // Rev 10: Transition classes based on sensory profile
   const transitionClass = reducedMotion
@@ -85,12 +85,12 @@ export function KeyboardDisplay({
     : 'transition-all duration-150';
 
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-1.5 sm:space-y-2 overflow-hidden">
       {KEYBOARD_ROWS.map((row, rowIndex) => (
         <div
           key={rowIndex}
-          className="flex justify-center gap-1.5"
-          style={{ paddingLeft: rowIndex === 1 ? '16px' : rowIndex === 2 ? '40px' : '0' }}
+          className="flex justify-center gap-1 sm:gap-1.5"
+          style={{ paddingLeft: rowIndex === 1 ? '12px' : rowIndex === 2 ? '28px' : '0' }}
         >
           {row.map((key) => (
             <button
@@ -119,25 +119,25 @@ export function KeyboardDisplay({
       ))}
 
       {specialKeys && (
-        <div className="flex justify-center gap-1.5 mt-2">
+        <div className="flex justify-center gap-1 sm:gap-1.5 mt-2">
           <button
             onClick={() => handleKeyClick('shift')}
             disabled={displayOnly}
             className={cn(
-              'rounded-xl border-2 font-bold px-4',
+              'rounded-xl border-2 font-bold px-2 sm:px-4',
               transitionClass,
               keySize,
               pressedKey === 'shift' ? PRESSED_COLORS : 'bg-card border-border hover:bg-accent',
               displayOnly && 'cursor-default',
             )}
           >
-            ⬆️ Shift
+            ⬆️
           </button>
           <button
             onClick={() => handleKeyClick('space')}
             disabled={displayOnly}
             className={cn(
-              'rounded-xl border-2 font-bold flex-1 max-w-[240px]',
+              'rounded-xl border-2 font-bold flex-1 max-w-[200px] sm:max-w-[240px]',
               transitionClass,
               keySize,
               pressedKey === 'space' ? PRESSED_COLORS : 'bg-card border-border hover:bg-accent',
@@ -150,7 +150,7 @@ export function KeyboardDisplay({
             onClick={() => handleKeyClick('backspace')}
             disabled={displayOnly}
             className={cn(
-              'rounded-xl border-2 font-bold px-4',
+              'rounded-xl border-2 font-bold px-2 sm:px-4',
               transitionClass,
               keySize,
               pressedKey === 'backspace' ? PRESSED_COLORS : 'bg-card border-border hover:bg-accent',
@@ -163,7 +163,7 @@ export function KeyboardDisplay({
             onClick={() => handleKeyClick('enter')}
             disabled={displayOnly}
             className={cn(
-              'rounded-xl border-2 font-bold px-4',
+              'rounded-xl border-2 font-bold px-2 sm:px-4',
               transitionClass,
               keySize,
               pressedKey === 'enter' ? PRESSED_COLORS : 'bg-card border-border hover:bg-accent',
