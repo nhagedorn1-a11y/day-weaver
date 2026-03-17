@@ -72,12 +72,12 @@ export function KeyboardDisplay({
     return 'bg-card border-border hover:bg-accent';
   };
 
-  // Rev 2: Larger touch targets for DCD
+  // Rev 2: Larger touch targets for DCD — responsive for mobile
   const keySize = size === 'xl'
-    ? 'min-w-[64px] min-h-[64px] text-2xl'
+    ? 'min-w-[48px] sm:min-w-[64px] min-h-[48px] sm:min-h-[64px] text-xl sm:text-2xl'
     : size === 'large'
-    ? 'min-w-[56px] min-h-[56px] text-xl'  // Rev 2: bumped from 44px
-    : 'min-w-[36px] min-h-[40px] text-base';
+    ? 'min-w-[32px] sm:min-w-[56px] min-h-[40px] sm:min-h-[56px] text-base sm:text-xl'
+    : 'min-w-[28px] sm:min-w-[36px] min-h-[36px] sm:min-h-[40px] text-sm sm:text-base';
 
   // Rev 10: Transition classes based on sensory profile
   const transitionClass = reducedMotion
