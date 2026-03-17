@@ -25,6 +25,8 @@ export function SettingsPage({ isOpen, onClose, user, onLogin, onLogout }: Setti
         return <SoundSettingsPanel onBack={() => setActiveSection('main')} />;
       case 'display':
         return <DisplaySettingsPanel onBack={() => setActiveSection('main')} />;
+      case 'vibe':
+        return <VibeControlsPanel onBack={() => setActiveSection('main')} />;
       case 'notifications':
         return (
           <div className="p-4">
