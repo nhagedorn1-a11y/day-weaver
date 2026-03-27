@@ -334,7 +334,7 @@ const IndexContent = () => {
       return (
         <div className="p-6 space-y-6">
           <TokenProgress earned={tokensEarned} goal={TOKENS_GOAL} currentReward={currentReward} compact />
-          <div className="bg-card rounded-3xl p-4 border-2 border-border">
+          <div className="bg-card rounded-lg p-4 border border-border" style={{ boxShadow: 'var(--shadow-card)' }}>
             <div className="flex items-center gap-3 mb-4">
               <span className="text-3xl">{nowTask.icon === 'reading' ? '📖' : '⭐'}</span>
               <h2 className="text-xl font-semibold">{nowTask.title}</h2>
@@ -352,9 +352,9 @@ const IndexContent = () => {
     }
 
     return (
-      <div className="space-y-5">
+      <div className="space-y-6">
         {/* Streak + Token Progress */}
-        <div className="px-5 pt-2 flex items-center gap-3">
+        <div className="px-6 pt-3 flex items-center gap-3">
           <div className="flex-1">
             <TokenProgress earned={tokensEarned} goal={TOKENS_GOAL} currentReward={currentReward} compact />
           </div>
@@ -362,58 +362,37 @@ const IndexContent = () => {
           <EffortBadges compact />
         </div>
 
-        {/* View Toggle + Build Button */}
-        <div className="px-5 flex items-center gap-2">
-          <div className="flex-1 flex bg-muted rounded-xl p-1">
-            <button
-              onClick={() => setViewMode('progress')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
-                viewMode === 'progress' 
-                  ? 'bg-background shadow-sm text-foreground' 
-                  : 'text-muted-foreground'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4" />
-              Progress
-            </button>
-            <button
-              onClick={() => setViewMode('tasks')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
-                viewMode === 'tasks' 
-                  ? 'bg-background shadow-sm text-foreground' 
-                  : 'text-muted-foreground'
-              }`}
-            >
-              <LayoutGrid className="w-4 h-4" />
-              Tasks
-            </button>
-            <button
-              onClick={() => setViewMode('schedule')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
-                viewMode === 'schedule' 
-                  ? 'bg-background shadow-sm text-foreground' 
-                  : 'text-muted-foreground'
-              }`}
-            >
-              <List className="w-4 h-4" />
-              Schedule
-            </button>
+        {/* View Toggle — underline style */}
+        <div className="px-6 flex items-center gap-1">
+          <div className="flex-1 flex border-b border-border">
+            {(['progress', 'tasks', 'schedule'] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setViewMode(v)}
+                className={`flex-1 py-2 text-xs font-medium transition-all border-b-2 ${
+                  viewMode === v 
+                    ? 'border-primary text-foreground' 
+                    : 'border-transparent text-muted-foreground'
+                }`}
+              >
+                {v === 'progress' ? 'Progress' : v === 'tasks' ? 'Tasks' : 'Schedule'}
+              </button>
+            ))}
           </div>
           
           {mode === 'parent' && (
             <button
               onClick={() => setShowScheduleBuilder(true)}
-              className="w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:shadow-lg active:scale-95 transition-all"
+              className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center active:scale-95 transition-all ml-2"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
             </button>
           )}
         </div>
 
         {/* Main Content based on view mode */}
         {viewMode === 'progress' ? (
-          <div className="px-5 space-y-6">
-            {/* Structured Choice — two clear visual options to reduce anxiety */}
+          <div className="px-6 space-y-8">
             <StructuredChoice
               options={['reading', 'math']}
               onChoose={(moduleId) => setCurrentModule(moduleId as AppModule)}
@@ -428,7 +407,7 @@ const IndexContent = () => {
         ) : viewMode === 'tasks' ? (
           <>
             {/* Now/Next/Later - the main focus */}
-            <div className="px-5">
+            <div className="px-6">
               <NowNextLater
                 now={nowTask}
                 next={nextTask}
@@ -448,13 +427,13 @@ const IndexContent = () => {
             </div>
 
             {/* Self-talk buttons */}
-            <div className="px-5">
+            <div className="px-6">
               <SelfTalkButtons />
             </div>
           </>
         ) : (
           /* Full Schedule View - Fully Editable */
-          <div className="px-5">
+          <div className="px-6">
             <VisualSchedule
               tasks={tasks}
               currentTaskIndex={currentTaskIndex}
@@ -481,24 +460,20 @@ const IndexContent = () => {
         )}
 
         {/* Quick access modules */}
-        <div className="px-5">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Activities
-            </span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-          <div className="grid grid-cols-4 gap-3">
+        <div className="px-6">
+          <span className="hw-label block mb-3">Activities</span>
+          <div className="grid grid-cols-4 gap-2">
             {appModules.slice(1, 5).map((module) => (
               <button
                 key={module.id}
                 onClick={() => setCurrentModule(module.id)}
-                className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow-md active:scale-[0.98] transition-all"
+                className="group flex flex-col items-center gap-1.5 p-3 rounded-lg bg-card border border-border hover:bg-muted/50 active:scale-[0.98] transition-all"
+                style={{ boxShadow: 'var(--shadow-card)' }}
               >
-                <div className="w-11 h-11 rounded-xl bg-muted/50 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                  <span className="text-xl">{module.icon}</span>
+                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center transition-colors">
+                  <span className="text-lg">{module.icon}</span>
                 </div>
-                <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                   {module.title}
                 </span>
               </button>
@@ -508,13 +483,13 @@ const IndexContent = () => {
 
         {/* Parent-only bravery button */}
         {mode === 'parent' && (
-          <div className="px-5 pb-4">
+          <div className="px-6 pb-4">
             <button
               onClick={() => setShowBraveryTimer(true)}
-              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-token/10 to-primary/10 border border-token/30 flex items-center justify-center gap-3 hover:from-token/20 hover:to-primary/20 active:scale-[0.99] transition-all"
+              className="w-full py-3 px-6 rounded-lg bg-card border border-border flex items-center justify-center gap-2 hover:bg-muted/50 active:scale-[0.99] transition-all"
             >
-              <Shield className="w-5 h-5 text-token" />
-              <span className="font-bold text-token">Start Bravery Practice</span>
+              <Shield className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium text-sm">Start Bravery Practice</span>
             </button>
           </div>
         )}
@@ -542,7 +517,7 @@ const IndexContent = () => {
         currentModule={currentModule}
       />
       {/* Header with greeting */}
-      <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-lg border-b border-border/50">
+      <header className="sticky top-0 z-20 bg-background/90 border-b border-border">
         <div className="flex items-center justify-between p-4 safe-top">
           <button
             onClick={() => setShowModuleMenu(true)}
