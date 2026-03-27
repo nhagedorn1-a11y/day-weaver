@@ -228,6 +228,7 @@ export function resolvePhonemeText(
   engine: TTSEngine,
 ): { text: string; source: 'map' | 'fallback' } {
   const map = engine === 'elevenlabs' ? ELEVENLABS_PHONEMES : WEB_SPEECH_PHONEMES;
+  // Always lowercase — handles uppercase phonemes from proper nouns (S in Sam, P in Pam)
   const normalized = phoneme.toLowerCase().trim();
 
   // Direct match
@@ -241,12 +242,6 @@ export function resolvePhonemeText(
     if (map[inner]) {
       return { text: map[inner], source: 'map' };
     }
-  }
-
-  // Uppercase letter fallback (e.g. 'S' in 'Sam')
-  const lower = normalized.toLowerCase();
-  if (map[lower]) {
-    return { text: map[lower], source: 'map' };
   }
 
   // Nothing matched — return raw text (will be logged as a warning)
