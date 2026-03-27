@@ -24,7 +24,7 @@ export function PhonemeSlider({
   const [isBlending, setIsBlending] = useState(false);
   const [blendProgress, setBlendProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
-  const { speakPhoneme, speakWord, playBlend, playComplete } = useSound();
+  const { speakPhoneme, speakBlend, playComplete } = useSound();
   const lastSpokenRef = useRef<number>(-1);
 
   // Reset state when word changes
@@ -37,7 +37,7 @@ export function PhonemeSlider({
     lastSpokenRef.current = -1;
   }, [word]);
 
-  // Speak phoneme when slider changes position
+  // Speak phoneme when slider changes position (debounced via speechQueue)
   useEffect(() => {
     if (isBlending || isComplete) return;
     
@@ -63,28 +63,26 @@ export function PhonemeSlider({
 
   const handleBlend = useCallback(() => {
     setIsBlending(true);
-    playBlend();
     
+    // Use the cascade blend — plays each phoneme at shrinking intervals then the word
+    speakBlend(phonemes, word);
+
+    // Visual animation: sweep the slider across phonemes
     let progress = 0;
+    const totalTicks = phonemes.length * 10;
     const interval = setInterval(() => {
       progress += 1;
       setBlendProgress(progress);
       setSliderValue(Math.min(Math.floor(progress / 10), phonemes.length - 1));
       
-      if (progress >= phonemes.length * 10) {
+      if (progress >= totalTicks) {
         clearInterval(interval);
         setIsComplete(true);
         playComplete();
-        
-        // Delay word pronunciation so it's clearly separate from the blend animation
-        setTimeout(() => {
-          speakWord(word);
-        }, 400);
-        
         onComplete?.();
       }
     }, 50);
-  }, [phonemes.length, word, onComplete, playBlend, playComplete, speakWord]);
+  }, [phonemes, word, onComplete, speakBlend, playComplete]);
 
   const handleReset = useCallback(() => {
     setSliderValue(0);
@@ -201,7 +199,10 @@ export function PhonemeSlider({
       {(isComplete || showWord) && (
         <div className="flex flex-col items-center gap-3 animate-scale-in">
           <button
-            onClick={() => speakWord(word)}
+            onClick={() => {
+              const { speakWord } = useSound();
+              speakWord(word);
+            }}
             className="px-10 py-5 rounded-3xl bg-calm/20 border-3 border-calm hover:bg-calm/30 transition-colors"
             aria-label={`Hear the word ${word}`}
           >
