@@ -1,162 +1,107 @@
 
-# New Module: Keyboard Explorer
 
-A pre-typing learning program designed for a neurodivergent child to build familiarity with QWERTY keyboards and basic PC use -- before any actual typing speed is expected.
+# Jony Ive Aesthetic Overhaul
 
-## Philosophy
+## The Problem
 
-This follows the app's existing "operator/explorer" metaphor. The child is a **Keyboard Pilot** learning the controls of a machine. No typing tests, no WPM counters, no time pressure. Instead: guided exploration, key hunts, pattern play, and gradual familiarization with letter positions through games.
+The current interface is functional but visually cluttered. There's inconsistent spacing, too many competing colors and shapes, rounded corners fighting the stated "soft brutalist" system, gratuitous gradients, and a general lack of the *restraint* and *material honesty* the design system claims. Jony Ive's design philosophy can be summarized as: **remove everything that isn't essential, then make what remains feel inevitable.**
 
-The module progresses through stages that mirror how a neurodivergent child would naturally build comfort:
+## Design Audit — What Ive Would Change
 
-1. **Explore** -- Just tap any key and see/hear what happens (cause and effect)
-2. **Find** -- "Where is the B?" style key hunts with visual hints
-3. **Patterns** -- Home row awareness, left/right hand, letter groups
-4. **Words** -- Type simple familiar words one key at a time with visual guides
-5. **PC Skills** -- Concepts like spacebar, enter, backspace, shift explained visually
+### 1. Strip the Visual Noise
+- **StatusStrip** (top bar): Too many segments crammed together. The weather, moon phase, tokens, regulation emoji, and clock all compete. Ive would reduce this to time + one status indicator, and hide the rest behind a deliberate tap.
+- **TokenProgress** (orange banner): The orange-on-warm-background creates a garish band. Replace with a thin, elegant progress line — no fill color on the container, just a precise indicator.
+- **ProgressHub** header: The `bg-gradient-to-br from-primary/10 via-calm/5 to-token/10` gradient is the antithesis of Ive. Replace with a single, flat, subtle tint or pure white card.
+- **Subject cards**: Emoji icons + colored pills + streak flames + progress bars + chevrons = too many signals per card. Reduce to: icon, name, progress bar, one piece of metadata.
 
-## What the Child Sees
+### 2. Establish a Typographic Hierarchy
+- Currently everything is bold. When everything shouts, nothing communicates. Introduce clear weight tiers:
+  - **Display**: One element per screen at 600/700 weight (the page title or the current task)
+  - **Body**: 400 weight for most text
+  - **Caption**: 400 weight, reduced opacity for metadata
+- Reduce font sizes globally. The current UI uses `text-xl`, `text-lg` too aggressively.
 
-### Home Screen: "Keyboard Pilot"
-A landing page with 5 lane cards (same pattern as Motor Skills module):
-- Free Play -- tap keys, see big letters appear with sound
-- Key Hunt -- find specific keys with visual hints
-- Home Row Heroes -- learn finger positions through games
-- Word Builder -- type simple words with a guided on-screen keyboard
-- PC Controls -- learn spacebar, enter, backspace, shift, arrows
+### 3. Whitespace as Structure
+- Increase vertical spacing between sections from `space-y-5`/`space-y-6` to `space-y-8` or more.
+- Cards should breathe — increase internal padding, reduce border thickness from `border-2` to `border` or remove borders entirely in favor of subtle elevation.
+- The module grid (Activities) is cramped. Increase gap and reduce icon size for a calmer grid.
 
-### Interactive On-Screen Keyboard
-A large, touch-friendly QWERTY keyboard component that:
-- Highlights keys when tapped (satisfying color burst)
-- Shows the letter LARGE on screen when pressed (reinforcement)
-- Plays the letter sound using the existing phoneme system
-- Color-codes rows or hand zones when in learning mode
-- Animates finger guides for home row lessons
+### 4. Color Discipline
+- Reduce active colors on any single screen from 5+ to 2-3 max.
+- The primary terracotta + token orange + calm teal + next blue all appear simultaneously — this creates visual chaos.
+- Ive approach: one accent color per screen context. The dashboard uses a single accent (terracotta). Reading uses teal. Math uses a warm tone. Never mix.
+- Remove all `/10`, `/15`, `/20` opacity background tints on cards — use pure `bg-card` with subtle shadow instead.
 
-### Key Hunt Game
-- Shows a big letter/emoji prompt: "Find the K!"
-- Keyboard lights up with a hint zone (left/right half, which row)
-- Child taps the correct key -- celebration animation
-- Difficulty scales: full hint -> row hint -> no hint
+### 5. Borders and Corners
+- The design system says `--radius: 0.25rem` (machined, minimal) but many components use `rounded-2xl`, `rounded-3xl`. This contradiction makes the UI feel unresolved.
+- Standardize: all interactive cards get `rounded-xl` (0.75rem). All containers get `rounded-lg`. No `rounded-3xl` anywhere.
+- Replace `border-2` and `border-3` with `border` (1px). Thick borders feel heavy and dated.
 
-### Word Builder
-- Shows a simple word like "cat" with the first letter highlighted
-- On-screen keyboard highlights the target key
-- Child taps it, letter fills in, next letter highlights
-- Completion triggers token reward and celebration
+### 6. Shadows and Depth
+- Remove `shadow-xl`, `shadow-lg` from cards. Use a single, consistent shadow: `shadow-sm` for resting state, `shadow-md` on hover/press.
+- The token star badge uses `shadow-lg` + `shadow-md` + `border-2` — three depth cues is two too many.
 
-## Integration Points
+### 7. Motion
+- Current animations are fine (mechanical, short) but some use `animate-pulse` which feels cheap. Replace any pulse with a single subtle opacity transition.
 
-This module plugs into the existing system exactly like every other module:
+## Implementation Plan
 
-- Added to `AppModule` type union as `'typing'`
-- Registered in `MODULE_REGISTRY` with `awardsTokens: true` (it's a learning module)
-- Added to `appModules` array for the Module Menu
-- Rendered in `renderModuleContent()` switch in Index.tsx
-- Uses existing `onTokensEarned` callback pattern
-- Uses existing `useSound()` for phoneme playback on key press
+### File 1: `src/index.css` — Design Token Refinement
+- Increase `--radius` from `0.25rem` to `0.625rem` (a single, confident rounding)
+- Add `--shadow-card` and `--shadow-card-hover` custom properties
+- Reduce border color contrast slightly (make borders more subtle)
+- Add a `--color-surface` for elevated cards (slightly warmer than background)
 
-## Files to Create
+### File 2: `src/components/controls/StatusStrip.tsx` — Simplify
+- Show only: time, weather emoji, token count
+- Remove moon phase and regulation emoji from the default view
+- Make the strip thinner — reduce padding, use `text-[11px]` mono
+- Remove the 2px border; use a single hairline bottom border
 
-| File | Purpose |
-|------|---------|
-| `src/components/modules/TypingModule.tsx` | Main module shell with view routing (home, freePlay, keyHunt, homeRow, wordBuilder, pcControls) |
-| `src/components/modules/typing/KeyboardDisplay.tsx` | Reusable on-screen QWERTY keyboard component with highlighting, color zones, and tap handling |
-| `src/components/modules/typing/FreePlay.tsx` | Free exploration mode -- tap any key, see big letter + hear sound |
-| `src/components/modules/typing/KeyHunt.tsx` | "Find the letter" game with progressive difficulty |
-| `src/components/modules/typing/HomeRowHeroes.tsx` | Home row finger placement lessons and practice |
-| `src/components/modules/typing/WordBuilder.tsx` | Guided word typing with visual key hints |
-| `src/components/modules/typing/PCControls.tsx` | Visual lessons on spacebar, enter, backspace, shift, arrows |
-| `src/data/typingLessons.ts` | Lesson data: key hunt sequences, word lists, home row drills, PC control explanations |
+### File 3: `src/components/TokenProgress.tsx` — Minimal Progress
+- Compact mode: replace the orange box with a flat inline row — star icon, count, thin progress bar, no background color
+- Remove `shadow-lg`, `shadow-inner`, `shadow-md` from all elements
+- Token dots: reduce to simple circles, no shadows
 
-## Files to Modify
+### File 4: `src/components/dashboard/ProgressHub.tsx` — Clean Cards
+- Remove the gradient header. Use flat `bg-card` with consistent padding.
+- Subject cards: remove emoji, use Lucide icon only. Remove the colored pill tags. Show just: icon, name, progress bar, lesson count.
+- "Suggested Next Steps" cards: reduce to a simpler, flatter style — no colored backgrounds, just icon + text + subtle border.
+- Standardize all `rounded-*` to `rounded-xl`
 
-| File | Change |
-|------|--------|
-| `src/types/jackos.ts` | Add `'typing'` to `AppModule` union type |
-| `src/config/modules.ts` | Add `typing` entry to `MODULE_REGISTRY` |
-| `src/data/appContent.ts` | Add typing module to `appModules` array |
-| `src/pages/Index.tsx` | Import `TypingModule`, add `case 'typing'` to render switch |
+### File 5: `src/components/StructuredChoice.tsx` — Quieter Choice Cards
+- Remove `border-3`. Use `border` (1px).
+- Remove `drop-shadow-sm` from emoji.
+- Reduce emoji size from `text-5xl` to `text-4xl`.
+- Replace colored backgrounds with `bg-card` + subtle left-edge color accent (a 3px left border in the module color).
+- Remove hover scale effect. Use background tint change only.
 
-## Technical Details
+### File 6: `src/components/Header.tsx` — Integrate with StatusStrip
+- Remove the separate header component. Merge the "J" avatar + day label into the StatusStrip as a unified top bar.
+- Or: simplify header to just the avatar circle + a single line of text + settings button. Remove `backdrop-blur-sm` (blur is overused).
 
-### KeyboardDisplay Component
-The central reusable component. Renders a 3-row QWERTY layout with these props:
+### File 7: `src/pages/Index.tsx` — Layout and Spacing
+- Increase section spacing throughout
+- Standardize padding from mixed `px-5`/`p-6`/`p-4` to a consistent `px-6`
+- View toggle (Progress/Tasks/Schedule): reduce visual weight — use underline-style tabs instead of pill-background tabs
+- Remove the redundant "Suggested Next Steps" when StructuredChoice already exists (they do the same thing)
 
+### File 8: `src/components/ModuleMenu.tsx` — Gallery Grid
+- Remove gradients from active module card
+- Use a simple left-border accent or subtle background shift for active state
+- Reduce card padding and emoji size for a calmer grid
+
+### Summary of Principles Applied
 ```text
-interface KeyboardDisplayProps {
-  onKeyPress: (key: string) => void;
-  highlightedKeys?: string[];        // Keys to glow/highlight
-  disabledKeys?: string[];           // Keys to dim out
-  colorZone?: 'left' | 'right' | 'home' | 'none';
-  showFingerGuides?: boolean;        // Show which finger for each key
-  size?: 'compact' | 'large';       // Touch target sizing
-  specialKeys?: boolean;             // Show space, enter, backspace, shift
-}
+BEFORE (current)              AFTER (Ive revision)
+─────────────────             ────────────────────
+5+ colors per screen    →     2 colors max per screen
+border-2, border-3      →     border (1px) or none
+rounded-2xl/3xl mixed   →     rounded-xl everywhere
+shadow-lg/xl            →     shadow-sm, shadow-md hover
+Gradient backgrounds    →     Flat bg-card
+Bold everything         →     Clear weight hierarchy
+Cramped spacing         →     Generous whitespace
+Emoji + icon + pill     →     One signal per element
 ```
 
-The keyboard layout uses CSS Grid for consistent sizing. Each key is a large touch target (min 44x44px per accessibility standards, larger on tablet). Keys are color-coded by hand zone using Tailwind classes that already exist in the app's palette.
-
-### Lesson Data Structure
-```text
-interface KeyHuntLevel {
-  id: string;
-  targetKey: string;
-  hint: 'full' | 'row' | 'hand' | 'none';
-  emoji: string;         // Visual cue: "Find the B! B is for Bear"
-  keyword: string;
-}
-
-interface WordBuilderWord {
-  id: string;
-  word: string;
-  emoji: string;
-  difficulty: 1 | 2 | 3;  // 3-letter, 4-letter, 5-letter
-}
-
-interface HomeRowLesson {
-  id: string;
-  title: string;
-  keys: string[];          // Which keys to practice
-  hand: 'left' | 'right' | 'both';
-  fingerMap: Record<string, string>;  // key -> finger name
-}
-
-interface PCControlLesson {
-  id: string;
-  title: string;
-  key: string;             // 'space' | 'enter' | 'backspace' | 'shift' | 'arrows'
-  emoji: string;
-  explanation: string;     // Kid-friendly description
-  tryItPrompt: string;     // "Press the big bar at the bottom!"
-}
-```
-
-### Token Awards
-- Free Play: no tokens (pure exploration)
-- Key Hunt: 1 token per 5 correct finds
-- Home Row: 1 token per completed drill
-- Word Builder: 2 tokens per word completed
-- PC Controls: 1 token per lesson completed
-
-### Sound Integration
-Key presses trigger `playPhoneme(key)` from the existing `SoundContext`, so the child hears the letter sound (using the newly fixed phoneme maps). Special keys get descriptive sounds via `playTap()`.
-
-### Module Registry Entry
-```text
-typing: {
-  id: 'typing',
-  title: 'Keyboard Pilot',
-  icon: 'Keyboard',
-  emoji: '⌨️',
-  description: 'Learn the keyboard',
-  color: 'secondary',
-  enabled: true,
-  awardsTokens: true,
-  requiresAuth: false,
-  parentOnly: false,
-  order: 5,  // After writing, before science
-}
-```
-
-The existing modules after writing will have their order numbers shifted up by 1 to accommodate this.
