@@ -57,12 +57,19 @@
     --destructive: 0 55% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 8% 82%;
+    --border: 40 8% 88%;
     --input: 40 8% 82%;
     --ring: 15 55% 50%;
 
-    /* Radius — minimal, machined */
-    --radius: 0.25rem;
+    /* Radius — confident, unified */
+    --radius: 0.625rem;
+
+    /* Shadows — restrained depth */
+    --shadow-card: 0 1px 3px 0 hsl(30 5% 12% / 0.04), 0 1px 2px -1px hsl(30 5% 12% / 0.04);
+    --shadow-card-hover: 0 4px 6px -1px hsl(30 5% 12% / 0.06), 0 2px 4px -2px hsl(30 5% 12% / 0.04);
+
+    /* Surface — slightly elevated card feel */
+    --surface: 40 8% 99%;
 
     /* Sidebar */
     --sidebar-background: 40 8% 94%;
@@ -167,8 +174,9 @@
 @layer components {
   /* Panel — visible structure, mounted look */
   .panel {
-    @apply bg-card border-2 border-border;
+    @apply bg-card border border-border;
     border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
   }
 
   .panel-inset {
@@ -178,7 +186,7 @@
 
   /* Task Cards — machined, flat, structural */
   .task-card {
-    @apply border-2 p-6 transition-all;
+    @apply border p-6 transition-all;
     border-radius: var(--radius);
     transition-duration: var(--duration-normal);
     transition-timing-function: var(--ease-mechanical);
@@ -203,12 +211,12 @@
   }
 
   .token-chip-empty {
-    @apply token-chip bg-muted text-muted-foreground border-2 border-dashed border-border;
+    @apply token-chip bg-muted text-muted-foreground border border-dashed border-border;
   }
 
   /* Calm button — solid, no flourish */
   .calm-button {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-4 bg-calm text-calm-foreground font-semibold text-lg transition-all border-2 border-calm;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-4 bg-calm text-calm-foreground font-semibold text-lg transition-all border border-calm;
     border-radius: var(--radius);
     transition-duration: var(--duration-fast);
     transition-timing-function: var(--ease-mechanical);
@@ -224,7 +232,7 @@
 
   /* Giant button for child UI — solid, confident */
   .giant-button {
-    @apply flex flex-col items-center justify-center gap-3 p-8 font-semibold text-xl transition-all border-2;
+    @apply flex flex-col items-center justify-center gap-3 p-8 font-semibold text-xl transition-all border;
     min-height: 120px;
     border-radius: var(--radius);
     transition-duration: var(--duration-fast);
