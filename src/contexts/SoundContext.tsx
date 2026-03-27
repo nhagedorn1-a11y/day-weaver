@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode, useCallback, useState, useEffect, useRef } from 'react';
 import { useSoundscape } from '@/hooks/useSoundscape';
 import { resolvePhonemeText, TTSEngine } from '@/data/phonemeMaps';
+import { speechQueue } from '@/lib/speechQueue';
 
 interface SoundSettings {
   voiceURI: string;
@@ -29,6 +30,8 @@ interface SoundContextType {
   playClick: () => void;
   speakPhoneme: (phoneme: string) => void;
   speakWord: (word: string) => void;
+  /** Cascade phonemes at shrinking intervals then speak the full word */
+  speakBlend: (phonemes: string[], word: string) => void;
   isSpeaking: boolean;
 }
 
@@ -112,7 +115,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Tone helpers (unchanged)
+  // Tone helpers
   // ---------------------------------------------------------------------------
   const playTone = useCallback((frequency: number, duration: number, type: OscillatorType = 'sine', volume = 0.3) => {
     if (!soundscape.isEnabled) return;
@@ -163,14 +166,17 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
   // ---------------------------------------------------------------------------
   // Play a blob (shared helper for cached / fresh ElevenLabs audio)
+  // Returns a promise that resolves when playback ends
   // ---------------------------------------------------------------------------
-  const playBlob = useCallback((blob: Blob) => {
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.volume = soundscape.volume;
-    audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-    audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-    audio.play().catch(() => setIsSpeaking(false));
+  const playBlob = useCallback((blob: Blob): Promise<void> => {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.volume = soundscape.volume;
+      audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); resolve(); };
+      audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); resolve(); };
+      audio.play().catch(() => { setIsSpeaking(false); resolve(); });
+    });
   }, [soundscape.volume]);
 
   // ---------------------------------------------------------------------------
@@ -183,7 +189,6 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   ): Promise<Blob | null> => {
     const cacheKey = getCacheKey(textToSend, voiceId, isWord);
 
-    // Cache hit?
     const cached = elevenLabsCache.get(cacheKey);
     if (cached) {
       logSound('cache-hit', { cacheKey });
@@ -217,133 +222,137 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ---------------------------------------------------------------------------
-  // speakPhoneme — ElevenLabs path
+  // Core speech functions (return Promises for queue integration)
   // ---------------------------------------------------------------------------
-  const speakPhonemeWithElevenLabs = useCallback(async (phoneme: string) => {
+
+  /** Speak via Web Speech, returns a promise that resolves on utterance end */
+  const webSpeechSpeak = useCallback((text: string, rate?: number): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!('speechSynthesis' in window)) { playTap(); resolve(); return; }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = rate ?? settings.speechRate;
+      utterance.pitch = settings.speechPitch;
+      utterance.volume = soundscape.volume;
+
+      if (settings.voiceURI) {
+        const voice = availableVoices.find(v => v.voiceURI === settings.voiceURI);
+        if (voice) utterance.voice = voice;
+      }
+
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => { setIsSpeaking(false); resolve(); };
+      utterance.onerror = () => { setIsSpeaking(false); resolve(); };
+
+      window.speechSynthesis.speak(utterance);
+    });
+  }, [soundscape.volume, settings.speechRate, settings.speechPitch, settings.voiceURI, availableVoices, playTap]);
+
+  /** Play a phoneme via ElevenLabs, returns promise */
+  const elevenLabsPhoneme = useCallback(async (phoneme: string): Promise<void> => {
     const { text, source } = resolvePhonemeText(phoneme, 'elevenlabs');
     logSound('phoneme-resolve', { phoneme, text, source, engine: 'elevenlabs' });
     if (source === 'fallback') {
-      console.warn(`[Sound] No ElevenLabs mapping for phoneme "${phoneme}" — using fallback "${text}"`);
+      console.warn(`[Sound] No ElevenLabs mapping for "${phoneme}" — fallback "${text}"`);
     }
 
-    try {
-      setIsSpeaking(true);
-      const blob = await callElevenLabs(text, settings.elevenLabsVoiceId, false);
-      if (blob) {
-        playBlob(blob);
-      } else {
-        // Fallback to Web Speech
-        setIsSpeaking(false);
-        speakPhonemeWithWebSpeech(phoneme);
-      }
-    } catch (error) {
-      console.error('[Sound] ElevenLabs phoneme error:', error);
+    setIsSpeaking(true);
+    const blob = await callElevenLabs(text, settings.elevenLabsVoiceId, false);
+    if (blob) {
+      await playBlob(blob);
+    } else {
+      // Fallback to Web Speech
       setIsSpeaking(false);
-      speakPhonemeWithWebSpeech(phoneme);
+      const { text: wsText } = resolvePhonemeText(phoneme, 'web-speech');
+      await webSpeechSpeak(wsText);
     }
-  }, [settings.elevenLabsVoiceId, callElevenLabs, playBlob]);
+  }, [settings.elevenLabsVoiceId, callElevenLabs, playBlob, webSpeechSpeak]);
 
-  // ---------------------------------------------------------------------------
-  // speakPhoneme — Web Speech path
-  // ---------------------------------------------------------------------------
-  const speakPhonemeWithWebSpeech = useCallback((phoneme: string) => {
-    if (!('speechSynthesis' in window)) { playTap(); return; }
-
-    window.speechSynthesis.cancel();
-
-    const { text, source } = resolvePhonemeText(phoneme, 'web-speech');
-    logSound('phoneme-resolve', { phoneme, text, source, engine: 'web-speech' });
-    if (source === 'fallback') {
-      console.warn(`[Sound] No Web Speech mapping for phoneme "${phoneme}" — using fallback "${text}"`);
+  /** Play a word via ElevenLabs, returns promise */
+  const elevenLabsWord = useCallback(async (word: string): Promise<void> => {
+    logSound('word', { word, engine: 'elevenlabs' });
+    setIsSpeaking(true);
+    const blob = await callElevenLabs(word, settings.elevenLabsVoiceId, true);
+    if (blob) {
+      await playBlob(blob);
+    } else {
+      setIsSpeaking(false);
+      await webSpeechSpeak(word, settings.speechRate + 0.1);
     }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = settings.speechRate;
-    utterance.pitch = settings.speechPitch;
-    utterance.volume = soundscape.volume;
-
-    if (settings.voiceURI) {
-      const voice = availableVoices.find(v => v.voiceURI === settings.voiceURI);
-      if (voice) utterance.voice = voice;
-    }
-
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => { setIsSpeaking(false); playTap(); };
-
-    window.speechSynthesis.speak(utterance);
-  }, [soundscape.volume, settings.speechRate, settings.speechPitch, settings.voiceURI, availableVoices, playTap]);
+  }, [settings.elevenLabsVoiceId, callElevenLabs, playBlob, webSpeechSpeak]);
 
   // ---------------------------------------------------------------------------
-  // speakPhoneme — dispatcher
+  // Public API — debounced through speechQueue
   // ---------------------------------------------------------------------------
+
   const speakPhoneme = useCallback((phoneme: string) => {
     if (!soundscape.isEnabled || !settings.phonemesEnabled) return;
-    if (settings.ttsEngine === 'elevenlabs') {
-      speakPhonemeWithElevenLabs(phoneme);
-    } else {
-      speakPhonemeWithWebSpeech(phoneme);
-    }
-  }, [soundscape.isEnabled, settings.phonemesEnabled, settings.ttsEngine, speakPhonemeWithElevenLabs, speakPhonemeWithWebSpeech]);
 
-  // ---------------------------------------------------------------------------
-  // speakWord — Web Speech
-  // ---------------------------------------------------------------------------
-  const speakWordWithWebSpeech = useCallback((word: string) => {
-    if (!('speechSynthesis' in window)) { playComplete(); return; }
-
-    window.speechSynthesis.cancel();
-    logSound('word', { word, engine: 'web-speech' });
-
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.rate = settings.speechRate + 0.1;
-    utterance.pitch = settings.speechPitch;
-    utterance.volume = soundscape.volume;
-
-    if (settings.voiceURI) {
-      const voice = availableVoices.find(v => v.voiceURI === settings.voiceURI);
-      if (voice) utterance.voice = voice;
-    }
-
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
-    window.speechSynthesis.speak(utterance);
-  }, [soundscape.volume, settings.speechRate, settings.speechPitch, settings.voiceURI, availableVoices, playComplete]);
-
-  // ---------------------------------------------------------------------------
-  // speakWord — ElevenLabs (with cache)
-  // ---------------------------------------------------------------------------
-  const speakWordWithElevenLabs = useCallback(async (word: string) => {
-    logSound('word', { word, engine: 'elevenlabs' });
-    try {
-      setIsSpeaking(true);
-      const blob = await callElevenLabs(word, settings.elevenLabsVoiceId, true);
-      if (blob) {
-        playBlob(blob);
+    // Debounce rapid slider movements — only the last phoneme in a burst plays
+    speechQueue.debouncedEnqueue(async () => {
+      if (settings.ttsEngine === 'elevenlabs') {
+        await elevenLabsPhoneme(phoneme);
       } else {
-        setIsSpeaking(false);
-        speakWordWithWebSpeech(word);
+        const { text } = resolvePhonemeText(phoneme, 'web-speech');
+        logSound('phoneme-resolve', { phoneme, text, engine: 'web-speech' });
+        await webSpeechSpeak(text);
       }
-    } catch (error) {
-      console.error('[Sound] ElevenLabs word error:', error);
-      setIsSpeaking(false);
-      speakWordWithWebSpeech(word);
-    }
-  }, [settings.elevenLabsVoiceId, callElevenLabs, playBlob, speakWordWithWebSpeech]);
+    }, 100);
+  }, [soundscape.isEnabled, settings.phonemesEnabled, settings.ttsEngine, elevenLabsPhoneme, webSpeechSpeak]);
 
-  // ---------------------------------------------------------------------------
-  // speakWord — dispatcher
-  // ---------------------------------------------------------------------------
   const speakWord = useCallback((word: string) => {
     if (!soundscape.isEnabled) return;
-    if (settings.ttsEngine === 'elevenlabs') {
-      speakWordWithElevenLabs(word);
-    } else {
-      speakWordWithWebSpeech(word);
-    }
-  }, [soundscape.isEnabled, settings.ttsEngine, speakWordWithElevenLabs, speakWordWithWebSpeech]);
+
+    speechQueue.flush();
+    speechQueue.enqueue(async () => {
+      if (settings.ttsEngine === 'elevenlabs') {
+        await elevenLabsWord(word);
+      } else {
+        logSound('word', { word, engine: 'web-speech' });
+        await webSpeechSpeak(word, settings.speechRate + 0.1);
+      }
+    });
+  }, [soundscape.isEnabled, settings.ttsEngine, elevenLabsWord, webSpeechSpeak, settings.speechRate]);
+
+  /**
+   * speakBlend — cascade phonemes at shrinking intervals then speak the word.
+   * This gives the child the auditory experience of sounds merging into a word.
+   */
+  const speakBlend = useCallback((phonemes: string[], word: string) => {
+    if (!soundscape.isEnabled) return;
+
+    speechQueue.flush();
+
+    const abortController = new AbortController();
+
+    const playItems = phonemes.map((p) => async () => {
+      if (settings.ttsEngine === 'elevenlabs') {
+        await elevenLabsPhoneme(p);
+      } else {
+        const { text } = resolvePhonemeText(p, 'web-speech');
+        await webSpeechSpeak(text);
+      }
+    });
+
+    speechQueue.enqueue(async () => {
+      try {
+        // Cascade: 350ms gap → 80ms gap across phonemes
+        await speechQueue.cascade(playItems, 350, 80, abortController.signal);
+
+        // Brief pause then full word
+        await new Promise(r => setTimeout(r, 400));
+
+        if (settings.ttsEngine === 'elevenlabs') {
+          await elevenLabsWord(word);
+        } else {
+          await webSpeechSpeak(word, settings.speechRate + 0.1);
+        }
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') throw e;
+      }
+    });
+  }, [soundscape.isEnabled, settings.ttsEngine, settings.speechRate, elevenLabsPhoneme, elevenLabsWord, webSpeechSpeak]);
 
   return (
     <SoundContext.Provider
@@ -365,6 +374,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         playClick: soundscape.playClick,
         speakPhoneme,
         speakWord,
+        speakBlend,
         isSpeaking,
       }}
     >
@@ -394,6 +404,7 @@ export function useSound() {
       playClick: () => {},
       speakPhoneme: () => {},
       speakWord: () => {},
+      speakBlend: (_p: string[], _w: string) => {},
       isSpeaking: false,
     };
   }
