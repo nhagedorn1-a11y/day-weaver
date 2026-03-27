@@ -24,7 +24,7 @@ export function PhonemeSlider({
   const [isBlending, setIsBlending] = useState(false);
   const [blendProgress, setBlendProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
-  const { speakPhoneme, speakBlend, playComplete } = useSound();
+  const { speakPhoneme, speakWord, speakBlend, playComplete } = useSound();
   const lastSpokenRef = useRef<number>(-1);
 
   // Reset state when word changes
