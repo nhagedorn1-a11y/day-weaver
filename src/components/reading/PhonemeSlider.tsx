@@ -199,10 +199,7 @@ export function PhonemeSlider({
       {(isComplete || showWord) && (
         <div className="flex flex-col items-center gap-3 animate-scale-in">
           <button
-            onClick={() => {
-              const { speakWord } = useSound();
-              speakWord(word);
-            }}
+            onClick={() => speakWord(word)}
             className="px-10 py-5 rounded-3xl bg-calm/20 border-3 border-calm hover:bg-calm/30 transition-colors"
             aria-label={`Hear the word ${word}`}
           >
