@@ -20,23 +20,29 @@ interface WritingModuleProps {
 type WritingView = 'home' | 'uppercase' | 'lowercase' | 'numbers' | 'practice';
 type PracticeItem = LetterCardType | NumberCard;
 
-// All letters/numbers in teaching order
+// All letters/numbers in teaching order (grouped by stroke family)
 const ALL_ITEMS_ORDER = [
-  'L','l','I','i','T','t','F','E',
-  'O','o','C','c','Q','G',
-  'M','m','N','n','H','h','R','r',
-  'A','V','v','W','w','X','x','K','k',
-  'g','j','p','q','y',
+  // Line letters
+  'L','l','I','i','T','t','F','f','E','e',
+  // Circle letters
+  'O','o','C','c','Q','G','S','s','D','d',
+  // Hump letters
+  'M','m','N','n','H','h','R','r','B','b','P',
+  // Slant letters
+  'A','a','V','v','W','w','X','x','K','k','Y','Z','z',
+  // Tail letters (descenders)
+  'g','j','p','q','y','J','U','u',
+  // Numbers
   '0','1','2','3','4','5','6','7','8','9','10',
 ];
 
 const LETTER_GROUPS = [
   { id: 'numbers', name: 'Numbers 0-10', items: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], isNumbers: true },
-  { id: 'line', name: 'Line Letters', items: ['L', 'l', 'I', 'i', 'T', 't', 'F', 'E'], isNumbers: false },
-  { id: 'circle', name: 'Circle Letters', items: ['O', 'o', 'C', 'c', 'Q', 'G'], isNumbers: false },
-  { id: 'hump', name: 'Hump Letters', items: ['M', 'm', 'N', 'n', 'H', 'h', 'R', 'r'], isNumbers: false },
-  { id: 'slant', name: 'Slant Letters', items: ['A', 'V', 'v', 'W', 'w', 'X', 'x', 'K', 'k'], isNumbers: false },
-  { id: 'tail', name: 'Tail Letters', items: ['g', 'j', 'p', 'q', 'y'], isNumbers: false },
+  { id: 'line', name: 'Line Letters', items: ['L', 'l', 'I', 'i', 'T', 't', 'F', 'f', 'E', 'e'], isNumbers: false },
+  { id: 'circle', name: 'Circle & Curve Letters', items: ['O', 'o', 'C', 'c', 'Q', 'G', 'S', 's', 'D', 'd'], isNumbers: false },
+  { id: 'hump', name: 'Hump & Bump Letters', items: ['M', 'm', 'N', 'n', 'H', 'h', 'R', 'r', 'B', 'b', 'P'], isNumbers: false },
+  { id: 'slant', name: 'Slant Letters', items: ['A', 'a', 'V', 'v', 'W', 'w', 'X', 'x', 'K', 'k', 'Y', 'Z', 'z'], isNumbers: false },
+  { id: 'tail', name: 'Tail & Hook Letters', items: ['g', 'j', 'p', 'q', 'y', 'J', 'U', 'u'], isNumbers: false },
 ];
 
 export function WritingModule({ onBack, onTokensEarned }: WritingModuleProps) {
