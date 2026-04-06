@@ -9,7 +9,7 @@ import {
 import { ScienceActivity, LabCard } from '@/types/activities';
 import { 
   ArrowLeft, ChevronRight, Clock, Star, Trophy, 
-  Volume2, Check, HelpCircle, Lightbulb, BookOpen
+  Volume2, Check, HelpCircle, Lightbulb, BookOpen, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSound } from '@/contexts/SoundContext';
@@ -21,6 +21,29 @@ interface ScienceModuleProps {
 
 type ScienceView = 'home' | 'lane' | 'activity' | 'cards' | 'cardDetail';
 
+// Difficulty gating helpers
+const COMPLETIONS_TO_UNLOCK = 3; // Complete 3 activities at current level to unlock next
+
+function getScienceCompletedIds(): string[] {
+  try { return JSON.parse(localStorage.getItem('science-completed') || '[]'); } catch { return []; }
+}
+function saveScienceCompleted(ids: string[]) {
+  try { localStorage.setItem('science-completed', JSON.stringify(ids)); } catch { /* noop */ }
+}
+function computeUnlockedDifficulty(completedIds: string[], activities: ScienceActivity[]): number {
+  let unlocked = 1;
+  for (let d = 1; d <= 5; d++) {
+    const atLevel = activities.filter(a => a.difficulty === d);
+    const completedAtLevel = atLevel.filter(a => completedIds.includes(a.id)).length;
+    if (completedAtLevel >= Math.min(COMPLETIONS_TO_UNLOCK, atLevel.length)) {
+      unlocked = d + 1;
+    } else {
+      break;
+    }
+  }
+  return unlocked;
+}
+
 export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
   const { speakWord } = useSound();
   const [view, setView] = useState<ScienceView>('home');
@@ -31,6 +54,7 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
   const [selectedDuration, setSelectedDuration] = useState(5);
   const [unlockedCards, setUnlockedCards] = useState<string[]>([]);
   const [showHint, setShowHint] = useState(false);
+  const [completedActivityIds, setCompletedActivityIds] = useState<string[]>(getScienceCompletedIds);
 
   const laneActivities = useMemo(() => 
     selectedLane ? getActivitiesByLane(selectedLane) : [],
@@ -53,6 +77,13 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
 
   const handleActivityComplete = () => {
     if (!selectedActivity) return;
+
+    // Track completion for difficulty gating
+    if (!completedActivityIds.includes(selectedActivity.id)) {
+      const newCompleted = [...completedActivityIds, selectedActivity.id];
+      setCompletedActivityIds(newCompleted);
+      saveScienceCompleted(newCompleted);
+    }
 
     // Unlock lab card if available
     if (selectedActivity.labCardId && !unlockedCards.includes(selectedActivity.labCardId)) {
@@ -326,18 +357,24 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
         </div>
 
         <div className="p-4 space-y-3">
-          {laneActivities
-            .filter(a => a.durationOptions.includes(selectedDuration))
-            .map((activity) => {
+          {(() => {
+            const filtered = laneActivities.filter(a => a.durationOptions.includes(selectedDuration));
+            const unlockedDiff = computeUnlockedDifficulty(completedActivityIds, filtered);
+            return filtered.map((activity) => {
               const hasCard = activity.labCardId && !unlockedCards.includes(activity.labCardId);
+              const isLocked = activity.difficulty > unlockedDiff;
+              const isCompleted = completedActivityIds.includes(activity.id);
               
               return (
                 <button
                   key={activity.id}
-                  onClick={() => handleActivitySelect(activity)}
-                  className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card border-2 border-border hover:border-primary/50 transition-colors"
+                  onClick={() => !isLocked && handleActivitySelect(activity)}
+                  disabled={isLocked}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl bg-card border transition-all text-left ${
+                    isLocked ? 'opacity-40 cursor-not-allowed' : 'hover:shadow-sm'
+                  } ${isCompleted ? 'border-primary/30' : 'border-border'}`}
                 >
-                  <div className={`w-14 h-14 rounded-2xl ${laneInfo.color} flex items-center justify-center`}>
+                  <div className={`w-14 h-14 rounded-xl ${laneInfo.color} flex items-center justify-center`}>
                     <span className="text-2xl">{activity.icon}</span>
                   </div>
                   <div className="flex-1 text-left">
@@ -365,11 +402,18 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
                         <div key={i} className="w-2 h-2 rounded-full bg-muted ml-0.5" />
                       ))}
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    {isLocked ? (
+                      <Lock className="w-4 h-4 text-muted-foreground" />
+                    ) : isCompleted ? (
+                      <span className="text-primary text-sm">✓</span>
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    )}
                   </div>
                 </button>
               );
-            })}
+            });
+          })()}
 
           {laneActivities.filter(a => a.durationOptions.includes(selectedDuration)).length === 0 && (
             <div className="text-center py-8 text-muted-foreground">

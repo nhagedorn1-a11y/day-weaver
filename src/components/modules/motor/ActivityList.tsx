@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Lock } from 'lucide-react';
 
 interface ActivityItem {
   id: string;
@@ -15,9 +15,16 @@ interface ActivityListProps {
   items: ActivityItem[];
   onSelect: (item: ActivityItem) => void;
   onBack: () => void;
+  /** If set, activities above this difficulty are locked */
+  unlockedDifficulty?: number;
+  completedIds?: string[];
 }
 
-export function ActivityList({ title, description, items, onSelect, onBack }: ActivityListProps) {
+export function ActivityList({ title, description, items, onSelect, onBack, unlockedDifficulty, completedIds = [] }: ActivityListProps) {
+  // Group by difficulty if gating is active
+  const maxDiff = Math.max(...items.map(i => i.difficulty ?? 1));
+  const showDifficultyGroups = unlockedDifficulty !== undefined && maxDiff > 1;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -37,32 +44,49 @@ export function ActivityList({ title, description, items, onSelect, onBack }: Ac
       <div className="p-4 space-y-3">
         <p className="text-muted-foreground text-sm mb-4">{description}</p>
 
-        {items.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onSelect(item)}
-            className="w-full flex items-center gap-4 p-4 rounded bg-card border-2 border-border hover:border-primary/50 transition-colors"
-          >
-            <span className="text-4xl">{item.emoji}</span>
-            <div className="flex-1 text-left">
-              <span className="font-semibold block">{item.title}</span>
-              <span className="text-sm text-muted-foreground">
-                {item.difficulty && (
-                  <span className="flex gap-0.5 mt-1">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <span 
-                        key={i} 
-                        className={`w-1.5 h-1.5 rounded-full ${i < item.difficulty! ? 'bg-primary' : 'bg-muted'}`} 
-                      />
-                    ))}
-                  </span>
-                )}
-                {item.steps && `${item.steps.length} steps`}
-              </span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </button>
-        ))}
+        {items.map((item) => {
+          const diff = item.difficulty ?? 1;
+          const isLocked = unlockedDifficulty !== undefined && diff > unlockedDifficulty;
+          const isCompleted = completedIds.includes(item.id);
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => !isLocked && onSelect(item)}
+              disabled={isLocked}
+              className={`w-full flex items-center gap-4 p-4 rounded-xl bg-card border text-left transition-all ${
+                isLocked
+                  ? 'opacity-40 cursor-not-allowed'
+                  : 'hover:shadow-sm active:scale-[0.99]'
+              } ${isCompleted ? 'border-primary/30' : 'border-border'}`}
+            >
+              <span className="text-4xl">{item.emoji}</span>
+              <div className="flex-1 text-left">
+                <span className="font-semibold block">{item.title}</span>
+                <span className="text-sm text-muted-foreground">
+                  {item.difficulty && (
+                    <span className="flex gap-0.5 mt-1">
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <span 
+                          key={i} 
+                          className={`w-1.5 h-1.5 rounded-full ${i < item.difficulty! ? 'bg-primary' : 'bg-muted'}`} 
+                        />
+                      ))}
+                    </span>
+                  )}
+                  {item.steps && `${item.steps.length} steps`}
+                </span>
+              </div>
+              {isLocked ? (
+                <Lock className="w-4 h-4 text-muted-foreground" />
+              ) : isCompleted ? (
+                <span className="text-primary text-sm">✓</span>
+              ) : (
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
