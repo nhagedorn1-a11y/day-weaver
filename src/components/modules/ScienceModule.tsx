@@ -357,18 +357,24 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
         </div>
 
         <div className="p-4 space-y-3">
-          {laneActivities
-            .filter(a => a.durationOptions.includes(selectedDuration))
-            .map((activity) => {
+          {(() => {
+            const filtered = laneActivities.filter(a => a.durationOptions.includes(selectedDuration));
+            const unlockedDiff = computeUnlockedDifficulty(completedActivityIds, filtered);
+            return filtered.map((activity) => {
               const hasCard = activity.labCardId && !unlockedCards.includes(activity.labCardId);
+              const isLocked = activity.difficulty > unlockedDiff;
+              const isCompleted = completedActivityIds.includes(activity.id);
               
               return (
                 <button
                   key={activity.id}
-                  onClick={() => handleActivitySelect(activity)}
-                  className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card border-2 border-border hover:border-primary/50 transition-colors"
+                  onClick={() => !isLocked && handleActivitySelect(activity)}
+                  disabled={isLocked}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl bg-card border transition-all text-left ${
+                    isLocked ? 'opacity-40 cursor-not-allowed' : 'hover:shadow-sm'
+                  } ${isCompleted ? 'border-primary/30' : 'border-border'}`}
                 >
-                  <div className={`w-14 h-14 rounded-2xl ${laneInfo.color} flex items-center justify-center`}>
+                  <div className={`w-14 h-14 rounded-xl ${laneInfo.color} flex items-center justify-center`}>
                     <span className="text-2xl">{activity.icon}</span>
                   </div>
                   <div className="flex-1 text-left">
@@ -396,11 +402,18 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
                         <div key={i} className="w-2 h-2 rounded-full bg-muted ml-0.5" />
                       ))}
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    {isLocked ? (
+                      <Lock className="w-4 h-4 text-muted-foreground" />
+                    ) : isCompleted ? (
+                      <span className="text-primary text-sm">✓</span>
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    )}
                   </div>
                 </button>
               );
-            })}
+            });
+          })()}
 
           {laneActivities.filter(a => a.durationOptions.includes(selectedDuration)).length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
