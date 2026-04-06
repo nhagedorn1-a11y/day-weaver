@@ -9,7 +9,7 @@ import {
 import { ScienceActivity, LabCard } from '@/types/activities';
 import { 
   ArrowLeft, ChevronRight, Clock, Star, Trophy, 
-  Volume2, Check, HelpCircle, Lightbulb, BookOpen
+  Volume2, Check, HelpCircle, Lightbulb, BookOpen, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSound } from '@/contexts/SoundContext';
