@@ -29,6 +29,8 @@ interface SoundContextType {
   playTrace: () => void;
   playClick: () => void;
   speakPhoneme: (phoneme: string) => void;
+  /** Speak the letter name (e.g. "A", "B") instead of its phonetic sound */
+  speakLetterName: (letter: string) => void;
   speakWord: (word: string) => void;
   /** Cascade phonemes at shrinking intervals then speak the full word */
   speakBlend: (phonemes: string[], word: string) => void;
@@ -301,6 +303,19 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     }, 100);
   }, [soundscape.isEnabled, settings.phonemesEnabled, settings.ttsEngine, elevenLabsPhoneme, webSpeechSpeak]);
 
+  /** Speak the letter name (e.g. "A", "B", "Z") — used by keyboard/typing modules */
+  const speakLetterName = useCallback((letter: string) => {
+    if (!soundscape.isEnabled) return;
+    speechQueue.debouncedEnqueue(async () => {
+      const name = letter.toUpperCase();
+      if (settings.ttsEngine === 'elevenlabs') {
+        await elevenLabsWord(name);
+      } else {
+        await webSpeechSpeak(name, settings.speechRate);
+      }
+    }, 100);
+  }, [soundscape.isEnabled, settings.ttsEngine, settings.speechRate, elevenLabsWord, webSpeechSpeak]);
+
   const speakWord = useCallback((word: string) => {
     if (!soundscape.isEnabled) return;
 
@@ -373,6 +388,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         playTrace,
         playClick: soundscape.playClick,
         speakPhoneme,
+        speakLetterName,
         speakWord,
         speakBlend,
         isSpeaking,
@@ -403,6 +419,7 @@ export function useSound() {
       playTrace: () => {},
       playClick: () => {},
       speakPhoneme: () => {},
+      speakLetterName: () => {},
       speakWord: () => {},
       speakBlend: (_p: string[], _w: string) => {},
       isSpeaking: false,

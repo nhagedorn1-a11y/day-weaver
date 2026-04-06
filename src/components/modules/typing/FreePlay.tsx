@@ -13,7 +13,7 @@ const REDIRECT_THRESHOLD = 20;
 const REDIRECT_REPEAT = 30;
 
 export function FreePlay({ onBack }: FreePlayProps) {
-  const { speakPhoneme, playTap } = useSound();
+  const { speakLetterName, playTap } = useSound();
   const [displayLetter, setDisplayLetter] = useState<string | null>(null);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [pressCount, setPressCount] = useState(0);
@@ -26,7 +26,7 @@ export function FreePlay({ onBack }: FreePlayProps) {
       playTap();
       setDisplayLetter(key === 'space' ? '␣' : key === 'enter' ? '↵' : key === 'backspace' ? '⌫' : '⬆️');
     } else {
-      speakPhoneme(key);
+      speakLetterName(key);
       setDisplayLetter(key.toUpperCase());
     }
     setPressedKey(key);
@@ -41,7 +41,7 @@ export function FreePlay({ onBack }: FreePlayProps) {
       }
       return next;
     });
-  }, [speakPhoneme, playTap, redirectDismissed, showRedirect]);
+  }, [speakLetterName, playTap, redirectDismissed, showRedirect]);
 
   // Physical keyboard
   useEffect(() => {

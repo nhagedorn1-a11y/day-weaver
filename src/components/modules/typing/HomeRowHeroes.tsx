@@ -12,7 +12,7 @@ interface HomeRowHeroesProps {
 }
 
 export function HomeRowHeroes({ onBack, onTokensEarned }: HomeRowHeroesProps) {
-  const { speakPhoneme, playCorrect, playComplete, playTap } = useSound();
+  const { speakLetterName, playCorrect, playComplete, playTap } = useSound();
   const [lessonIndex, setLessonIndex] = useState(0);
   const [targetKeyIndex, setTargetKeyIndex] = useState(0);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export function HomeRowHeroes({ onBack, onTokensEarned }: HomeRowHeroesProps) {
     setTimeout(() => setPressedKey(null), 200);
 
     if (key === targetKey) {
-      speakPhoneme(key);
+      speakLetterName(key);
       playCorrect();
       setNudgeKey(null);
 
@@ -53,7 +53,7 @@ export function HomeRowHeroes({ onBack, onTokensEarned }: HomeRowHeroesProps) {
       setNudgeKey(targetKey);
       setTimeout(() => setNudgeKey(null), 1500);
     }
-  }, [targetKey, targetKeyIndex, lesson, lessonIndex, isAllDone, speakPhoneme, playCorrect, playComplete, playTap, onTokensEarned]);
+  }, [targetKey, targetKeyIndex, lesson, lessonIndex, isAllDone, speakLetterName, playCorrect, playComplete, playTap, onTokensEarned]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

@@ -14,7 +14,7 @@ interface WordBuilderProps {
 const SESSION_WORDS = 3; // Rev 6: fixed session size
 
 export function WordBuilder({ onBack, onTokensEarned }: WordBuilderProps) {
-  const { speakPhoneme, playCorrect, playComplete, playTap, speakWord } = useSound();
+  const { speakLetterName, playCorrect, playComplete, playTap, speakWord } = useSound();
   const [wordIndex, setWordIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export function WordBuilder({ onBack, onTokensEarned }: WordBuilderProps) {
     setTimeout(() => setPressedKey(null), 200);
 
     if (key === targetChar) {
-      speakPhoneme(key);
+      speakLetterName(key);
       playCorrect();
       setNudgeKey(null);
 
@@ -78,7 +78,7 @@ export function WordBuilder({ onBack, onTokensEarned }: WordBuilderProps) {
       setNudgeKey(targetChar);
       setTimeout(() => setNudgeKey(null), 1500);
     }
-  }, [targetChar, charIndex, currentWord, showCelebration, wordsCompleted, speakPhoneme, playCorrect, playComplete, playTap, speakWord, onTokensEarned]);
+  }, [targetChar, charIndex, currentWord, showCelebration, wordsCompleted, speakLetterName, playCorrect, playComplete, playTap, speakWord, onTokensEarned]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
