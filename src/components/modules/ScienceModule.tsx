@@ -78,6 +78,13 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
   const handleActivityComplete = () => {
     if (!selectedActivity) return;
 
+    // Track completion for difficulty gating
+    if (!completedActivityIds.includes(selectedActivity.id)) {
+      const newCompleted = [...completedActivityIds, selectedActivity.id];
+      setCompletedActivityIds(newCompleted);
+      saveScienceCompleted(newCompleted);
+    }
+
     // Unlock lab card if available
     if (selectedActivity.labCardId && !unlockedCards.includes(selectedActivity.labCardId)) {
       setUnlockedCards(prev => [...prev, selectedActivity.labCardId!]);
