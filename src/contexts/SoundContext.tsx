@@ -303,6 +303,19 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     }, 100);
   }, [soundscape.isEnabled, settings.phonemesEnabled, settings.ttsEngine, elevenLabsPhoneme, webSpeechSpeak]);
 
+  /** Speak the letter name (e.g. "A", "B", "Z") — used by keyboard/typing modules */
+  const speakLetterName = useCallback((letter: string) => {
+    if (!soundscape.isEnabled) return;
+    speechQueue.debouncedEnqueue(async () => {
+      const name = letter.toUpperCase();
+      if (settings.ttsEngine === 'elevenlabs') {
+        await elevenLabsWord(name);
+      } else {
+        await webSpeechSpeak(name, settings.speechRate);
+      }
+    }, 100);
+  }, [soundscape.isEnabled, settings.ttsEngine, settings.speechRate, elevenLabsWord, webSpeechSpeak]);
+
   const speakWord = useCallback((word: string) => {
     if (!soundscape.isEnabled) return;
 
