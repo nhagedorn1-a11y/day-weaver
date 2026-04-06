@@ -21,6 +21,29 @@ interface ScienceModuleProps {
 
 type ScienceView = 'home' | 'lane' | 'activity' | 'cards' | 'cardDetail';
 
+// Difficulty gating helpers
+const COMPLETIONS_TO_UNLOCK = 3; // Complete 3 activities at current level to unlock next
+
+function getScienceCompletedIds(): string[] {
+  try { return JSON.parse(localStorage.getItem('science-completed') || '[]'); } catch { return []; }
+}
+function saveScienceCompleted(ids: string[]) {
+  try { localStorage.setItem('science-completed', JSON.stringify(ids)); } catch { /* noop */ }
+}
+function computeUnlockedDifficulty(completedIds: string[], activities: ScienceActivity[]): number {
+  let unlocked = 1;
+  for (let d = 1; d <= 5; d++) {
+    const atLevel = activities.filter(a => a.difficulty === d);
+    const completedAtLevel = atLevel.filter(a => completedIds.includes(a.id)).length;
+    if (completedAtLevel >= Math.min(COMPLETIONS_TO_UNLOCK, atLevel.length)) {
+      unlocked = d + 1;
+    } else {
+      break;
+    }
+  }
+  return unlocked;
+}
+
 export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
   const { speakWord } = useSound();
   const [view, setView] = useState<ScienceView>('home');
@@ -31,6 +54,7 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
   const [selectedDuration, setSelectedDuration] = useState(5);
   const [unlockedCards, setUnlockedCards] = useState<string[]>([]);
   const [showHint, setShowHint] = useState(false);
+  const [completedActivityIds, setCompletedActivityIds] = useState<string[]>(getScienceCompletedIds);
 
   const laneActivities = useMemo(() => 
     selectedLane ? getActivitiesByLane(selectedLane) : [],
