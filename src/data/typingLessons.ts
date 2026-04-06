@@ -63,39 +63,51 @@ export const FINGER_MAP: Record<string, string> = {
   l: 'Right Ring',
 };
 
-// Key Hunt levels — progressive difficulty
-export const KEY_HUNT_LEVELS: KeyHuntLevel[] = [
-  // Full hint (key highlighted + row + hand)
-  { id: 'kh1', targetKey: 'a', hint: 'full', emoji: '🍎', keyword: 'Apple' },
-  { id: 'kh2', targetKey: 's', hint: 'full', emoji: '🌟', keyword: 'Star' },
-  { id: 'kh3', targetKey: 'd', hint: 'full', emoji: '🐕', keyword: 'Dog' },
-  { id: 'kh4', targetKey: 'f', hint: 'full', emoji: '🐸', keyword: 'Frog' },
-  { id: 'kh5', targetKey: 'j', hint: 'full', emoji: '🃏', keyword: 'Joker' },
-  { id: 'kh6', targetKey: 'k', hint: 'full', emoji: '🪁', keyword: 'Kite' },
-  { id: 'kh7', targetKey: 'l', hint: 'full', emoji: '🦁', keyword: 'Lion' },
-  // Row hint only
-  { id: 'kh8', targetKey: 'b', hint: 'row', emoji: '🐻', keyword: 'Bear' },
-  { id: 'kh9', targetKey: 'c', hint: 'row', emoji: '🐱', keyword: 'Cat' },
-  { id: 'kh10', targetKey: 'e', hint: 'row', emoji: '🐘', keyword: 'Elephant' },
-  { id: 'kh11', targetKey: 'g', hint: 'row', emoji: '🦒', keyword: 'Giraffe' },
-  { id: 'kh12', targetKey: 'h', hint: 'row', emoji: '🐴', keyword: 'Horse' },
-  { id: 'kh13', targetKey: 'm', hint: 'row', emoji: '🐵', keyword: 'Monkey' },
-  { id: 'kh14', targetKey: 'n', hint: 'row', emoji: '🥜', keyword: 'Nut' },
-  // Hand hint only
-  { id: 'kh15', targetKey: 'o', hint: 'hand', emoji: '🐙', keyword: 'Octopus' },
-  { id: 'kh16', targetKey: 'p', hint: 'hand', emoji: '🐧', keyword: 'Penguin' },
-  { id: 'kh17', targetKey: 'r', hint: 'hand', emoji: '🌈', keyword: 'Rainbow' },
-  { id: 'kh18', targetKey: 't', hint: 'hand', emoji: '🐯', keyword: 'Tiger' },
-  { id: 'kh19', targetKey: 'w', hint: 'hand', emoji: '🐋', keyword: 'Whale' },
-  { id: 'kh20', targetKey: 'x', hint: 'hand', emoji: '❌', keyword: 'X-ray' },
-  // No hint
-  { id: 'kh21', targetKey: 'i', hint: 'none', emoji: '🍦', keyword: 'Ice cream' },
-  { id: 'kh22', targetKey: 'u', hint: 'none', emoji: '☂️', keyword: 'Umbrella' },
-  { id: 'kh23', targetKey: 'v', hint: 'none', emoji: '🌋', keyword: 'Volcano' },
-  { id: 'kh24', targetKey: 'y', hint: 'none', emoji: '🪀', keyword: 'Yo-yo' },
-  { id: 'kh25', targetKey: 'z', hint: 'none', emoji: '🦓', keyword: 'Zebra' },
-  { id: 'kh26', targetKey: 'q', hint: 'none', emoji: '👑', keyword: 'Queen' },
+// Key Hunt — full alphabet available at every hint tier for variety
+// Each letter has an emoji + keyword association
+const KEY_LETTER_DATA: Record<string, { emoji: string; keyword: string }> = {
+  a: { emoji: '🍎', keyword: 'Apple' }, b: { emoji: '🐻', keyword: 'Bear' },
+  c: { emoji: '🐱', keyword: 'Cat' }, d: { emoji: '🐕', keyword: 'Dog' },
+  e: { emoji: '🐘', keyword: 'Elephant' }, f: { emoji: '🐸', keyword: 'Frog' },
+  g: { emoji: '🦒', keyword: 'Giraffe' }, h: { emoji: '🐴', keyword: 'Horse' },
+  i: { emoji: '🍦', keyword: 'Ice cream' }, j: { emoji: '🃏', keyword: 'Joker' },
+  k: { emoji: '🪁', keyword: 'Kite' }, l: { emoji: '🦁', keyword: 'Lion' },
+  m: { emoji: '🐵', keyword: 'Monkey' }, n: { emoji: '🥜', keyword: 'Nut' },
+  o: { emoji: '🐙', keyword: 'Octopus' }, p: { emoji: '🐧', keyword: 'Penguin' },
+  q: { emoji: '👑', keyword: 'Queen' }, r: { emoji: '🌈', keyword: 'Rainbow' },
+  s: { emoji: '🌟', keyword: 'Star' }, t: { emoji: '🐯', keyword: 'Tiger' },
+  u: { emoji: '☂️', keyword: 'Umbrella' }, v: { emoji: '🌋', keyword: 'Volcano' },
+  w: { emoji: '🐋', keyword: 'Whale' }, x: { emoji: '❌', keyword: 'X-ray' },
+  y: { emoji: '🪀', keyword: 'Yo-yo' }, z: { emoji: '🦓', keyword: 'Zebra' },
+};
+
+const ALL_LETTERS = Object.keys(KEY_LETTER_DATA);
+
+// Build full pool: every letter at every hint level
+export const KEY_HUNT_LEVELS: KeyHuntLevel[] = (['full', 'row', 'hand', 'none'] as const).flatMap(
+  (hint, hintIdx) => ALL_LETTERS.map((key, i) => ({
+    id: `kh-${hint}-${key}`,
+    targetKey: key,
+    hint,
+    emoji: KEY_LETTER_DATA[key].emoji,
+    keyword: KEY_LETTER_DATA[key].keyword,
+  }))
+);
+
+/** Key Hunt difficulty tier metadata */
+export const KEY_HUNT_TIERS = [
+  { hint: 'full' as const, label: 'Easy', emoji: '🟢', desc: 'Key is highlighted for you' },
+  { hint: 'row' as const, label: 'Medium', emoji: '🟡', desc: 'You know which row' },
+  { hint: 'hand' as const, label: 'Hard', emoji: '🟠', desc: 'You know which hand' },
+  { hint: 'none' as const, label: 'Expert', emoji: '🔴', desc: 'No hints at all!' },
 ];
+
+/** Get random Key Hunt levels for a specific hint tier */
+export function getRandomKeyHuntLevels(hint: 'full' | 'row' | 'hand' | 'none', count: number): KeyHuntLevel[] {
+  const pool = KEY_HUNT_LEVELS.filter(l => l.hint === hint);
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
 
 // Word Builder words — 5 difficulty tiers, 20+ words each
 export const WORD_BUILDER_WORDS: WordBuilderWord[] = [
