@@ -12,7 +12,7 @@ export interface WordBuilderWord {
   id: string;
   word: string;
   emoji: string;
-  difficulty: 1 | 2 | 3;
+  difficulty: 1 | 2 | 3 | 4 | 5;
 }
 
 export interface HomeRowLesson {
