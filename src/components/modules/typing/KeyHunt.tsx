@@ -40,7 +40,7 @@ function getVisibleKeys(targetKey: string, hint: string, allKeys: string[]): str
 }
 
 export function KeyHunt({ onBack, onTokensEarned }: KeyHuntProps) {
-  const { speakPhoneme, playCorrect, playTap } = useSound();
+  const { speakLetterName, playCorrect, playTap } = useSound();
   const [levelIndex, setLevelIndex] = useState(0);
   const [sessionCorrect, setSessionCorrect] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -79,7 +79,7 @@ export function KeyHunt({ onBack, onTokensEarned }: KeyHuntProps) {
 
     if (key === level.targetKey) {
       playCorrect();
-      speakPhoneme(key);
+      speakLetterName(key);
       setNudgeKey(null);
 
       const nextSessionCorrect = sessionCorrect + 1;
@@ -113,7 +113,7 @@ export function KeyHunt({ onBack, onTokensEarned }: KeyHuntProps) {
       setNudgeKey(level.targetKey);
       setTimeout(() => setNudgeKey(null), 1500);
     }
-  }, [level.targetKey, showCelebration, sessionCorrect, playCorrect, playTap, speakPhoneme, onTokensEarned]);
+  }, [level.targetKey, showCelebration, sessionCorrect, playCorrect, playTap, speakLetterName, onTokensEarned]);
 
   // Physical keyboard
   useEffect(() => {

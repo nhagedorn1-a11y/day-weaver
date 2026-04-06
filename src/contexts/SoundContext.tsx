@@ -29,6 +29,8 @@ interface SoundContextType {
   playTrace: () => void;
   playClick: () => void;
   speakPhoneme: (phoneme: string) => void;
+  /** Speak the letter name (e.g. "A", "B") instead of its phonetic sound */
+  speakLetterName: (letter: string) => void;
   speakWord: (word: string) => void;
   /** Cascade phonemes at shrinking intervals then speak the full word */
   speakBlend: (phonemes: string[], word: string) => void;
