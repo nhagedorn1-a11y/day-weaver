@@ -97,30 +97,141 @@ export const KEY_HUNT_LEVELS: KeyHuntLevel[] = [
   { id: 'kh26', targetKey: 'q', hint: 'none', emoji: '👑', keyword: 'Queen' },
 ];
 
-// Word Builder words
+// Word Builder words — 5 difficulty tiers, 20+ words each
 export const WORD_BUILDER_WORDS: WordBuilderWord[] = [
-  // 3-letter
-  { id: 'wb1', word: 'cat', emoji: '🐱', difficulty: 1 },
-  { id: 'wb2', word: 'dog', emoji: '🐕', difficulty: 1 },
-  { id: 'wb3', word: 'sun', emoji: '☀️', difficulty: 1 },
-  { id: 'wb4', word: 'hat', emoji: '🎩', difficulty: 1 },
-  { id: 'wb5', word: 'bug', emoji: '🐛', difficulty: 1 },
-  { id: 'wb6', word: 'cup', emoji: '☕', difficulty: 1 },
-  { id: 'wb7', word: 'pen', emoji: '🖊️', difficulty: 1 },
-  { id: 'wb8', word: 'fox', emoji: '🦊', difficulty: 1 },
-  // 4-letter
-  { id: 'wb9', word: 'frog', emoji: '🐸', difficulty: 2 },
-  { id: 'wb10', word: 'duck', emoji: '🦆', difficulty: 2 },
-  { id: 'wb11', word: 'fish', emoji: '🐟', difficulty: 2 },
-  { id: 'wb12', word: 'lamp', emoji: '💡', difficulty: 2 },
-  { id: 'wb13', word: 'star', emoji: '⭐', difficulty: 2 },
-  { id: 'wb14', word: 'moon', emoji: '🌙', difficulty: 2 },
-  // 5-letter
-  { id: 'wb15', word: 'apple', emoji: '🍎', difficulty: 3 },
-  { id: 'wb16', word: 'train', emoji: '🚂', difficulty: 3 },
-  { id: 'wb17', word: 'happy', emoji: '😊', difficulty: 3 },
-  { id: 'wb18', word: 'cloud', emoji: '☁️', difficulty: 3 },
+  // ── Level 1: 2-3 letter CVC / simple words ──
+  { id: 'wb1',  word: 'cat', emoji: '🐱', difficulty: 1 },
+  { id: 'wb2',  word: 'dog', emoji: '🐕', difficulty: 1 },
+  { id: 'wb3',  word: 'sun', emoji: '☀️', difficulty: 1 },
+  { id: 'wb4',  word: 'hat', emoji: '🎩', difficulty: 1 },
+  { id: 'wb5',  word: 'bug', emoji: '🐛', difficulty: 1 },
+  { id: 'wb6',  word: 'cup', emoji: '☕', difficulty: 1 },
+  { id: 'wb7',  word: 'pen', emoji: '🖊️', difficulty: 1 },
+  { id: 'wb8',  word: 'fox', emoji: '🦊', difficulty: 1 },
+  { id: 'wb9',  word: 'bed', emoji: '🛏️', difficulty: 1 },
+  { id: 'wb10', word: 'pig', emoji: '🐷', difficulty: 1 },
+  { id: 'wb11', word: 'hen', emoji: '🐔', difficulty: 1 },
+  { id: 'wb12', word: 'jam', emoji: '🍯', difficulty: 1 },
+  { id: 'wb13', word: 'map', emoji: '🗺️', difficulty: 1 },
+  { id: 'wb14', word: 'net', emoji: '🥅', difficulty: 1 },
+  { id: 'wb15', word: 'pot', emoji: '🍲', difficulty: 1 },
+  { id: 'wb16', word: 'rug', emoji: '🧶', difficulty: 1 },
+  { id: 'wb17', word: 'van', emoji: '🚐', difficulty: 1 },
+  { id: 'wb18', word: 'zip', emoji: '🤐', difficulty: 1 },
+  { id: 'wb19', word: 'log', emoji: '🪵', difficulty: 1 },
+  { id: 'wb20', word: 'mug', emoji: '☕', difficulty: 1 },
+  { id: 'wb21', word: 'bat', emoji: '🦇', difficulty: 1 },
+  { id: 'wb22', word: 'fin', emoji: '🦈', difficulty: 1 },
+
+  // ── Level 2: 4-letter words ──
+  { id: 'wb30', word: 'frog', emoji: '🐸', difficulty: 2 },
+  { id: 'wb31', word: 'duck', emoji: '🦆', difficulty: 2 },
+  { id: 'wb32', word: 'fish', emoji: '🐟', difficulty: 2 },
+  { id: 'wb33', word: 'lamp', emoji: '💡', difficulty: 2 },
+  { id: 'wb34', word: 'star', emoji: '⭐', difficulty: 2 },
+  { id: 'wb35', word: 'moon', emoji: '🌙', difficulty: 2 },
+  { id: 'wb36', word: 'tree', emoji: '🌳', difficulty: 2 },
+  { id: 'wb37', word: 'bear', emoji: '🐻', difficulty: 2 },
+  { id: 'wb38', word: 'cake', emoji: '🎂', difficulty: 2 },
+  { id: 'wb39', word: 'drum', emoji: '🥁', difficulty: 2 },
+  { id: 'wb40', word: 'flag', emoji: '🚩', difficulty: 2 },
+  { id: 'wb41', word: 'gift', emoji: '🎁', difficulty: 2 },
+  { id: 'wb42', word: 'ship', emoji: '🚢', difficulty: 2 },
+  { id: 'wb43', word: 'kite', emoji: '🪁', difficulty: 2 },
+  { id: 'wb44', word: 'nest', emoji: '🪺', difficulty: 2 },
+  { id: 'wb45', word: 'ring', emoji: '💍', difficulty: 2 },
+  { id: 'wb46', word: 'bell', emoji: '🔔', difficulty: 2 },
+  { id: 'wb47', word: 'bone', emoji: '🦴', difficulty: 2 },
+  { id: 'wb48', word: 'corn', emoji: '🌽', difficulty: 2 },
+  { id: 'wb49', word: 'hand', emoji: '✋', difficulty: 2 },
+  { id: 'wb50', word: 'leaf', emoji: '🍃', difficulty: 2 },
+  { id: 'wb51', word: 'sock', emoji: '🧦', difficulty: 2 },
+
+  // ── Level 3: 5-letter words ──
+  { id: 'wb60', word: 'apple', emoji: '🍎', difficulty: 3 },
+  { id: 'wb61', word: 'train', emoji: '🚂', difficulty: 3 },
+  { id: 'wb62', word: 'happy', emoji: '😊', difficulty: 3 },
+  { id: 'wb63', word: 'cloud', emoji: '☁️', difficulty: 3 },
+  { id: 'wb64', word: 'house', emoji: '🏠', difficulty: 3 },
+  { id: 'wb65', word: 'mouse', emoji: '🐭', difficulty: 3 },
+  { id: 'wb66', word: 'plant', emoji: '🌱', difficulty: 3 },
+  { id: 'wb67', word: 'earth', emoji: '🌍', difficulty: 3 },
+  { id: 'wb68', word: 'lemon', emoji: '🍋', difficulty: 3 },
+  { id: 'wb69', word: 'piano', emoji: '🎹', difficulty: 3 },
+  { id: 'wb70', word: 'robot', emoji: '🤖', difficulty: 3 },
+  { id: 'wb71', word: 'tiger', emoji: '🐯', difficulty: 3 },
+  { id: 'wb72', word: 'whale', emoji: '🐋', difficulty: 3 },
+  { id: 'wb73', word: 'zebra', emoji: '🦓', difficulty: 3 },
+  { id: 'wb74', word: 'smile', emoji: '😄', difficulty: 3 },
+  { id: 'wb75', word: 'bread', emoji: '🍞', difficulty: 3 },
+  { id: 'wb76', word: 'chair', emoji: '🪑', difficulty: 3 },
+  { id: 'wb77', word: 'ghost', emoji: '👻', difficulty: 3 },
+  { id: 'wb78', word: 'queen', emoji: '👑', difficulty: 3 },
+  { id: 'wb79', word: 'sheep', emoji: '🐑', difficulty: 3 },
+  { id: 'wb80', word: 'storm', emoji: '⛈️', difficulty: 3 },
+
+  // ── Level 4: 6-letter words ──
+  { id: 'wb90',  word: 'banana', emoji: '🍌', difficulty: 4 },
+  { id: 'wb91',  word: 'castle', emoji: '🏰', difficulty: 4 },
+  { id: 'wb92',  word: 'dinner', emoji: '🍽️', difficulty: 4 },
+  { id: 'wb93',  word: 'flower', emoji: '🌸', difficulty: 4 },
+  { id: 'wb94',  word: 'garden', emoji: '🌻', difficulty: 4 },
+  { id: 'wb95',  word: 'jungle', emoji: '🌴', difficulty: 4 },
+  { id: 'wb96',  word: 'kitten', emoji: '🐈', difficulty: 4 },
+  { id: 'wb97',  word: 'monkey', emoji: '🐵', difficulty: 4 },
+  { id: 'wb98',  word: 'pencil', emoji: '✏️', difficulty: 4 },
+  { id: 'wb99',  word: 'rabbit', emoji: '🐰', difficulty: 4 },
+  { id: 'wb100', word: 'rocket', emoji: '🚀', difficulty: 4 },
+  { id: 'wb101', word: 'spider', emoji: '🕷️', difficulty: 4 },
+  { id: 'wb102', word: 'sunset', emoji: '🌅', difficulty: 4 },
+  { id: 'wb103', word: 'turtle', emoji: '🐢', difficulty: 4 },
+  { id: 'wb104', word: 'winter', emoji: '❄️', difficulty: 4 },
+  { id: 'wb105', word: 'bottle', emoji: '🍶', difficulty: 4 },
+  { id: 'wb106', word: 'candle', emoji: '🕯️', difficulty: 4 },
+  { id: 'wb107', word: 'dragon', emoji: '🐉', difficulty: 4 },
+  { id: 'wb108', word: 'island', emoji: '🏝️', difficulty: 4 },
+  { id: 'wb109', word: 'pillow', emoji: '🛌', difficulty: 4 },
+  { id: 'wb110', word: 'bridge', emoji: '🌉', difficulty: 4 },
+
+  // ── Level 5: 7+ letter words ──
+  { id: 'wb120', word: 'airplane', emoji: '✈️', difficulty: 5 },
+  { id: 'wb121', word: 'birthday', emoji: '🎂', difficulty: 5 },
+  { id: 'wb122', word: 'elephant', emoji: '🐘', difficulty: 5 },
+  { id: 'wb123', word: 'dinosaur', emoji: '🦕', difficulty: 5 },
+  { id: 'wb124', word: 'football', emoji: '🏈', difficulty: 5 },
+  { id: 'wb125', word: 'mountain', emoji: '⛰️', difficulty: 5 },
+  { id: 'wb126', word: 'sandwich', emoji: '🥪', difficulty: 5 },
+  { id: 'wb127', word: 'umbrella', emoji: '☂️', difficulty: 5 },
+  { id: 'wb128', word: 'treasure', emoji: '💎', difficulty: 5 },
+  { id: 'wb129', word: 'penguin', emoji: '🐧', difficulty: 5 },
+  { id: 'wb130', word: 'rainbow', emoji: '🌈', difficulty: 5 },
+  { id: 'wb131', word: 'blanket', emoji: '🧣', difficulty: 5 },
+  { id: 'wb132', word: 'chicken', emoji: '🐔', difficulty: 5 },
+  { id: 'wb133', word: 'dolphin', emoji: '🐬', difficulty: 5 },
+  { id: 'wb134', word: 'feather', emoji: '🪶', difficulty: 5 },
+  { id: 'wb135', word: 'giraffe', emoji: '🦒', difficulty: 5 },
+  { id: 'wb136', word: 'kitchen', emoji: '🍳', difficulty: 5 },
+  { id: 'wb137', word: 'pumpkin', emoji: '🎃', difficulty: 5 },
+  { id: 'wb138', word: 'volcano', emoji: '🌋', difficulty: 5 },
+  { id: 'wb139', word: 'snowman', emoji: '⛄', difficulty: 5 },
+  { id: 'wb140', word: 'popcorn', emoji: '🍿', difficulty: 5 },
 ];
+
+/** Difficulty tiers metadata */
+export const WORD_BUILDER_LEVELS = [
+  { difficulty: 1 as const, label: '2–3 Letters', emoji: '🌱', desc: 'Simple short words' },
+  { difficulty: 2 as const, label: '4 Letters', emoji: '🌿', desc: 'A little longer' },
+  { difficulty: 3 as const, label: '5 Letters', emoji: '🌳', desc: 'Growing words' },
+  { difficulty: 4 as const, label: '6 Letters', emoji: '🏔️', desc: 'Bigger challenge' },
+  { difficulty: 5 as const, label: '7+ Letters', emoji: '🚀', desc: 'Word master!' },
+];
+
+/** Get a shuffled random selection of words for a given difficulty */
+export function getRandomWords(difficulty: 1 | 2 | 3 | 4 | 5, count: number): WordBuilderWord[] {
+  const pool = WORD_BUILDER_WORDS.filter(w => w.difficulty === difficulty);
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
 
 // Home Row lessons
 export const HOME_ROW_LESSONS: HomeRowLesson[] = [
