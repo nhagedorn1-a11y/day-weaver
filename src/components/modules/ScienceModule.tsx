@@ -55,6 +55,7 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
   const [unlockedCards, setUnlockedCards] = useState<string[]>([]);
   const [showHint, setShowHint] = useState(false);
   const [completedActivityIds, setCompletedActivityIds] = useState<string[]>(getScienceCompletedIds);
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
 
   const laneActivities = useMemo(() => 
     selectedLane ? getActivitiesByLane(selectedLane) : [],
