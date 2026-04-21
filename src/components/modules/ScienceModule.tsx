@@ -324,15 +324,94 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
 
   // Lane view
   if (view === 'lane' && laneInfo) {
+    // Build difficulty groups for this lane
+    const grouped = new Map<number, ScienceActivity[]>();
+    laneActivities.forEach(a => {
+      const d = a.difficulty ?? 1;
+      if (!grouped.has(d)) grouped.set(d, []);
+      grouped.get(d)!.push(a);
+    });
+    const difficulties = [...grouped.keys()].sort((a, b) => a - b);
+    const hasMultipleLevels = difficulties.length > 1;
+    const unlockedDiff = computeUnlockedDifficulty(completedActivityIds, laneActivities);
+
+    const LEVEL_META: Record<number, { label: string; emoji: string; desc: string }> = {
+      1: { label: 'Level 1 — Starter', emoji: '🌱', desc: 'Easy first experiments' },
+      2: { label: 'Level 2 — Builder', emoji: '🌿', desc: 'Building curiosity' },
+      3: { label: 'Level 3 — Explorer', emoji: '🌳', desc: 'Stretch your thinking' },
+      4: { label: 'Level 4 — Pro', emoji: '⭐', desc: 'Advanced investigations' },
+      5: { label: 'Level 5 — Master', emoji: '🏆', desc: 'Expert science' },
+    };
+
+    // ── Level picker (default entry when multiple levels exist) ──
+    if (hasMultipleLevels && selectedLevel === null) {
+      return (
+        <div className="min-h-screen bg-background">
+          <header className="flex items-center gap-4 p-4 border-b border-border safe-top">
+            <button onClick={() => setView('home')} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="font-semibold text-lg">{laneInfo.emoji} {laneInfo.name}</h1>
+              <span className="hw-label">Pick a level</span>
+            </div>
+          </header>
+
+          <div className="p-4 space-y-3">
+            {difficulties.map(d => {
+              const meta = LEVEL_META[d] ?? { label: `Level ${d}`, emoji: '✨', desc: '' };
+              const groupItems = grouped.get(d) ?? [];
+              const isLocked = d > unlockedDiff;
+              const completedCount = groupItems.filter(a => completedActivityIds.includes(a.id)).length;
+              const isCompleted = completedCount >= Math.min(COMPLETIONS_TO_UNLOCK, groupItems.length);
+              return (
+                <button
+                  key={d}
+                  onClick={() => !isLocked && setSelectedLevel(d)}
+                  disabled={isLocked}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all ${
+                    isLocked
+                      ? 'opacity-40 cursor-not-allowed bg-muted/30'
+                      : 'bg-card shadow-sm hover:shadow-md active:scale-[0.98]'
+                  }`}
+                >
+                  <span className="text-3xl">{meta.emoji}</span>
+                  <div className="flex-1">
+                    <h3 className="font-semibold">{meta.label}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {meta.desc} • {groupItems.length} activities
+                      {completedCount > 0 && ` • ${completedCount} done`}
+                    </p>
+                  </div>
+                  {isLocked && <Lock className="w-4 h-4 text-muted-foreground" />}
+                  {isCompleted && !isLocked && <span className="text-primary text-sm">✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    const activeLevel = selectedLevel ?? difficulties[0] ?? 1;
+    const levelActivities = hasMultipleLevels ? (grouped.get(activeLevel) ?? []) : laneActivities;
+
     return (
       <div className="min-h-screen bg-background">
         <header className="flex items-center gap-4 p-4 border-b border-border safe-top">
-          <button onClick={() => setView('home')} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+          <button
+            onClick={() => hasMultipleLevels ? setSelectedLevel(null) : setView('home')}
+            className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center"
+          >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <h1 className="font-semibold text-lg">{laneInfo.emoji} {laneInfo.name}</h1>
-            <span className="hw-label">{laneActivities.length} activities</span>
+            <span className="hw-label">
+              {hasMultipleLevels
+                ? `${LEVEL_META[activeLevel]?.label ?? `Level ${activeLevel}`} • ${levelActivities.length}`
+                : `${levelActivities.length} activities`}
+            </span>
           </div>
         </header>
 
@@ -360,8 +439,7 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
 
         <div className="p-4 space-y-3">
           {(() => {
-            const filtered = laneActivities.filter(a => a.durationOptions.includes(selectedDuration));
-            const unlockedDiff = computeUnlockedDifficulty(completedActivityIds, filtered);
+            const filtered = levelActivities.filter(a => a.durationOptions.includes(selectedDuration));
             return filtered.map((activity) => {
               const hasCard = activity.labCardId && !unlockedCards.includes(activity.labCardId);
               const isLocked = activity.difficulty > unlockedDiff;
@@ -417,16 +495,17 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
             });
           })()}
 
-          {laneActivities.filter(a => a.durationOptions.includes(selectedDuration)).length === 0 && (
+          {levelActivities.filter(a => a.durationOptions.includes(selectedDuration)).length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              <p>No {selectedDuration}-minute activities in this lane.</p>
-              <p className="text-sm mt-1">Try a different time!</p>
+              <p>No {selectedDuration}-minute activities at this level.</p>
+              <p className="text-sm mt-1">Try a different time or level!</p>
             </div>
           )}
         </div>
       </div>
     );
   }
+
 
   // Home view
   return (
