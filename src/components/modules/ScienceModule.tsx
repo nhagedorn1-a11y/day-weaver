@@ -66,6 +66,7 @@ export function ScienceModule({ onBack, onTokensEarned }: ScienceModuleProps) {
 
   const handleLaneSelect = (laneId: string) => {
     setSelectedLane(laneId);
+    setSelectedLevel(null);
     setView('lane');
   };
 
